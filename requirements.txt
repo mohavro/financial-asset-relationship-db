@@ -1,0 +1,4 @@
+gradio>=4.0.0
+plotly>=5.0.0
+numpy>=1.21.0
+dataclasses-json>=0.5.7
