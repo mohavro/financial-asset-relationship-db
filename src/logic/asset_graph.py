@@ -8,6 +8,7 @@ class AssetRelationshipGraph:
     def __init__(self):
         self.assets: Dict[str, Asset] = {}
         self.relationships: Dict[str, List[Tuple[str, str, float]]] = {}  # asset_id -> [(target_id, rel_type, strength)]
+        self.incoming_relationships: Dict[str, List[Tuple[str, str, float]]] = {}  # asset_id -> [(source_id, rel_type, strength)]
         self.regulatory_events: List[RegulatoryEvent] = []
         self.relationship_metrics: Dict[str, float] = {}
         self._positions: Optional[np.ndarray] = None  # persist 3D positions
@@ -17,6 +18,8 @@ class AssetRelationshipGraph:
         self.assets[asset.id] = asset
         if asset.id not in self.relationships:
             self.relationships[asset.id] = []
+        if asset.id not in self.incoming_relationships:
+            self.incoming_relationships[asset.id] = []
         # Invalidate positions if asset count changes
         self._positions = None
 
@@ -25,16 +28,32 @@ class AssetRelationshipGraph:
         strength = float(max(0.0, min(1.0, strength)))
         if source_id not in self.relationships:
             self.relationships[source_id] = []
+        if target_id not in self.incoming_relationships:
+            self.incoming_relationships[target_id] = []
+        
         rel = (target_id, rel_type, strength)
         if rel not in self.relationships[source_id]:
             self.relationships[source_id].append(rel)
+        
+        # Add to incoming relationships
+        incoming_rel = (source_id, rel_type, strength)
+        if incoming_rel not in self.incoming_relationships[target_id]:
+            self.incoming_relationships[target_id].append(incoming_rel)
+        
         if bidirectional:
             # Add reverse direction without recursion loop
             if target_id not in self.relationships:
                 self.relationships[target_id] = []
+            if source_id not in self.incoming_relationships:
+                self.incoming_relationships[source_id] = []
+            
             rel_rev = (source_id, rel_type, strength)
             if rel_rev not in self.relationships[target_id]:
                 self.relationships[target_id].append(rel_rev)
+            
+            incoming_rel_rev = (target_id, rel_type, strength)
+            if incoming_rel_rev not in self.incoming_relationships[source_id]:
+                self.incoming_relationships[source_id].append(incoming_rel_rev)
 
     def add_regulatory_event(self, event: RegulatoryEvent):
         """Add regulatory event and link to related assets"""
@@ -189,3 +208,51 @@ class AssetRelationshipGraph:
                     edges_z.extend([positions[source_idx, 2], positions[target_idx, 2], None])
 
         return positions, asset_ids, asset_colors, asset_text, (edges_x, edges_y, edges_z)
+
+    def get_3d_visualization_data_enhanced(self) -> Tuple[np.ndarray, List[str], List[str], List[str]]:
+        """Generate enhanced 3D coordinates for visualization with better relationship handling"""
+        n_assets = len(self.assets)
+        asset_ids = list(self.assets.keys())
+
+        # Initialize/persist positions
+        if self._positions is None or self._positions.shape[0] != n_assets:
+            # Stable, deterministic positions based on sorted asset ids
+            np.random.seed(42)
+            self._positions = np.random.randn(n_assets, 3) * 10
+        positions = self._positions
+
+        asset_colors: List[str] = []
+        asset_text: List[str] = []
+
+        color_map = {
+            AssetClass.EQUITY.value: "#1f77b4",      # Professional blue
+            AssetClass.FIXED_INCOME.value: "#2ca02c", # Professional green
+            AssetClass.COMMODITY.value: "#ff7f0e",    # Professional orange
+            AssetClass.CURRENCY.value: "#d62728",     # Professional red
+            AssetClass.DERIVATIVE.value: "#9467bd",   # Professional purple
+        }
+
+        for asset_id in asset_ids:
+            asset = self.assets[asset_id]
+            asset_colors.append(color_map.get(asset.asset_class.value, "#7f7f7f"))
+            
+            # Enhanced hover text with more detail
+            price_display = asset.price
+            if isinstance(asset, Currency) and asset.exchange_rate is not None:
+                price_display = asset.exchange_rate
+                
+            # Get relationship counts for this asset
+            outgoing_count = len(self.relationships.get(asset_id, []))
+            incoming_count = len(self.incoming_relationships.get(asset_id, []))
+            
+            asset_text.append(
+                f"<b>{asset.symbol}</b><br>"
+                f"{asset.name}<br>"
+                f"<b>Price:</b> ${price_display:.2f}<br>"
+                f"<b>Class:</b> {asset.asset_class.value}<br>"
+                f"<b>Sector:</b> {asset.sector}<br>"
+                f"<b>Relationships:</b> {outgoing_count + incoming_count}<br>"
+                f"<b>Out:</b> {outgoing_count} | <b>In:</b> {incoming_count}"
+            )
+
+        return positions, asset_ids, asset_colors, asset_text
