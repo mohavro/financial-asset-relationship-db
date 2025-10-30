@@ -232,3 +232,6 @@ For AI agents: see `.github/copilot-instructions.md` for development guidelines.
 - [CHANGELOG.md](CHANGELOG.md) - Version history and changes
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
 - [AI_RULES.md](AI_RULES.md) - Tech stack and coding conventions
+- [DOCKER.md](DOCKER.md) - Docker deployment guide
+- [IMPROVEMENTS.md](IMPROVEMENTS.md) - Code quality recommendations
+- [SECURITY.md](SECURITY.md) - Security best practices
