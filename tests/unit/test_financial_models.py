@@ -1,8 +1,8 @@
 """Unit tests for financial models."""
 
 import pytest
-from src.models.financial_models import Asset, AssetClass, Bond, Currency, Equity, RegulatoryActivity, RegulatoryEvent
-    from src.models.financial_models import (
+from src.models.financial_models import (
+    Asset,
     AssetClass,
     Bond,
     Equity,
