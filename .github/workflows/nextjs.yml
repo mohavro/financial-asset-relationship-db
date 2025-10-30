@@ -48,7 +48,6 @@ jobs:
               echo "manager=none"
               echo "command=echo"
               echo "runner=echo"
-              echo "has_nextjs=false"
               echo "skip_build=true"
             } >> "$GITHUB_OUTPUT"
             echo "ℹ️ No Next.js project detected. Skipping Next.js build steps." >&2
@@ -61,7 +60,6 @@ jobs:
               echo "manager=yarn"
               echo "command=install"
               echo "runner=yarn"
-echo "has_nextjs=$NEXTJS_EXISTS"
               echo "skip_build=false"
             } >> "$GITHUB_OUTPUT"
             exit 0
@@ -70,7 +68,6 @@ echo "has_nextjs=$NEXTJS_EXISTS"
               echo "manager=npm"
               echo "command=ci"
               echo "runner=npx --no-install"
-              echo "has_nextjs=$NEXTJS_EXISTS"
               echo "skip_build=false"
             } >> "$GITHUB_OUTPUT"
             exit 0
@@ -80,7 +77,6 @@ echo "has_nextjs=$NEXTJS_EXISTS"
               echo "manager=none"
               echo "command=echo"
               echo "runner=echo"
-              echo "has_nextjs=$NEXTJS_EXISTS"
               echo "skip_build=true"
             } >> "$GITHUB_OUTPUT"
             echo "❌ ERROR: No lock file found (yarn.lock or package-lock.json). Aborting build for security reasons. See https://docs.npmjs.com/cli/v10/configuring-npm/package-lock-json for details." >&2
@@ -91,7 +87,6 @@ echo "has_nextjs=$NEXTJS_EXISTS"
               echo "manager=none"
               echo "command=echo"
               echo "runner=echo"
-              echo "has_nextjs=false"
               echo "skip_build=true"
             } >> "$GITHUB_OUTPUT"
             echo "ℹ️ No Node.js package.json found. Skipping Next.js build steps." >&2
@@ -102,7 +97,7 @@ echo "has_nextjs=$NEXTJS_EXISTS"
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-I'm sorry, but your instruction isn't clear. Can you please provide the specific change you want to make in this line of code?
+          cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
         if: steps.detect-package-manager.outputs.skip_build != 'true'
         uses: actions/configure-pages@v5
