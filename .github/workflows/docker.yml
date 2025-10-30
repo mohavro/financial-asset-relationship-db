@@ -83,7 +83,7 @@ jobs:
       run: docker build -t financial-asset-db:scan .
 
     - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@v0.14.0
+      uses: aquasecurity/trivy-action@<full-length-commit-sha>
       with:
         image-ref: 'financial-asset-db:scan'
         format: 'sarif'
