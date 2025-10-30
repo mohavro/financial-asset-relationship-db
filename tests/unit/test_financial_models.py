@@ -2,7 +2,7 @@
 
 import pytest
 from src.models.financial_models import Asset, AssetClass, Bond, Currency, Equity, RegulatoryActivity, RegulatoryEvent
-    Asset,
+    from src.models.financial_models import (
     AssetClass,
     Bond,
     Equity,
