@@ -52,23 +52,23 @@ jobs:
 
     - name: Test Docker Compose
       run: |
-        # Test docker-compose configuration
-        docker-compose config
+        # Test docker compose configuration
+        docker compose config
         
-        # Build with docker-compose
-        docker-compose build
+        # Build with docker compose
+        docker compose build
         
         # Start services
-        docker-compose up -d
+        docker compose up -d
         
         # Wait for services to be ready
         sleep 15
         
         # Check services are running
-        docker-compose ps
+        docker compose ps
         
         # Clean up
-        docker-compose down
+        docker compose down
 
   docker-security:
     name: Docker Security Scan
