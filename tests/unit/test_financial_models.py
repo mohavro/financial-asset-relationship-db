@@ -5,8 +5,6 @@ from src.models.financial_models import (
     Asset,
     AssetClass,
     Bond,
-    Commodity,
-    Currency,
     Equity,
     RegulatoryActivity,
     RegulatoryEvent,

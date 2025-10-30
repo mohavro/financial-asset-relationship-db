@@ -1,6 +1,5 @@
 """Unit tests for the asset relationship graph."""
 
-import pytest
 import numpy as np
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import AssetClass, Equity, Bond
