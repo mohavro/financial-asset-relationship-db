@@ -24,7 +24,7 @@ jobs:
       uses: docker/setup-buildx-action@<actual-full-length-commit-SHA>
 
     - name: Build Docker image
-      uses: docker/build-push-action@abc123def456
+      uses: docker/build-push-action@<full-length-commit-SHA>
       with:
         context: .
         push: false
