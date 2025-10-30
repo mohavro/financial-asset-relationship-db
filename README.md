@@ -47,6 +47,28 @@ A comprehensive 3D visualization system for interconnected financial assets acro
 
 The application will launch in your browser automatically at `http://localhost:7860`.
 
+### 🐳 Docker Installation (Alternative)
+
+For containerized deployment:
+
+1. **Using Docker Compose (recommended)**
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Using Docker directly**
+   ```bash
+   docker build -t financial-asset-db .
+   docker run -p 7860:7860 financial-asset-db
+   ```
+
+3. **Using Makefile**
+   ```bash
+   make docker-compose-up
+   ```
+
+See [DOCKER.md](DOCKER.md) for detailed Docker deployment guide.
+
 ## 📊 Features
 
 ### Core Functionality

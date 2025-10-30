@@ -80,3 +80,7 @@ dmypy.json
 
 # Linting
 .ruff_cache/
+
+# Docker
+.dockerignore
+docker-compose.override.yml

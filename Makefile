@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test lint format type-check clean run pre-commit
+.PHONY: help install install-dev test lint format type-check clean run pre-commit docker-build docker-run docker-stop docker-clean
 
 help:  ## Show this help message
 	@echo 'Usage: make [target]'
@@ -68,3 +68,33 @@ check:  ## Run all checks (format, lint, type, test)
 	@make test
 	@echo ""
 	@echo "All checks passed! ✅"
+
+# Docker commands
+docker-build:  ## Build Docker image
+	docker build -t financial-asset-db:latest .
+
+docker-run:  ## Run Docker container
+	docker run -d -p 7860:7860 --name financial-asset-db financial-asset-db:latest
+
+docker-stop:  ## Stop Docker container
+	docker stop financial-asset-db || true
+	docker rm financial-asset-db || true
+
+docker-clean:  ## Remove Docker image and container
+	@make docker-stop
+	docker rmi financial-asset-db:latest || true
+
+docker-compose-up:  ## Start with docker-compose
+	docker-compose up --build
+
+docker-compose-down:  ## Stop docker-compose services
+	docker-compose down
+
+docker-compose-logs:  ## View docker-compose logs
+	docker-compose logs -f
+
+docker-shell:  ## Open shell in running container
+	docker exec -it financial-asset-db /bin/bash
+
+docker-dev:  ## Run in development mode with volumes
+	docker-compose up
