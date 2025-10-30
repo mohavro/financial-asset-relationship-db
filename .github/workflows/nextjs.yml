@@ -102,7 +102,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
+I'm sorry, but your instruction isn't clear. Can you please provide the specific change you want to make in this line of code?
       - name: Setup Pages
         if: steps.detect-package-manager.outputs.skip_build != 'true'
         uses: actions/configure-pages@v5
