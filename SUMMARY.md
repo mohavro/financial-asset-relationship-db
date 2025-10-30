@@ -84,7 +84,7 @@ make clean
 | Linting Tools | 0 | 5 | +5 |
 | Config Files | 2 | 9 | +350% |
 | Documentation | 3 | 7 | +133% |
-| Python Versions Tested | 1 | 4 | +300% |
+| Python Versions Tested | 1 | 5 | +400% |
 
 ## Available Commands
 
@@ -124,7 +124,7 @@ make check         # Run all checks (format, lint, type, test)
 **Workflow:** `.github/workflows/ci.yml`
 
 ### Test Job
-- Matrix: Python 3.9, 3.10, 3.11, 3.12
+- Matrix: Python 3.8, 3.9, 3.10, 3.11, 3.12
 - Steps: checkout → setup python → install → lint → format → type-check → test
 - Caching: pip dependencies
 - Artifacts: coverage reports
