@@ -150,16 +150,63 @@ if isinstance(asset1, Derivative) and isinstance(asset2, Equity):
 - `AssetRelationshipGraph.calculate_metrics()` - Generate network statistics
 - `AssetRelationshipGraph.get_3d_visualization_data()` - Export for visualization
 
+## 🧪 Testing
+
+The project includes comprehensive test coverage:
+
+```bash
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+
+# Or use Makefile
+make test
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed testing guidelines.
+
+## 🔧 Development Tools
+
+- **Testing:** pytest with coverage reporting
+- **Linting:** flake8, pylint
+- **Formatting:** black, isort
+- **Type Checking:** mypy
+- **Pre-commit Hooks:** Automatic quality checks
+
+Install development dependencies:
+```bash
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+Or use the Makefile:
+```bash
+make install-dev
+make pre-commit
+```
+
 ## 📝 License
 
 MIT License - see LICENSE file for details.
 
 ## 🤝 Contributing
 
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+Quick start:
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
+3. Make your changes with tests
+4. Run `make check` to verify quality
 5. Submit a pull request
 
 For AI agents: see `.github/copilot-instructions.md` for development guidelines.
+
+## 📚 Additional Documentation
+
+- [AUDIT_REPORT.md](AUDIT_REPORT.md) - Comprehensive code audit and improvements
+- [CHANGELOG.md](CHANGELOG.md) - Version history and changes
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
+- [AI_RULES.md](AI_RULES.md) - Tech stack and coding conventions
