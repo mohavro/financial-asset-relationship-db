@@ -28,32 +28,73 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    outputs:
+      skip_build: ${{ steps.detect-package-manager.outputs.skip_build }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Detect package manager
         id: detect-package-manager
         run: |
+          # Check for Next.js project indicators (next.config.js, pages/, app/ directories)
+          NEXTJS_EXISTS=false
+          if [ -f "next.config.js" ] || [ -f "next.config.mjs" ] || [ -d "pages" ] || [ -d "app" ]; then
+            NEXTJS_EXISTS=true
+          fi
+          
+          # If no Next.js project indicators found, skip the build
+          if [ "$NEXTJS_EXISTS" = "false" ]; then
+            echo "manager=none" >> $GITHUB_OUTPUT
+            echo "command=echo" >> $GITHUB_OUTPUT
+            echo "runner=echo" >> $GITHUB_OUTPUT
+            echo "has_nextjs=false" >> $GITHUB_OUTPUT
+            echo "skip_build=true" >> $GITHUB_OUTPUT
+            echo "ℹ️ No Next.js project detected. Skipping Next.js build steps." >&2
+            exit 0
+          fi
+          
+          # Check for package manager based on lock files and package.json
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
+            echo "has_nextjs=$NEXTJS_EXISTS" >> $GITHUB_OUTPUT
+            echo "skip_build=false" >> $GITHUB_OUTPUT
             exit 0
-          elif [ -f "${{ github.workspace }}/package.json" ]; then
+          elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
             echo "manager=npm" >> $GITHUB_OUTPUT
             echo "command=ci" >> $GITHUB_OUTPUT
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
+            echo "has_nextjs=$NEXTJS_EXISTS" >> $GITHUB_OUTPUT
+            echo "skip_build=false" >> $GITHUB_OUTPUT
+            exit 0
+          elif [ -f "${{ github.workspace }}/package.json" ]; then
+            # package.json exists but no lock file - use npm install as fallback
+            echo "manager=npm" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=npx --yes" >> $GITHUB_OUTPUT
+            echo "has_nextjs=$NEXTJS_EXISTS" >> $GITHUB_OUTPUT
+            echo "skip_build=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Warning: No lock file found. Using 'npm install' without lock file." >&2
             exit 0
           else
-            echo "Unable to determine package manager"
-            exit 1
+            # No package.json found - skip the build gracefully
+            echo "manager=none" >> $GITHUB_OUTPUT
+            echo "command=echo" >> $GITHUB_OUTPUT
+            echo "runner=echo" >> $GITHUB_OUTPUT
+            echo "has_nextjs=false" >> $GITHUB_OUTPUT
+            echo "skip_build=true" >> $GITHUB_OUTPUT
+            echo "ℹ️ No Node.js package.json found. Skipping Next.js build steps." >&2
+            exit 0
           fi
       - name: Setup Node
+        if: steps.detect-package-manager.outputs.skip_build != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
       - name: Setup Pages
+        if: steps.detect-package-manager.outputs.skip_build != 'true'
         uses: actions/configure-pages@v5
         with:
           # Automatically inject basePath in your Next.js configuration file and disable
@@ -62,6 +103,7 @@ jobs:
           # You may remove this line if you want to manage the configuration yourself.
           static_site_generator: next
       - name: Restore cache
+        if: steps.detect-package-manager.outputs.skip_build != 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -72,16 +114,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
+        if: steps.detect-package-manager.outputs.skip_build != 'true'
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
+        if: steps.detect-package-manager.outputs.skip_build != 'true'
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Upload artifact
+        if: steps.detect-package-manager.outputs.skip_build != 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
 
   # Deployment job
   deploy:
+    if: needs.build.outputs.skip_build != 'true'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
