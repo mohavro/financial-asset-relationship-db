@@ -75,16 +75,16 @@ jobs:
             } >> "$GITHUB_OUTPUT"
             exit 0
           elif [ -f "${{ github.workspace }}/package.json" ]; then
-            # package.json exists but no lock file - use npm install as fallback
+            # package.json exists but no lock file - halt the build for security reasons
             {
-              echo "manager=npm"
-              echo "command=install"
-              echo "runner=npx --yes"
+              echo "manager=none"
+              echo "command=echo"
+              echo "runner=echo"
               echo "has_nextjs=$NEXTJS_EXISTS"
-              echo "skip_build=false"
+              echo "skip_build=true"
             } >> "$GITHUB_OUTPUT"
-            echo "⚠️ Warning: No lock file found. Using 'npm install' without lock file." >&2
-            exit 0
+            echo "❌ ERROR: No lock file found (yarn.lock or package-lock.json). Aborting build for security reasons. See https://docs.npmjs.com/cli/v10/configuring-npm/package-lock-json for details." >&2
+            exit 1
           else
             # No package.json found - skip the build gracefully
             {
