@@ -44,46 +44,56 @@ jobs:
           
           # If no Next.js project indicators found, skip the build
           if [ "$NEXTJS_EXISTS" = "false" ]; then
-            echo "manager=none" >> $GITHUB_OUTPUT
-            echo "command=echo" >> $GITHUB_OUTPUT
-            echo "runner=echo" >> $GITHUB_OUTPUT
-            echo "has_nextjs=false" >> $GITHUB_OUTPUT
-            echo "skip_build=true" >> $GITHUB_OUTPUT
+            {
+              echo "manager=none"
+              echo "command=echo"
+              echo "runner=echo"
+              echo "has_nextjs=false"
+              echo "skip_build=true"
+            } >> "$GITHUB_OUTPUT"
             echo "ℹ️ No Next.js project detected. Skipping Next.js build steps." >&2
             exit 0
           fi
           
           # Check for package manager based on lock files and package.json
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
-            echo "manager=yarn" >> $GITHUB_OUTPUT
-            echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=yarn" >> $GITHUB_OUTPUT
-            echo "has_nextjs=$NEXTJS_EXISTS" >> $GITHUB_OUTPUT
-            echo "skip_build=false" >> $GITHUB_OUTPUT
+            {
+              echo "manager=yarn"
+              echo "command=install"
+              echo "runner=yarn"
+              echo "has_nextjs=$NEXTJS_EXISTS"
+              echo "skip_build=false"
+            } >> "$GITHUB_OUTPUT"
             exit 0
           elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=ci" >> $GITHUB_OUTPUT
-            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
-            echo "has_nextjs=$NEXTJS_EXISTS" >> $GITHUB_OUTPUT
-            echo "skip_build=false" >> $GITHUB_OUTPUT
+            {
+              echo "manager=npm"
+              echo "command=ci"
+              echo "runner=npx --no-install"
+              echo "has_nextjs=$NEXTJS_EXISTS"
+              echo "skip_build=false"
+            } >> "$GITHUB_OUTPUT"
             exit 0
           elif [ -f "${{ github.workspace }}/package.json" ]; then
             # package.json exists but no lock file - use npm install as fallback
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=npx --yes" >> $GITHUB_OUTPUT
-            echo "has_nextjs=$NEXTJS_EXISTS" >> $GITHUB_OUTPUT
-            echo "skip_build=false" >> $GITHUB_OUTPUT
+            {
+              echo "manager=npm"
+              echo "command=install"
+              echo "runner=npx --yes"
+              echo "has_nextjs=$NEXTJS_EXISTS"
+              echo "skip_build=false"
+            } >> "$GITHUB_OUTPUT"
             echo "⚠️ Warning: No lock file found. Using 'npm install' without lock file." >&2
             exit 0
           else
             # No package.json found - skip the build gracefully
-            echo "manager=none" >> $GITHUB_OUTPUT
-            echo "command=echo" >> $GITHUB_OUTPUT
-            echo "runner=echo" >> $GITHUB_OUTPUT
-            echo "has_nextjs=false" >> $GITHUB_OUTPUT
-            echo "skip_build=true" >> $GITHUB_OUTPUT
+            {
+              echo "manager=none"
+              echo "command=echo"
+              echo "runner=echo"
+              echo "has_nextjs=false"
+              echo "skip_build=true"
+            } >> "$GITHUB_OUTPUT"
             echo "ℹ️ No Node.js package.json found. Skipping Next.js build steps." >&2
             exit 0
           fi
