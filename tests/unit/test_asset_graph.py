@@ -1,4 +1,14 @@
-"""Unit tests for the asset relationship graph."""
+"""Unit tests for AssetRelationshipGraph.
+
+This module contains comprehensive unit tests for the asset relationship graph including:
+- Graph initialization and asset management
+- Relationship creation (directional and bidirectional)
+- Automatic relationship discovery algorithms
+- Relationship strength calculation and clamping
+- Metric calculation (totals, averages, distributions, density)
+- 3D visualization data generation with deterministic positioning
+- Regulatory event integration and impact modeling
+"""
 
 import numpy as np
 from src.logic.asset_graph import AssetRelationshipGraph

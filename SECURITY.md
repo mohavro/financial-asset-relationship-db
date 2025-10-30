@@ -435,7 +435,7 @@ detect-secrets scan
 
 ## Contact
 
-For security issues, contact: security@yourdomain.com
+For security issues, contact: mohavro@users.noreply.github.com
 
 **Never** publish security vulnerabilities in public issues. Use responsible disclosure.
 

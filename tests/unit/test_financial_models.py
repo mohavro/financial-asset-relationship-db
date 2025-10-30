@@ -1,4 +1,11 @@
-"""Unit tests for financial models."""
+"""Unit tests for financial models.
+
+This module contains comprehensive unit tests for all financial model classes including:
+- Asset base class creation and validation
+- Equity, Bond, Commodity, Currency subclasses
+- RegulatoryEvent class with impact scoring
+- Input validation and error handling for all model types
+"""
 
 import pytest
 from src.models.financial_models import (
