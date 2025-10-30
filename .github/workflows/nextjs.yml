@@ -61,7 +61,7 @@ jobs:
               echo "manager=yarn"
               echo "command=install"
               echo "runner=yarn"
-              echo "has_nextjs=$NEXTJS_EXISTS"
+echo "has_nextjs=$NEXTJS_EXISTS"
               echo "skip_build=false"
             } >> "$GITHUB_OUTPUT"
             exit 0
