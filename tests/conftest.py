@@ -1,7 +1,7 @@
 """Pytest configuration and fixtures for the financial asset relationship database tests."""
 
 import pytest
-from src.models.financial_models import (
+from src.models.financial_models import (AssetClass, Bond, Commodity, Currency, Equity, RegulatoryActivity, RegulatoryEvent)
     Asset,
     AssetClass,
     Bond,
