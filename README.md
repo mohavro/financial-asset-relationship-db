@@ -6,9 +6,10 @@ A comprehensive 3D visualization system for interconnected financial assets acro
 
 ### Prerequisites
 - Python 3.8+
+- Node.js 18+ (for Next.js frontend)
 - Virtual environment (recommended)
 
-### Installation
+### Option 1: Gradio UI (Original)
 
 1. **Clone the repository**
    ```bash
@@ -46,6 +47,44 @@ A comprehensive 3D visualization system for interconnected financial assets acro
    ```
 
 The application will launch in your browser automatically at `http://localhost:7860`.
+
+### Option 2: Next.js Frontend + FastAPI Backend (New)
+
+For the modern web frontend with REST API:
+
+**Quick Start (Both Servers):**
+```bash
+# Linux/Mac
+./run-dev.sh
+
+# Windows
+run-dev.bat
+```
+
+This will start both the FastAPI backend (port 8000) and Next.js frontend (port 3000).
+
+**Manual Setup:**
+
+1. **Start the FastAPI backend:**
+   ```bash
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   python -m uvicorn api.main:app --reload --port 8000
+   ```
+
+2. **Start the Next.js frontend (in a new terminal):**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+3. **Access the application:**
+   - Frontend: `http://localhost:3000`
+   - Backend API: `http://localhost:8000`
+   - API Documentation: `http://localhost:8000/docs`
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions and Vercel integration.
 
 ### 🐳 Docker Installation (Alternative)
 
@@ -228,6 +267,7 @@ For AI agents: see `.github/copilot-instructions.md` for development guidelines.
 
 ## 📚 Additional Documentation
 
+- [DEPLOYMENT.md](DEPLOYMENT.md) - **Vercel Next.js deployment guide (NEW)**
 - [AUDIT_REPORT.md](AUDIT_REPORT.md) - Comprehensive code audit and improvements
 - [CHANGELOG.md](CHANGELOG.md) - Version history and changes
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
