@@ -267,9 +267,17 @@ For AI agents: see `.github/copilot-instructions.md` for development guidelines.
 
 ## 📚 Additional Documentation
 
-- [QUICK_START.md](QUICK_START.md) - **Get started in under 5 minutes (NEW)**
-- [DEPLOYMENT.md](DEPLOYMENT.md) - **Vercel Next.js deployment guide (NEW)**
-- [INTEGRATION_SUMMARY.md](INTEGRATION_SUMMARY.md) - **Technical integration details (NEW)**
+### Getting Started (NEW)
+- [QUICK_START.md](QUICK_START.md) - **Get started in under 5 minutes**
+- [UI_COMPARISON.md](UI_COMPARISON.md) - **Compare Gradio vs Next.js interfaces**
+
+### Deployment & Integration (NEW)
+- [DEPLOYMENT.md](DEPLOYMENT.md) - **Vercel Next.js deployment guide**
+- [VERCEL_DEPLOYMENT_CHECKLIST.md](VERCEL_DEPLOYMENT_CHECKLIST.md) - **Step-by-step deployment checklist**
+- [INTEGRATION_SUMMARY.md](INTEGRATION_SUMMARY.md) - **Technical integration details**
+- [ARCHITECTURE.md](ARCHITECTURE.md) - **System architecture diagrams**
+
+### Original Documentation
 - [AUDIT_REPORT.md](AUDIT_REPORT.md) - Comprehensive code audit and improvements
 - [CHANGELOG.md](CHANGELOG.md) - Version history and changes
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
