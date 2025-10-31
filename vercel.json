@@ -5,7 +5,8 @@
       "src": "api/main.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "50mb"
+        "maxLambdaSize": "50mb",
+        "_comment": "Large size needed for NumPy, Pandas, and Plotly dependencies. Consider optimizing if cold starts become an issue."
       }
     },
     {

@@ -16,7 +16,7 @@ call .venv\Scripts\activate.bat
 
 REM Install Python dependencies
 echo 📥 Installing Python dependencies...
-pip install -q -r requirements.txt
+pip install -r requirements.txt
 
 REM Start backend in background
 echo 🔧 Starting FastAPI backend on port 8000...

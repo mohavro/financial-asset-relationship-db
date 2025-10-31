@@ -44,27 +44,29 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
       }
     };
 
-    // Create edge traces
-    const edgeTraces = data.edges.map(edge => {
-      const sourceNode = data.nodes.find(n => n.id === edge.source);
-      const targetNode = data.nodes.find(n => n.id === edge.target);
-      
-      if (!sourceNode || !targetNode) return null;
+    // Create edge traces with type predicate to filter nulls
+    const edgeTraces = data.edges
+      .map(edge => {
+        const sourceNode = data.nodes.find(n => n.id === edge.source);
+        const targetNode = data.nodes.find(n => n.id === edge.target);
+        
+        if (!sourceNode || !targetNode) return null;
 
-      return {
-        type: 'scatter3d',
-        mode: 'lines',
-        x: [sourceNode.x, targetNode.x],
-        y: [sourceNode.y, targetNode.y],
-        z: [sourceNode.z, targetNode.z],
-        line: {
-          color: `rgba(125, 125, 125, ${edge.strength})`,
-          width: edge.strength * 3
-        },
-        hoverinfo: 'none',
-        showlegend: false
-      };
-    }).filter(trace => trace !== null);
+        return {
+          type: 'scatter3d' as const,
+          mode: 'lines' as const,
+          x: [sourceNode.x, targetNode.x],
+          y: [sourceNode.y, targetNode.y],
+          z: [sourceNode.z, targetNode.z],
+          line: {
+            color: `rgba(125, 125, 125, ${edge.strength})`,
+            width: edge.strength * 3
+          },
+          hoverinfo: 'none' as const,
+          showlegend: false
+        };
+      })
+      .filter((trace): trace is NonNullable<typeof trace> => trace !== null);
 
     setPlotData([...edgeTraces, nodeTrace]);
   }, [data]);

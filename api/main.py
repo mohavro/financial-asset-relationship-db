@@ -24,13 +24,31 @@ app = FastAPI(
 # Configure CORS for Next.js frontend
 # Note: Update allowed origins for production deployment
 import os
+import re
+
+def validate_origin(origin: str) -> bool:
+    """Validate that an origin matches expected patterns"""
+    # Allow localhost for development
+    if re.match(r'^https?://localhost(:\d+)?$', origin):
+        return True
+    # Allow valid HTTPS URLs with proper domains
+    if re.match(r'^https://[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$', origin):
+        return True
+    return False
+
 allowed_origins = [
     "http://localhost:3000",
     "http://localhost:7860",
 ]
 # Add production origins from environment variable if set
 if os.getenv("ALLOWED_ORIGINS"):
-    allowed_origins.extend(os.getenv("ALLOWED_ORIGINS").split(","))
+    additional_origins = os.getenv("ALLOWED_ORIGINS").split(",")
+    for origin in additional_origins:
+        origin = origin.strip()
+        if validate_origin(origin):
+            allowed_origins.append(origin)
+        else:
+            logger.warning(f"Skipping invalid CORS origin: {origin}")
 
 app.add_middleware(
     CORSMiddleware,
