@@ -267,7 +267,9 @@ For AI agents: see `.github/copilot-instructions.md` for development guidelines.
 
 ## 📚 Additional Documentation
 
+- [QUICK_START.md](QUICK_START.md) - **Get started in under 5 minutes (NEW)**
 - [DEPLOYMENT.md](DEPLOYMENT.md) - **Vercel Next.js deployment guide (NEW)**
+- [INTEGRATION_SUMMARY.md](INTEGRATION_SUMMARY.md) - **Technical integration details (NEW)**
 - [AUDIT_REPORT.md](AUDIT_REPORT.md) - Comprehensive code audit and improvements
 - [CHANGELOG.md](CHANGELOG.md) - Version history and changes
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
