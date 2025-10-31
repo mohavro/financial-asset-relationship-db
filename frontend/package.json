@@ -14,8 +14,7 @@
     "next": "^14.0.0",
     "axios": "^1.6.0",
     "recharts": "^2.10.0",
-    "react-plotly.js": "^2.6.0",
-    "plotly.js": "^2.27.0"
+    "react-plotly.js": "^2.6.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

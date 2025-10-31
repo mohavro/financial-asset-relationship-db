@@ -22,9 +22,19 @@ app = FastAPI(
 )
 
 # Configure CORS for Next.js frontend
+# Note: Update allowed origins for production deployment
+import os
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:7860",
+]
+# Add production origins from environment variable if set
+if os.getenv("ALLOWED_ORIGINS"):
+    allowed_origins.extend(os.getenv("ALLOWED_ORIGINS").split(","))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://*.vercel.app"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

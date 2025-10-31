@@ -35,7 +35,7 @@ export default function AssetList() {
   const loadAssets = async () => {
     setLoading(true);
     try {
-      const params: any = {};
+      const params: { asset_class?: string; sector?: string } = {};
       if (filter.asset_class) params.asset_class = filter.asset_class;
       if (filter.sector) params.sector = filter.sector;
       

@@ -5,7 +5,10 @@ import dynamic from 'next/dynamic';
 import type { VisualizationData } from '../types/api';
 
 // Dynamically import Plotly to avoid SSR issues
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+const Plot = dynamic(() => import('react-plotly.js'), { 
+  ssr: false,
+  loading: () => <div className="text-center p-8">Loading visualization...</div>
+});
 
 interface NetworkVisualizationProps {
   data: VisualizationData;
