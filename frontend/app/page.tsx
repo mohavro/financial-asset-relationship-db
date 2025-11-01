@@ -8,11 +8,13 @@ import AssetList from './components/AssetList';
 import type { Metrics, VisualizationData } from './types/api';
 
 /**
- * Render the application's Home page with a header, three-tab navigation, and tab-specific content panels.
+ * Renders the dashboard home page with a tabbed UI that loads metrics and visualization data,
+ * shows loading and error states, and conditionally displays the 3D visualization, metrics dashboard, or asset explorer.
  *
- * Fetches metrics and visualization data on mount, manages loading and error states, and exposes a retry action when data loading fails.
+ * The component fetches metrics and visualization data on mount, provides a retry action on failure,
+ * and manages which tab is active.
  *
- * @returns The root React element for the Home page UI
+ * @returns The top-level JSX element for the home page.
  */
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'visualization' | 'metrics' | 'assets'>('visualization');
