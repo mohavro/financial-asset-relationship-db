@@ -43,11 +43,11 @@ allowed_origins = [
 if os.getenv("ALLOWED_ORIGINS"):
     additional_origins = os.getenv("ALLOWED_ORIGINS").split(",")
     for origin in additional_origins:
-        origin = origin.strip()
-        if validate_origin(origin):
-            allowed_origins.append(origin)
+        stripped_origin = origin.strip()
+        if validate_origin(stripped_origin):
+            allowed_origins.append(stripped_origin)
         else:
-            logger.warning(f"Skipping invalid CORS origin: {origin}")
+            logger.warning(f"Skipping invalid CORS origin: {stripped_origin}")
 
 app.add_middleware(
     CORSMiddleware,
