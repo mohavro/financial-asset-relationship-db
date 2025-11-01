@@ -31,21 +31,7 @@ app = FastAPI(
 ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
-    """
-    Check whether an origin URL is allowed for CORS.
-    
-    Valid origins include localhost/127.0.0.1 (optional port), Vercel preview deployments, and configured production domains.
-    Note: The example patterns for production domains (e.g., `*.vercel.app`, `*.yourdomain.com`) are placeholders. Update the regex patterns in this function for your actual deployment domains.
-    
-    Parameters:
-        origin (str): The origin URL to validate (including scheme).
-    
-    Returns:
-        True if the origin matches allowed development, Vercel preview, or configured production domain patterns, False otherwise.
-    """
-    # Allow localhost and 127.0.0.1 for development
-    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
-    """Validate that an origin matches expected patterns"""  # Move this to the top of the function
+    """Validate that an origin matches expected patterns"""
     # Allow HTTP localhost only in development
     if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
@@ -99,14 +85,7 @@ graph: Optional[AssetRelationshipGraph] = None
 graph_lock = threading.Lock()
 
 def get_graph() -> AssetRelationshipGraph:
-    """
-    Provide the singleton AssetRelationshipGraph instance, initializing it on first use.
-    
-    If the global graph has not been created, this function initializes it by creating the real database and building relationships.
-    
-    Returns:
-        The initialized AssetRelationshipGraph instance.
-    Get or create the global graph instance with thread-safe initialization.
+    """Get or create the global graph instance with thread-safe initialization.
     Uses double-check locking pattern for efficiency in serverless environments.
     """
     global graph
@@ -183,18 +162,9 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
-    """
-    Return API health status and whether the global graph has been initialized.
-    
-    Returns:
-        dict: A dictionary with the following keys:
-            - status (str): String indicating overall service health ("healthy").
-            - graph_initialized (bool): True if the global graph has been created, False otherwise.
-    """
-    return {"status": "healthy", "graph_initialized": graph is not None}
     """Health check endpoint"""
     try:
-        _ = get_graph()
+        get_graph()
         return {"status": "healthy", "graph_initialized": True}
     except Exception:
         return {"status": "unhealthy", "graph_initialized": False}
