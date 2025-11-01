@@ -1,0 +1,43 @@
+# Docker Compose for Financial Asset Relationship Database
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: financial-asset-db
+    ports:
+      - "7860:7860"
+    environment:
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - GRADIO_SERVER_PORT=7860
+    volumes:
+      # Mount source code for development
+      - ./src:/app/src
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a database service for persistence (commented out by default)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: financial-asset-db-postgres
+  #   environment:
+  #     POSTGRES_DB: financial_assets
+  #     POSTGRES_USER: finuser
+  #     POSTGRES_PASSWORD: changeme
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

@@ -6,9 +6,10 @@ A comprehensive 3D visualization system for interconnected financial assets acro
 
 ### Prerequisites
 - Python 3.8+
+- Node.js 18+ (for Next.js frontend)
 - Virtual environment (recommended)
 
-### Installation
+### Option 1: Gradio UI (Original)
 
 1. **Clone the repository**
    ```bash
@@ -46,6 +47,66 @@ A comprehensive 3D visualization system for interconnected financial assets acro
    ```
 
 The application will launch in your browser automatically at `http://localhost:7860`.
+
+### Option 2: Next.js Frontend + FastAPI Backend (New)
+
+For the modern web frontend with REST API:
+
+**Quick Start (Both Servers):**
+```bash
+# Linux/Mac
+./run-dev.sh
+
+# Windows
+run-dev.bat
+```
+
+This will start both the FastAPI backend (port 8000) and Next.js frontend (port 3000).
+
+**Manual Setup:**
+
+1. **Start the FastAPI backend:**
+   ```bash
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   python -m uvicorn api.main:app --reload --port 8000
+   ```
+
+2. **Start the Next.js frontend (in a new terminal):**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+3. **Access the application:**
+   - Frontend: `http://localhost:3000`
+   - Backend API: `http://localhost:8000`
+   - API Documentation: `http://localhost:8000/docs`
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions and Vercel integration.
+
+### 🐳 Docker Installation (Alternative)
+
+For containerized deployment:
+
+1. **Using Docker Compose (recommended)**
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Using Docker directly**
+   ```bash
+   docker build -t financial-asset-db .
+   docker run -p 7860:7860 financial-asset-db
+   ```
+
+3. **Using Makefile**
+   ```bash
+   make docker-compose-up
+   ```
+
+See [DOCKER.md](DOCKER.md) for detailed Docker deployment guide.
 
 ## 📊 Features
 
@@ -150,16 +211,77 @@ if isinstance(asset1, Derivative) and isinstance(asset2, Equity):
 - `AssetRelationshipGraph.calculate_metrics()` - Generate network statistics
 - `AssetRelationshipGraph.get_3d_visualization_data()` - Export for visualization
 
+## 🧪 Testing
+
+The project includes comprehensive test coverage:
+
+```bash
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+
+# Or use Makefile
+make test
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed testing guidelines.
+
+## 🔧 Development Tools
+
+- **Testing:** pytest with coverage reporting
+- **Linting:** flake8, pylint
+- **Formatting:** black, isort
+- **Type Checking:** mypy
+- **Pre-commit Hooks:** Automatic quality checks
+
+Install development dependencies:
+```bash
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+Or use the Makefile:
+```bash
+make install-dev
+make pre-commit
+```
+
 ## 📝 License
 
 MIT License - see LICENSE file for details.
 
 ## 🤝 Contributing
 
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+Quick start:
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
+3. Make your changes with tests
+4. Run `make check` to verify quality
 5. Submit a pull request
 
 For AI agents: see `.github/copilot-instructions.md` for development guidelines.
+
+## 📚 Additional Documentation
+
+### Getting Started (NEW)
+- [QUICK_START.md](QUICK_START.md) - **Get started in under 5 minutes**
+- [UI_COMPARISON.md](UI_COMPARISON.md) - **Compare Gradio vs Next.js interfaces**
+
+### Deployment & Integration (NEW)
+- [DEPLOYMENT.md](DEPLOYMENT.md) - **Vercel Next.js deployment guide**
+- [VERCEL_DEPLOYMENT_CHECKLIST.md](VERCEL_DEPLOYMENT_CHECKLIST.md) - **Step-by-step deployment checklist**
+- [INTEGRATION_SUMMARY.md](INTEGRATION_SUMMARY.md) - **Technical integration details**
+- [ARCHITECTURE.md](ARCHITECTURE.md) - **System architecture diagrams**
+
+### Original Documentation
+- [AUDIT_REPORT.md](AUDIT_REPORT.md) - Comprehensive code audit and improvements
+- [CHANGELOG.md](CHANGELOG.md) - Version history and changes
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
+- [AI_RULES.md](AI_RULES.md) - Tech stack and coding conventions
+- [DOCKER.md](DOCKER.md) - Docker deployment guide
+- [IMPROVEMENTS.md](IMPROVEMENTS.md) - Code quality recommendations
+- [SECURITY.md](SECURITY.md) - Security best practices
