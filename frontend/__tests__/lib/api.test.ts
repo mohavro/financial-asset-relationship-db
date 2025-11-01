@@ -56,7 +56,7 @@ describe('API Client', () => {
       let apiInstance;
       jest.isolateModules(() => {
         // Use require here for dynamic import, but cast to correct type for type safety
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        import apiInstance = await import('../../app/lib/api').then(mod => mod.api);
         apiInstance = require('../../app/lib/api').api as typeof api;
       });
       
