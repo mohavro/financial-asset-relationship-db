@@ -2,10 +2,13 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
 import logging
+import os
+import re
+import threading
 
-from src.logic.asset_graph import AssetRelationshipGraph
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import RealDataFetcher
 from src.models.financial_models import AssetClass
@@ -212,12 +215,12 @@ async def get_assets(
 @app.get("/api/assets/{asset_id}", response_model=AssetResponse)
 async def get_asset_detail(asset_id: str):
     """Get detailed information about a specific asset"""
-    g = get_graph()
-    
-    if asset_id not in g.assets:
-        raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
-    
     try:
+        g = get_graph()
+        
+        if asset_id not in g.assets:
+            raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
+        
         asset = g.assets[asset_id]
         
         asset_dict = {
@@ -253,12 +256,12 @@ async def get_asset_detail(asset_id: str):
 @app.get("/api/assets/{asset_id}/relationships", response_model=List[RelationshipResponse])
 async def get_asset_relationships(asset_id: str):
     """Get all relationships for a specific asset"""
-    g = get_graph()
-    
-    if asset_id not in g.assets:
-        raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
-    
     try:
+        g = get_graph()
+        
+        if asset_id not in g.assets:
+            raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
+        
         relationships = []
         
         # Outgoing relationships

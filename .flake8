@@ -16,10 +16,10 @@ exclude =
 
 # Error codes to ignore
 ignore =
-    E203,  # whitespace before ':' (conflicts with black)
-    E501,  # line too long (handled by black)
-    W503,  # line break before binary operator (conflicts with black)
-    E231,  # missing whitespace after ',' (handled by black)
+    E203,
+    E501,
+    W503,
+    E231
 
 per-file-ignores =
     __init__.py:F401,F403
