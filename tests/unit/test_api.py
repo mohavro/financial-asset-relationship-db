@@ -52,7 +52,7 @@ def mock_graph():
         id="TEST_CORP",
         symbol="CORP",
         name="Corporate Bond",
-        asset_class=AssetClass.BOND,
+        asset_class=AssetClass.FIXED_INCOME,
         sector="Corporate",
         price=1000.00,
         yield_to_maturity=0.04,
@@ -553,3 +553,191 @@ class TestResponseValidation:
             assert isinstance(rel["relationship_type"], str)
             assert isinstance(rel["strength"], float)
             assert 0 <= rel["strength"] <= 1
+
+
+class TestRealDataFetcherFallback:
+    """Test RealDataFetcher fallback behavior when external APIs fail."""
+    
+    @patch('src.data.real_data_fetcher.yf.Ticker')
+    def test_real_data_fetcher_complete_failure_fallback(self, mock_ticker):
+        """Test that RealDataFetcher falls back to sample data when fetching fails completely."""
+        from src.data.real_data_fetcher import RealDataFetcher
+        
+        # Simulate API failure that causes exception in create_real_database
+        def raise_error(*args, **kwargs):
+            raise Exception("API connection failed")
+        
+        mock_ticker.side_effect = raise_error
+        
+        fetcher = RealDataFetcher()
+        
+        # Mock the individual fetch methods to raise exceptions
+        with patch.object(fetcher, '_fetch_equity_data', side_effect=Exception("Equity fetch failed")):
+            graph = fetcher.create_real_database()
+            
+            # Should fall back to sample data and return a valid graph
+            assert graph is not None
+            assert isinstance(graph, AssetRelationshipGraph)
+            assert len(graph.assets) > 0  # Should have sample data
+    
+    @patch('src.data.real_data_fetcher.yf.Ticker')
+    def test_real_data_fetcher_partial_fetch_success(self, mock_ticker):
+        """Test RealDataFetcher when all individual fetches fail gracefully (empty lists)."""
+        from src.data.real_data_fetcher import RealDataFetcher
+        
+        # Simulate API failure - each individual fetch will catch exceptions and return empty list
+        mock_ticker.side_effect = Exception("API failed")
+        
+        fetcher = RealDataFetcher()
+        graph = fetcher.create_real_database()
+        
+        # Should return an empty graph (individual fetch failures don't trigger fallback)
+        assert graph is not None
+        assert isinstance(graph, AssetRelationshipGraph)
+        # Individual fetch failures result in empty lists, not fallback
+        assert len(graph.assets) == 0
+    
+    @patch('api.main.RealDataFetcher')
+    def test_get_graph_with_real_data_fetcher_failure(self, mock_fetcher_class, client):
+        """Test get_graph endpoint behavior when RealDataFetcher fails during initialization."""
+        from api.main import get_graph
+        import api.main
+        
+        # Reset the global graph to None to test initialization
+        api.main.graph = None
+        
+        # Mock RealDataFetcher to raise exception during create_real_database
+        mock_instance = mock_fetcher_class.return_value
+        mock_instance.create_real_database.side_effect = Exception("Network error")
+        
+        # get_graph should raise the exception (doesn't fall back at this level)
+        with pytest.raises(Exception) as exc_info:
+            get_graph()
+        
+        assert "Network error" in str(exc_info.value)
+        
+        # Clean up
+        api.main.graph = None
+    
+    @patch('src.data.sample_data.create_sample_database')
+    @patch('src.data.real_data_fetcher.RealDataFetcher._fetch_equity_data')
+    def test_fetcher_falls_back_on_unhandled_exception(self, mock_fetch_equity, mock_sample_db):
+        """Test that unhandled exceptions in create_real_database trigger fallback."""
+        from src.data.real_data_fetcher import RealDataFetcher
+        
+        # Create a mock sample database
+        sample_graph = AssetRelationshipGraph()
+        mock_sample_db.return_value = sample_graph
+        
+        # Simulate unhandled exception in fetching
+        mock_fetch_equity.side_effect = RuntimeError("Unexpected error")
+        
+        fetcher = RealDataFetcher()
+        graph = fetcher.create_real_database()
+        
+        # Should have called the fallback
+        mock_sample_db.assert_called_once()
+        assert graph == sample_graph
+    
+    @patch('api.main.get_graph')
+    def test_health_check_with_fetcher_fallback(self, mock_get_graph, client, mock_graph):
+        """Test health check when get_graph returns a valid graph."""
+        # Mock get_graph to return a valid graph (could be from fallback)
+        mock_get_graph.return_value = mock_graph
+        
+        response = client.get("/api/health")
+        assert response.status_code == 200
+        assert response.json()["status"] == "healthy"
+    
+    @patch('api.main.get_graph')
+    def test_assets_endpoint_with_valid_graph(self, mock_get_graph, client, mock_graph):
+        """Test assets endpoint works regardless of whether data is real or fallback."""
+        # Mock get_graph to return a valid graph
+        mock_get_graph.return_value = mock_graph
+        
+        response = client.get("/api/assets")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have assets from the mock graph
+        assert len(data) > 0
+        assert all("id" in asset for asset in data)
+        assert all("symbol" in asset for asset in data)
+    
+    @patch('src.data.real_data_fetcher.yf.Ticker')
+    def test_real_data_fetcher_empty_history_graceful_handling(self, mock_ticker):
+        """Test RealDataFetcher handles empty ticker history gracefully."""
+        from src.data.real_data_fetcher import RealDataFetcher
+        import pandas as pd
+        
+        # Mock ticker to return empty history
+        mock_ticker_instance = mock_ticker.return_value
+        mock_ticker_instance.history.return_value = pd.DataFrame()  # Empty dataframe
+        mock_ticker_instance.info = {}
+        
+        fetcher = RealDataFetcher()
+        graph = fetcher.create_real_database()
+        
+        # Should create empty graph (individual failures don't trigger fallback)
+        assert graph is not None
+        assert isinstance(graph, AssetRelationshipGraph)
+    
+    @patch('api.main.get_graph')
+    def test_metrics_with_any_graph_source(self, mock_get_graph, client, mock_graph):
+        """Test metrics endpoint works with any valid graph (real or fallback)."""
+        # Mock to return sample database (simulating fallback scenario)
+        mock_get_graph.return_value = mock_graph
+        
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Verify metrics are calculated correctly
+        assert "total_assets" in data
+        assert "total_relationships" in data
+        assert data["total_assets"] > 0
+    
+    @patch('src.data.real_data_fetcher.logger')
+    @patch('src.data.real_data_fetcher.RealDataFetcher._fetch_equity_data')
+    def test_real_data_fetcher_logs_fallback_on_exception(self, mock_fetch_equity, mock_logger):
+        """Test that RealDataFetcher logs when falling back to sample data."""
+        from src.data.real_data_fetcher import RealDataFetcher
+        
+        # Simulate exception that triggers fallback
+        mock_fetch_equity.side_effect = RuntimeError("Unexpected failure")
+        
+        fetcher = RealDataFetcher()
+        graph = fetcher.create_real_database()
+        
+        # Verify error and warning were logged
+        assert mock_logger.error.called
+        assert mock_logger.warning.called
+        # Check that "Falling back" message was logged
+        warning_calls = [str(call) for call in mock_logger.warning.call_args_list]
+        assert any("Falling back" in call for call in warning_calls)
+    
+    @patch('api.main.get_graph')
+    def test_get_graph_initialization_error_propagates(self, mock_get_graph, client):
+        """Test that graph initialization errors propagate correctly to endpoints."""
+        # Simulate get_graph raising an exception
+        mock_get_graph.side_effect = Exception("Initialization failed")
+        
+        # Test that endpoints handle the error
+        response = client.get("/api/assets")
+        assert response.status_code == 500
+        assert "detail" in response.json()
+    
+    @patch('src.data.real_data_fetcher.logger')
+    @patch('src.data.real_data_fetcher.yf.Ticker')
+    def test_individual_asset_class_fetch_failures_logged(self, mock_ticker, mock_logger):
+        """Test that individual asset class fetch failures are logged properly."""
+        from src.data.real_data_fetcher import RealDataFetcher
+        
+        # Simulate ticker failures
+        mock_ticker.side_effect = Exception("Ticker API failed")
+        
+        fetcher = RealDataFetcher()
+        graph = fetcher.create_real_database()
+        
+        # Should log errors for each failed fetch
+        assert mock_logger.error.call_count > 0  # Multiple fetch attempts failed
