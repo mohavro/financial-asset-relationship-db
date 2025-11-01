@@ -157,7 +157,7 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     try:
-        g = get_graph()
+        _ = get_graph()
         return {"status": "healthy", "graph_initialized": True}
     except Exception:
         return {"status": "unhealthy", "graph_initialized": False}
