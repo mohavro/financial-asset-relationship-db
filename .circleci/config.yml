@@ -103,9 +103,9 @@ jobs:
             if [ -f requirements-dev.txt ]; then
               pip install -r requirements-dev.txt
             fi
-      - run:
-          name: Security check with safety
-          command: safety check --json || true
+- run:
+    name: Security check with safety
+    command: safety check --json
       - run:
           name: Security check with bandit
           command: bandit -r src/ -ll -f json -o bandit-report.json || true
