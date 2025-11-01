@@ -32,7 +32,7 @@ var addSorting = (function() {
         // it will be treated as a plain text search
         let searchRegex;
         try {
-            searchRegex = new RegExp(escapeRegExp(searchValue.replace(/[^a-zA-Z0-9\s]/g, '')), 'i');
+            isMatch = row.textContent.toLowerCase().includes(searchValue.toLowerCase());
         } catch (error) {
             searchRegex = null;
         }
