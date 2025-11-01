@@ -12,10 +12,7 @@ from fastapi.testclient import TestClient
 from api.main import (
     app,
     validate_origin,
-    get_graph,
-    ENV,
-    graph,
-    graph_lock
+    get_graph
 )
 from src.logic.asset_graph import AssetRelationshipGraph
 
