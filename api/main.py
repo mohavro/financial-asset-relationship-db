@@ -253,7 +253,6 @@ async def get_assets(
     except Exception as e:
         logger.exception("Error getting assets")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    return assets
 
 
 @app.get("/api/assets/{asset_id}", response_model=AssetResponse)
