@@ -59,7 +59,7 @@ frontend/
 │   │   ├── MetricsDashboard.tsx
 │   │   └── NetworkVisualization.tsx
 │   ├── lib/            # Utility libraries
-│   │   └── api.ts      # API client
+│   │                   # (no api.ts present)
 │   ├── types/          # TypeScript type definitions
 │   │   └── api.ts
 │   ├── globals.css     # Global styles
