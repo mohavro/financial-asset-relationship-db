@@ -7,6 +7,21 @@ interface MetricsDashboardProps {
   metrics: Metrics;
 }
 
+/**
+ * Renders a responsive dashboard of six metric panels based on the provided metrics.
+ *
+ * Displays Total Assets, Total Relationships, Network Density (as a percentage),
+ * Average Degree, Max Degree, and a list of Asset Classes with counts in a 1–3 column grid.
+ *
+ * @param props.metrics - Object containing metric values:
+ *   - `total_assets`: total number of assets
+ *   - `total_relationships`: total number of relationships
+ *   - `network_density`: density value in the range 0–1 (rendered as percentage)
+ *   - `avg_degree`: average node degree
+ *   - `max_degree`: maximum node degree
+ *   - `asset_classes`: record mapping asset class names to counts
+ * @returns The JSX element that renders the metrics dashboard UI
+ */
 export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
