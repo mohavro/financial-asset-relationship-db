@@ -319,7 +319,7 @@ async def get_visualization_data():
                 "color": asset_colors[i],
                 "size": 5
             })
-async def get_visualization_data():
+    except Exception as e: print(f"An error occurred: {e}")
     """Get 3D visualization data"""
     try:
         g = get_graph()
