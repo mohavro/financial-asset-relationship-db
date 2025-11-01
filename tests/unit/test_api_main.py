@@ -72,10 +72,14 @@ def mock_graph():
         "TEST_BOND": []
     }
     
-    # Mock metrics
+# Mock metrics
     graph.calculate_metrics.return_value = {
         "total_assets": 2,
         "total_relationships": 1,
+        "asset_classes": {
+            "EQUITY": 1,
+            "FIXED_INCOME": 1
+        },
         "avg_degree": 0.5,
         "max_degree": 1,
         "network_density": 0.5
