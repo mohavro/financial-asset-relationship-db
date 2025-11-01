@@ -27,8 +27,8 @@ import re
 
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
-    # Allow localhost for development
-    if re.match(r'^https?://localhost(:\d+)?$', origin):
+    # Allow localhost and 127.0.0.1 for development
+    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
     # Allow Vercel preview deployment URLs (e.g., https://project-git-branch-user.vercel.app)
     if re.match(r'^https://[a-zA-Z0-9\-_\.]+\.vercel\.app$', origin):
