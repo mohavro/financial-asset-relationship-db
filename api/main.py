@@ -192,7 +192,7 @@ async def get_assets(
         sector (Optional[str]): If provided, include only assets whose sector equals this string.
     
     Returns:
-        List[AssetResponse]: A list of AssetResponse objects representing matching assets. Each item includes core fields and an `additional_fields` map of asset-specific attributes when present.
+        List[AssetResponse]: A list of matching assets with optional filters applied.
     
     Raises:
         HTTPException: Raised with status code 500 if an unexpected error occurs while retrieving assets.
