@@ -159,7 +159,7 @@ async def health_check():
     Returns:
         dict: {
             "status": "healthy",  # string indicating overall service health
-            "graph_initialized": bool  # `True` if the global graph has been created, `False` otherwise
+            "graph_initialized": bool  # True if the global graph has been created, False otherwise
         }
     """
     return {"status": "healthy", "graph_initialized": graph is not None}
