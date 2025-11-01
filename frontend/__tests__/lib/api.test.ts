@@ -51,12 +51,17 @@ describe('API Client', () => {
       const originalEnv = process.env.NEXT_PUBLIC_API_URL;
       process.env.NEXT_PUBLIC_API_URL = 'https://test-api.example.com';
       
-      // Re-import to get new configuration
+      // Re-import to get new configuration using jest.isolateModules and ES6 import
       jest.resetModules();
-      const { api } = require('../../app/lib/api');
+      let apiInstance;
+      jest.isolateModules(() => {
+        // Use require here for dynamic import, but cast to correct type for type safety
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        apiInstance = require('../../app/lib/api').api as typeof api;
+      });
       
       // Verify the API instance uses the environment variable
-      expect(api.defaults.baseURL).toBe('https://test-api.example.com');
+      expect(apiInstance.defaults.baseURL).toBe('https://test-api.example.com');
       
       // Restore and reset modules
       process.env.NEXT_PUBLIC_API_URL = originalEnv;
