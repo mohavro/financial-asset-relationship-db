@@ -35,6 +35,15 @@ def validate_origin(origin: str) -> bool:
     """
     Check whether the provided origin URL is allowed by the application's CORS rules.
     
+    Security Note: HTTP is only allowed in development for local testing.
+    In production, ensure all origins use HTTPS to prevent MITM attacks.
+    """
+    # Allow HTTP localhost only in development (INSECURE - for local testing only)
+    if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+        return True
+    """
+    Check whether the provided origin URL is allowed by the application's CORS rules.
+    
     Accepted origins include:
     - HTTPS origins for any localhost or 127.0.0.1 (with optional port).
     - HTTP localhost origins when ENV is "development" (with optional port).
