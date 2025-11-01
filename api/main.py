@@ -82,20 +82,8 @@ app.add_middleware(
 
 # Global graph instance with thread-safe initialization
 graph: Optional[AssetRelationshipGraph] = None
-graph_lock = threading.Lock()
-
-
-def get_graph() -> AssetRelationshipGraph:
-    """Get or initialize the graph instance in a thread-safe manner"""
-    global graph
-    if graph is None:
-        with graph_lock:
-            # Double-check locking pattern to prevent race conditions
-            if graph is None:
-                logger.info("Initializing asset relationship graph")
-                graph = create_real_database()
-                graph.build_relationships()
-    return graph
+# Remove global graph instance and lazy initializer.
+# Each request should instantiate its own AssetRelationshipGraph.
 
 
 # Pydantic models for API responses
