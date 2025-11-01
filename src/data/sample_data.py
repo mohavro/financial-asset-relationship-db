@@ -176,7 +176,7 @@ def create_sample_database() -> AssetRelationshipGraph:
         )
 
         commodity_volatility = RegulatoryEvent(
-            id="ENERGY_VOLATILITY", asset_id="CL_CRUDE", event_type=RegulatoryActivity.SEC_FILING,
+            id="ENERGY_VOLATILITY", asset_id="CL_CRUDE", event_type=RegulatoryActivity.MARKET_EVENT,
             date="2024-01-15", description="Geopolitical Energy Market Disruption", impact_score=-0.20,
             related_assets=["NG_NGAS", "XOM", "CVX"]
         )
