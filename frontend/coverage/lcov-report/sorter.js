@@ -32,7 +32,7 @@ var addSorting = (function() {
         // it will be treated as a plain text search
         let searchRegex;
         try {
-            searchRegex = new RegExp(searchValue, 'i'); // 'i' for case-insensitive
+            searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
         } catch (error) {
             searchRegex = null;
         }
