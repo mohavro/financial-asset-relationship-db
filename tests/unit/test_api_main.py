@@ -26,7 +26,7 @@ def client():
 @pytest.fixture
 def reset_graph():
     """Reset the global graph instance before and after tests."""
-    global graph
+    graph = None
     original_graph = graph
     graph = None
     yield
