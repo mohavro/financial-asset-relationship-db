@@ -225,12 +225,12 @@ npm run lint
    - Components: `frontend/app/components/`
 
 2. **Read the documentation**
-   - [DEPLOYMENT.md](DEPLOYMENT.md) - Full deployment guide
-   - [INTEGRATION_SUMMARY.md](INTEGRATION_SUMMARY.md) - Technical details
-   - [frontend/README.md](frontend/README.md) - Frontend specifics
+   - [DEPLOYMENT.md](./DEPLOYMENT.md) - Full deployment guide
+   - [INTEGRATION_SUMMARY.md](./INTEGRATION_SUMMARY.md) - Technical details
+   - [frontend/README.md](./frontend/README.md) - Frontend specifics
 
 3. **Deploy to Vercel**
-   - See [DEPLOYMENT.md](DEPLOYMENT.md) for instructions
+   - See [DEPLOYMENT.md](./DEPLOYMENT.md) for instructions
 
 4. **Customize**
    - Modify components in `frontend/app/components/`
@@ -242,7 +242,7 @@ npm run lint
 1. Check the error messages in your terminal
 2. Review the browser console for frontend errors
 3. Visit the API docs at http://localhost:8000/docs
-4. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed troubleshooting
+4. See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed troubleshooting
 
 ## Compare with Gradio UI
 

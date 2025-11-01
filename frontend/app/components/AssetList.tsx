@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../lib/api';
 import type { Asset } from '../types/api';
 
@@ -10,14 +10,6 @@ export default function AssetList() {
   const [filter, setFilter] = useState({ asset_class: '', sector: '' });
   const [assetClasses, setAssetClasses] = useState<string[]>([]);
   const [sectors, setSectors] = useState<string[]>([]);
-
-  useEffect(() => {
-    loadMetadata();
-  }, []);
-
-  useEffect(() => {
-    loadAssets();
-  }, [filter, loadAssets]);
 
   const loadMetadata = async () => {
     try {
@@ -46,7 +38,15 @@ export default function AssetList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    loadMetadata();
+  }, []);
+
+  useEffect(() => {
+    loadAssets();
+  }, [loadAssets]);
 
   return (
     <div className="space-y-6">
