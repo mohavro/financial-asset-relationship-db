@@ -119,7 +119,13 @@ def get_graph() -> AssetRelationshipGraph:
 
 
 def raise_asset_not_found(asset_id: str, resource_type: str = "Asset") -> None:
-    """Raise HTTPException for resource not found"""
+    """
+    Raise HTTPException for missing resources.
+
+    Args:
+        asset_id (str): ID of the asset that was not found.
+        resource_type (str): Type of resource (default: "Asset").
+    """
     raise HTTPException(status_code=404, detail=f"{resource_type} {asset_id} not found")
 
 
