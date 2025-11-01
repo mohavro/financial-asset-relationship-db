@@ -32,7 +32,7 @@ export default function AssetList() {
     }
   };
 
-  const loadAssets = async () => {
+  const loadAssets = useCallback(async () => {
     setLoading(true);
     try {
       const params: { asset_class?: string; sector?: string } = {};
