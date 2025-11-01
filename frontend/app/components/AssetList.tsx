@@ -17,7 +17,7 @@ export default function AssetList() {
 
   useEffect(() => {
     loadAssets();
-  }, [filter]);
+  }, [filter, loadAssets]);
 
   const loadMetadata = async () => {
     try {
