@@ -19,7 +19,7 @@ from api.main import (
     MetricsResponse,
     VisualizationDataResponse
 )
-from src.models.financial_models import AssetClass, Equity, Bond
+from src.models.financial_models import AssetClass, Bond
 
 
 class TestValidateOrigin:
