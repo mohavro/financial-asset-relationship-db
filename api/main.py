@@ -5,10 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
+import threading
+import os
+import re
 
 from src.logic.asset_graph import AssetRelationshipGraph
-from src.data.real_data_fetcher import create_real_database
+# from src.data.real_data_fetcher import create_real_database
 from src.models.financial_models import AssetClass
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,8 +26,9 @@ app = FastAPI(
 
 # Configure CORS for Next.js frontend
 # Note: Update allowed origins for production deployment
-import os
-import re
+
+# Determine environment (default to 'development' if not set)
+ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
     """
@@ -40,21 +45,37 @@ def validate_origin(origin: str) -> bool:
     """
     # Allow localhost and 127.0.0.1 for development
     if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+    """Validate that an origin matches expected patterns"""
+    # Allow HTTP localhost only in development
+    if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+        return True
+    # Allow HTTPS localhost in any environment
+    if re.match(r'^https://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
     # Allow Vercel preview deployment URLs (e.g., https://project-git-branch-user.vercel.app)
-    if re.match(r'^https://[a-zA-Z0-9\-_\.]+\.vercel\.app$', origin):
+    if re.match(r'^https://[a-zA-Z0-9\-\.]+\.vercel\.app$', origin):
         return True
-    # Allow specific production domains (update for your deployment)
-    allowed_domains = [
-        r'^https://[\w-]+\.vercel\.app$',
-        r'^https://[\w-]+\.yourdomain\.com$'
-    ]
-    return any(re.match(pattern, origin) for pattern in allowed_domains)
+    # Allow valid HTTPS URLs with proper domains
+    if re.match(r'^https://[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$', origin):
+        return True
+    return False
 
-allowed_origins = [
-    "http://localhost:3000",
-    "http://localhost:7860",
-]
+# Set allowed_origins based on environment
+allowed_origins = []
+if ENV == "development":
+    allowed_origins.extend([
+        "http://localhost:3000",
+        "http://localhost:7860",
+        "https://localhost:3000",
+        "https://localhost:7860",
+    ])
+else:
+    # In production, only allow HTTPS localhost (if needed for testing)
+    allowed_origins.extend([
+        "https://localhost:3000",
+        "https://localhost:7860",
+    ])
+
 # Add production origins from environment variable if set
 if os.getenv("ALLOWED_ORIGINS"):
     additional_origins = os.getenv("ALLOWED_ORIGINS").split(",")
@@ -73,9 +94,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global graph instance
+# Global graph instance with thread-safe initialization
 graph: Optional[AssetRelationshipGraph] = None
-
+graph_lock = threading.Lock()
 
 def get_graph() -> AssetRelationshipGraph:
     """
@@ -85,12 +106,16 @@ def get_graph() -> AssetRelationshipGraph:
     
     Returns:
         The initialized AssetRelationshipGraph instance.
+    Get or create the global graph instance with thread-safe initialization.
+    Uses double-check locking pattern for efficiency in serverless environments.
     """
     global graph
     if graph is None:
-        logger.info("Initializing asset relationship graph")
-        graph = create_real_database()
-        graph.build_relationships()
+        with graph_lock:
+            # Double-check inside lock
+            if graph is None:
+                from src.data.sample_data import create_sample_database
+                graph = create_sample_database()
     return graph
 
 
@@ -163,6 +188,8 @@ async def health_check():
             - graph_initialized (bool): True if the global graph has been created, False otherwise.
     """
     return {"status": "healthy", "graph_initialized": graph is not None}
+    """Health check endpoint"""
+    return {"status": "healthy"}
 
 
 @app.get("/api/assets", response_model=List[AssetResponse])
@@ -397,26 +424,6 @@ async def get_visualization_data():
     Raises:
         HTTPException: If visualization data cannot be retrieved or processed; results in a 500 status with the error detail.
     """
-    try:
-        g = get_graph()
-        positions, asset_ids, asset_colors, asset_text, edges_xyz = g.get_3d_visualization_data()
-        
-        nodes = []
-        for i, asset_id in enumerate(asset_ids):
-            asset = g.assets[asset_id]
-            nodes.append({
-                "id": asset_id,
-                "name": asset.name,
-                "symbol": asset.symbol,
-                "asset_class": asset.asset_class.value,
-                "x": float(positions[i, 0]),
-                "y": float(positions[i, 1]),
-                "z": float(positions[i, 2]),
-                "color": asset_colors[i],
-                "size": 5
-            })
-    except Exception as e: print(f"An error occurred: {e}")
-    """Get 3D visualization data"""
     try:
         g = get_graph()
         viz_data = g.get_3d_visualization_data()
