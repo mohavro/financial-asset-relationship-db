@@ -197,7 +197,7 @@ async def get_assets(
     sector: Optional[str] = None
 ):
     """
-    Return a list of assets, optionally filtered by asset class and sector.
+    List assets, optionally filtered by asset class and sector.
     
     Parameters:
         asset_class (Optional[str]): Filter to include only assets whose `asset_class.value` equals this string.
