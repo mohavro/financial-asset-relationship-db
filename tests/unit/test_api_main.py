@@ -9,7 +9,7 @@ import threading
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 
-from api.main import (
+from api.main import app, validate_origin, get_graph
     app,
     validate_origin,
     get_graph,
