@@ -32,16 +32,12 @@ ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
     """
-    Check whether the provided origin URL is allowed by the application's CORS rules.
+    Determine whether an origin URL is permitted by the application's CORS rules.
     
-    Accepted origins include:
-    - HTTPS origins for any localhost or 127.0.0.1 (with optional port).
-    - HTTP localhost origins when ENV is "development" (with optional port).
-    - Vercel preview deployment URLs (domains ending with `.vercel.app`).
-    - Other well-formed HTTPS domains (standard domain names with a TLD).
+    Accepts HTTPS localhost or 127.0.0.1 (optional port), HTTP localhost when running in the development environment (optional port), Vercel preview domains ending with `.vercel.app`, and other well-formed HTTPS domains with a top-level domain.
     
     Parameters:
-        origin (str): The origin URL to validate (e.g., "https://example.com" or "http://localhost:3000").
+        origin (str): Origin URL to validate (e.g., "https://example.com" or "http://localhost:3000").
     
     Returns:
         bool: `True` if the origin matches an allowed pattern, `False` otherwise.
@@ -175,17 +171,17 @@ async def get_assets(
     sector: Optional[str] = None
 ):
     """
-    Return a list of assets, optionally filtered by asset class and sector.
+    List assets, optionally filtered by asset class and sector.
     
     Parameters:
         asset_class (Optional[str]): If provided, include only assets whose asset_class.value equals this string.
         sector (Optional[str]): If provided, include only assets whose sector equals this string.
     
     Returns:
-        List[AssetResponse]: A list of AssetResponse objects representing matching assets. Each item includes core fields and an `additional_fields` map of asset-specific attributes when present.
+        List[AssetResponse]: Matching assets; each item contains core asset fields and an `additional_fields` dictionary with any present asset-specific attributes.
     
     Raises:
-        HTTPException: Raised with status code 500 if an unexpected error occurs while retrieving assets.
+        HTTPException: With status code 500 if an unexpected error occurs while retrieving assets.
     """
     try:
         g = graph
@@ -286,13 +282,16 @@ async def get_asset_detail(asset_id: str):
 @app.get("/api/assets/{asset_id}/relationships", response_model=List[RelationshipResponse])
 async def get_asset_relationships(asset_id: str):
     """
-    Retrieve relationships originating from the given asset.
+    Return outgoing relationships for the specified asset.
     
     Parameters:
-        asset_id (str): The asset identifier to retrieve relationships for.
+        asset_id (str): Asset identifier whose outgoing relationships will be returned.
     
     Returns:
-        List[RelationshipResponse]: A list of relationship objects representing outgoing relationships from the specified asset.
+        List[RelationshipResponse]: List of relationship objects representing outgoing relationships from the specified asset.
+    
+    Raises:
+        HTTPException: 404 if the asset is not found; 500 for unexpected internal errors.
     """
     try:
         g = graph
@@ -323,10 +322,10 @@ async def get_asset_relationships(asset_id: str):
 @app.get("/api/relationships", response_model=List[RelationshipResponse])
 async def get_all_relationships():
     """
-    Retrieve all relationships present in the graph.
+    Retrieve all relationships from the in-memory graph.
     
     Returns:
-        List[RelationshipResponse]: A list of RelationshipResponse objects where each item contains the relationship's source_id, target_id, relationship_type, and strength.
+        List[RelationshipResponse]: List of RelationshipResponse objects; each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
     
     Raises:
         HTTPException: Raised with status code 500 if an internal error occurs while retrieving relationships.
@@ -353,16 +352,16 @@ async def get_all_relationships():
 @app.get("/api/metrics", response_model=MetricsResponse)
 async def get_metrics():
     """
-    Produce aggregated network metrics for the asset relationship graph.
+    Return aggregated network metrics for the asset relationship graph.
     
     Returns:
-        MetricsResponse: Aggregated metrics with snake_case JSON field names:
-            - total_assets: total number of assets
-            - total_relationships: total number of relationships
-            - asset_classes: mapping from asset class name to asset count
-            - avg_degree: average degree of nodes
-            - max_degree: maximum node degree
-            - network_density: density of the network
+        MetricsResponse: Aggregated metrics with the following fields:
+            - total_assets (int): Total number of assets in the graph.
+            - total_relationships (int): Total number of relationships (edges).
+            - asset_classes (dict): Mapping from asset class name (str) to asset count (int).
+            - avg_degree (float): Average node degree across the graph.
+            - max_degree (int): Maximum node degree.
+            - network_density (float): Density of the network.
     
     Raises:
         HTTPException: With status code 500 if metrics cannot be retrieved.
@@ -393,15 +392,15 @@ async def get_metrics():
 @app.get("/api/visualization", response_model=VisualizationDataResponse)
 async def get_visualization_data():
     """
-    Return 3D visualization nodes and edges representing the asset graph.
+    Retrieve 3D visualization nodes and edges for the asset graph.
     
     Returns:
-        VisualizationDataResponse: An object with:
-            - nodes: list of dicts each containing `id`, `name`, `symbol`, `asset_class`, `x`, `y`, `z`, `color`, and `size`.
-            - edges: list of dicts each containing `source`, `target`, `relationship_type`, and `strength`.
+        VisualizationDataResponse: Contains:
+            - nodes: list of node dictionaries with keys `id`, `name`, `symbol`, `asset_class`, `x`, `y`, `z`, `color`, and `size`.
+            - edges: list of edge dictionaries with keys `source`, `target`, `relationship_type`, and `strength`.
     
     Raises:
-        HTTPException: If visualization data cannot be retrieved or an internal error occurs.
+        HTTPException: With status code 500 if visualization data cannot be retrieved or an internal error occurs.
     """
     try:
         g = graph
@@ -439,10 +438,10 @@ async def get_visualization_data():
 @app.get("/api/asset-classes")
 async def get_asset_classes():
     """
-    Return the available asset class values.
+    List available asset classes.
     
     Returns:
-        dict: Mapping with key "asset_classes" to a list of asset class values as strings.
+        dict: A mapping with key "asset_classes" whose value is a list of asset class names as strings.
     """
     return {
         "asset_classes": [ac.value for ac in AssetClass]
@@ -452,10 +451,10 @@ async def get_asset_classes():
 @app.get("/api/sectors")
 async def get_sectors():
     """
-    Return a sorted list of unique sector names present in the graph.
+    Retrieve sorted unique sector names from the in-memory asset graph.
     
     Returns:
-        dict: A mapping with key "sectors" to a sorted list of sector names (List[str]).
+        dict: A mapping with the key "sectors" to a sorted list of unique sector names (List[str]).
     
     Raises:
         HTTPException: Raised with status_code 500 if an unexpected error occurs while retrieving sectors.
