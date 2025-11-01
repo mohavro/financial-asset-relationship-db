@@ -1,8 +1,15 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
+import React from 'react'
 
 // Mock environment variables
 process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8000'
+
+// Mock react-plotly.js to avoid loading the full Plotly library in tests
+jest.mock('react-plotly.js', () => ({
+  __esModule: true,
+  default: () => React.createElement('div', { 'data-testid': 'mock-plot' }, 'Mocked Plot Component')
+}));
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
