@@ -8,8 +8,6 @@ import logging
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import create_real_database
-from src.models.financial_models import AssetClass
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
