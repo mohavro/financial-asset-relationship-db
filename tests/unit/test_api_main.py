@@ -6,7 +6,6 @@ thread-safe graph initialization, and edge cases.
 
 import pytest
 import threading
-import threading
 import time
 from unittest.mock import patch
 from fastapi.testclient import TestClient
