@@ -157,7 +157,7 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     try:
-        # g = get_graph()
+        g = get_graph()
         return {"status": "healthy"}
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
