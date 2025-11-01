@@ -5,10 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
+import threading
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import create_real_database
 from src.models.financial_models import AssetClass
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,25 +27,41 @@ app = FastAPI(
 import os
 import re
 
+# Determine environment (default to 'development' if not set)
+ENV = os.getenv("ENV", "development").lower()
+
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
-    # Allow localhost and 127.0.0.1 for development
-    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+    # Allow HTTP localhost only in development
+    if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+        return True
+    # Allow HTTPS localhost in any environment
+    if re.match(r'^https://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
     # Allow Vercel preview deployment URLs (e.g., https://project-git-branch-user.vercel.app)
     if re.match(r'^https://[a-zA-Z0-9\-_\.]+\.vercel\.app$', origin):
         return True
-    # Allow specific production domains (update for your deployment)
-    allowed_domains = [
-        r'^https://[\w-]+\.vercel\.app$',
-        r'^https://[\w-]+\.yourdomain\.com$'
-    ]
-    return any(re.match(pattern, origin) for pattern in allowed_domains)
+    # Allow valid HTTPS URLs with proper domains
+    if re.match(r'^https://[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$', origin):
+        return True
+    return False
 
-allowed_origins = [
-    "http://localhost:3000",
-    "http://localhost:7860",
-]
+# Set allowed_origins based on environment
+allowed_origins = []
+if ENV == "development":
+    allowed_origins.extend([
+        "http://localhost:3000",
+        "http://localhost:7860",
+        "https://localhost:3000",
+        "https://localhost:7860",
+    ])
+else:
+    # In production, only allow HTTPS localhost (if needed for testing)
+    allowed_origins.extend([
+        "https://localhost:3000",
+        "https://localhost:7860",
+    ])
+
 # Add production origins from environment variable if set
 if os.getenv("ALLOWED_ORIGINS"):
     additional_origins = os.getenv("ALLOWED_ORIGINS").split(",")
@@ -62,17 +80,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global graph instance
+# Global graph instance with thread-safe initialization
 graph: Optional[AssetRelationshipGraph] = None
+graph_lock = threading.Lock()
 
 
 def get_graph() -> AssetRelationshipGraph:
-    """Get or initialize the graph instance"""
+    """Get or initialize the graph instance in a thread-safe manner"""
     global graph
     if graph is None:
-        logger.info("Initializing asset relationship graph")
-        graph = create_real_database()
-        graph.build_relationships()
+        with graph_lock:
+            # Double-check locking pattern to prevent race conditions
+            if graph is None:
+                logger.info("Initializing asset relationship graph")
+                graph = create_real_database()
+                graph.build_relationships()
     return graph
 
 
