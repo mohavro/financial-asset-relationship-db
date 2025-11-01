@@ -17,7 +17,7 @@ interface NetworkVisualizationProps {
 /**
  * Render an interactive 3D network visualization of assets using Plotly.
  *
- * @param data - Visualization payload containing `nodes` and `edges`. Each node should include `id`, `x`, `y`, `z`, `symbol`, `name`, `asset_class`, `size`, and `color`. Each edge should include `source`, `target`, and `strength`.
+ * @param data - Visualization payload conforming to VisualizationData type, containing nodes and edges for 3D rendering.
  * @returns The component's JSX element: a responsive Plotly 3D scene showing edges as lines and nodes as labeled markers; renders a loading placeholder until plot data is available.
  */
 export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
