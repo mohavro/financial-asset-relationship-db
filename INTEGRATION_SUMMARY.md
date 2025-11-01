@@ -41,7 +41,6 @@ frontend/
 │   │   ├── MetricsDashboard.tsx    # Metrics display
 │   │   └── NetworkVisualization.tsx # 3D graph visualization
 │   ├── lib/
-│   │   └── api.ts          # API client library
 │   ├── types/
 │   │   └── api.ts          # TypeScript type definitions
 │   ├── globals.css         # Global styles
