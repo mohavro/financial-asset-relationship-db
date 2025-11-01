@@ -43,9 +43,6 @@ def validate_origin(origin: str) -> bool:
     Returns:
         True if the origin matches allowed development, Vercel preview, or configured production domain patterns, False otherwise.
     """
-    # Allow localhost and 127.0.0.1 for development
-    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
-    """Validate that an origin matches expected patterns"""  # Move this to the top of the function
     # Allow HTTP localhost only in development
     if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
@@ -208,7 +205,7 @@ async def get_assets(
         List[AssetResponse]: AssetResponse objects matching the filters. Each object's `additional_fields` contains any non-null, asset-type-specific attributes as defined in the respective asset model classes.
     """
     try:
-        g = graph
+        g = get_graph()
         assets = []
         
         for asset_id, asset in g.assets.items():
@@ -265,7 +262,7 @@ async def get_asset_detail(asset_id: str):
         HTTPException: 500 for unexpected errors while retrieving the asset.
     """
     try:
-        g = graph
+        g = get_graph()
         
         if asset_id not in g.assets:
             raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
@@ -317,7 +314,7 @@ async def get_asset_relationships(asset_id: str):
         HTTPException: 404 if the asset is not found; 500 for other errors.
     """
     try:
-        g = graph
+        g = get_graph()
         
         if asset_id not in g.assets:
             raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
@@ -351,7 +348,7 @@ async def get_all_relationships():
         List[RelationshipResponse]: List of directed relationships; each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
     """
     try:
-        g = graph
+        g = get_graph()
         relationships = []
         
         for source_id, rels in g.relationships.items():
@@ -389,7 +386,7 @@ async def get_metrics():
         HTTPException: with status code 500 if metrics cannot be obtained.
     """
     try:
-        g = graph
+        g = get_graph()
         metrics = g.calculate_metrics()
         
         # Count assets by class
@@ -425,7 +422,7 @@ async def get_visualization_data():
         HTTPException: If visualization data cannot be retrieved or processed; results in a 500 status with the error detail.
     """
     try:
-        g = graph
+        g = get_graph()
         viz_data = g.get_3d_visualization_data()
         
         nodes = []
@@ -482,7 +479,7 @@ async def get_sectors():
         HTTPException: If an error occurs while retrieving sectors (responds with status 500).
     """
     try:
-        g = graph
+        g = get_graph()
         sectors = set()
         for asset in g.assets.values():
             if asset.sector:
