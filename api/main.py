@@ -5,10 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
-# Remove the unused import statement for threading
+import threading
+import os
+import re
 
 from src.logic.asset_graph import AssetRelationshipGraph
-# from src.data.real_data_fetcher import create_real_database
+from src.data.real_data_fetcher import RealDataFetcher
 from src.models.financial_models import AssetClass
 
 # Configure logging
@@ -24,8 +26,6 @@ app = FastAPI(
 
 # Configure CORS for Next.js frontend
 # Note: Update allowed origins for production deployment
-import os
-import re
 
 # Determine environment (default to 'development' if not set)
 ENV = os.getenv("ENV", "development").lower()
@@ -82,16 +82,25 @@ app.add_middleware(
 
 # Global graph instance with thread-safe initialization
 graph: Optional[AssetRelationshipGraph] = None
-# Remove global graph instance and lazy initializer.
+graph_lock = threading.Lock()
+
 def get_graph() -> AssetRelationshipGraph:
-    """Get or initialize the graph instance with real data.
+    """Get or create the global graph instance with thread-safe initialization.
     
-    Creates a new graph instance on each call to ensure data freshness.
-    In production, consider caching this with a TTL or using a singleton pattern.
+    Uses double-check locking pattern for efficiency in serverless environments.
     """
-    from src.data.real_data_fetcher import RealDataFetcher
-    fetcher = RealDataFetcher()
-    return fetcher.create_real_database()
+    global graph
+    if graph is None:
+        with graph_lock:
+            # Double-check inside lock
+            if graph is None:
+                try:
+                    fetcher = RealDataFetcher()
+                    graph = fetcher.create_real_database()
+                except Exception as e:
+                    logger.error(f"Failed to initialize graph: {str(e)}")
+                    raise
+    return graph
 
 
 # Pydantic models for API responses
@@ -147,7 +156,12 @@ async def root():
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "graph_initialized": graph is not None}
+    try:
+        get_graph()
+        return {"status": "healthy"}
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {"status": "unhealthy"}
 
 
 @app.get("/api/assets", response_model=List[AssetResponse])
@@ -160,10 +174,10 @@ async def get_assets(
         g = get_graph()
         assets = []
         
-for asset_id, asset in g.assets.items():
-    # Apply filters
-    if asset_class and asset.asset_class.value != asset_class:
-        continue
+        for asset_id, asset in g.assets.items():
+            # Apply filters
+            if asset_class and asset.asset_class.value != asset_class:
+                continue
             if sector and asset.sector != sector:
                 continue
             
