@@ -61,7 +61,10 @@ describe('API Client', () => {
       });
       
       // Verify the API instance uses the environment variable
-      expect(apiInstance.defaults.baseURL).toBe('https://test-api.example.com');
+      // The api object does not expose the axios instance or its defaults.
+      // Instead, check that mockedAxios.create was called with the correct baseURL.
+      const call = mockedAxios.create.mock.calls[0][0];
+      expect(call.baseURL).toBe('https://test-api.example.com');
       
       // Restore and reset modules
       process.env.NEXT_PUBLIC_API_URL = originalEnv;
