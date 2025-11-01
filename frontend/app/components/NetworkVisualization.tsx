@@ -45,11 +45,15 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
     };
 
     // Create edge traces with type predicate to filter nulls
-    const edgeTraces = data.edges
-      .map(edge => {
-        const sourceNode = data.nodes.find(n => n.id === edge.source);
-        const targetNode = data.nodes.find(n => n.id === edge.target);
-        
+// Create node lookup map for O(1) access
+const nodeMap = new Map(data.nodes.map(node => [node.id, node]));
+
+const edgeTraces = data.edges
+  .map(edge => {
+    const sourceNode = nodeMap.get(edge.source);
+    const targetNode = nodeMap.get(edge.target);
+    
+    if (!sourceNode || !targetNode) return null;
         if (!sourceNode || !targetNode) return null;
 
         return {
