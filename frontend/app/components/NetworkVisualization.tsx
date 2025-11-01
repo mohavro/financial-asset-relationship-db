@@ -20,7 +20,7 @@ interface NetworkVisualizationProps {
  * The component builds Plotly traces for nodes (scatter3d markers with labels) and edges (3D lines)
  * and displays a loading message while traces are being constructed or data is missing.
  *
- * @param {VisualizationData} data - Visualization payload containing `nodes` and `edges`.
+ * @param data - Visualization payload containing `nodes` and `edges`.
  *   - `nodes`: Array of node objects, each with properties:
  *       - `id`: string
  *       - `x`, `y`, `z`: number (3D coordinates)
@@ -65,16 +65,18 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
       }
     };
 
-    // Create edge traces with type predicate to filter nulls
-// Create node lookup map for O(1) access
-const nodeMap = new Map(data.nodes.map(node => [node.id, node]));
+    // Create node lookup map for O(1) access
+    const nodeMap = new Map(data.nodes.map(node => [node.id, node]));
 
-const edgeTraces = data.edges
-  .map(edge => {
-    const sourceNode = nodeMap.get(edge.source);
-    const targetNode = nodeMap.get(edge.target);
-    
-    if (!sourceNode || !targetNode) return null;
+    // Create edge traces with type predicate to filter nulls
+    const edgeTraces = data.edges
+      .map(edge => {
+        const sourceNode = nodeMap.get(edge.source);
+        const targetNode = nodeMap.get(edge.target);
+        
+        // Validate that both nodes exist before accessing their properties
+        if (!sourceNode || !targetNode) return null;
+        // Validate that both nodes exist before accessing their properties
         if (!sourceNode || !targetNode) return null;
 
         return {
