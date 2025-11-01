@@ -9,6 +9,7 @@ This module tests JSON and other configuration files to ensure:
 
 import pytest
 import json
+import re
 from pathlib import Path
 
 
@@ -182,13 +183,16 @@ class TestPackageJson:
             assert dep in dev_deps, f"Missing TypeScript dependency: {dep}"
 
     def test_package_json_version_format(self, package_json):
-        """Test that version follows semantic versioning."""
-        version = package_json["version"]
-        parts = version.split(".")
-        assert len(parts) == 3, "Version should follow semantic versioning (x.y.z)"
+        """Test that version follows semantic versioning.
         
-        for part in parts:
-            assert part.isdigit(), f"Version part should be numeric: {part}"
+        Supports standard semantic versions (e.g., 1.0.0) and pre-release versions
+        (e.g., 1.0.0-beta, 1.0.0-rc.1, 1.0.0-alpha.1).
+        """
+        version = package_json["version"]
+        # Semantic versioning pattern: major.minor.patch with optional pre-release suffix
+        semver_pattern = r'^\d+\.\d+\.\d+(-[\w.]+)?$'
+        assert re.match(semver_pattern, version), \
+            f"Version should follow semantic versioning (x.y.z or x.y.z-prerelease): {version}"
 
 
 class TestTSConfig:
