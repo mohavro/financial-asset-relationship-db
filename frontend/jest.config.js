@@ -9,13 +9,14 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
-  moduleNameMapper: {
-    // Handle module aliases
-    '^@/(.*)$': '<rootDir>/$1',
-    '^@/app/(.*)$': '<rootDir>/app/$1',
+moduleNameMapper: {
+    // Handle module aliases - specific patterns first
     '^@/components/(.*)$': '<rootDir>/app/components/$1',
     '^@/lib/(.*)$': '<rootDir>/app/lib/$1',
     '^@/types/(.*)$': '<rootDir>/app/types/$1',
+    '^@/app/(.*)$': '<rootDir>/app/$1',
+    // Generic pattern last to catch remaining @/ imports
+    '^@/(.*)$': '<rootDir>/$1',
   },
   testMatch: [
     '**/__tests__/**/*.[jt]s?(x)',
