@@ -6,6 +6,13 @@ export const metadata: Metadata = {
   description: 'Interactive 3D visualization of interconnected financial assets',
 }
 
+/**
+ * Root layout component that provides the top-level HTML skeleton and renders application content.
+ *
+ * Sets the document language to `"en"` and places `children` inside the `<body>` element.
+ *
+ * @param children - The React node(s) to render as the page content inside the document body
+ */
 export default function RootLayout({
   children,
 }: {

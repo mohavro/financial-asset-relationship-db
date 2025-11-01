@@ -7,6 +7,15 @@ interface MetricsDashboardProps {
   metrics: Metrics;
 }
 
+/**
+ * Render a responsive dashboard showing key graph metrics in six metric cards.
+ *
+ * Displays total assets, total relationships, network density (percentage with two decimals),
+ * average degree (two decimals), max degree, and a list of asset classes with counts.
+ *
+ * @param metrics - Metrics object containing `total_assets`, `total_relationships`, `network_density`, `avg_degree`, `max_degree`, and `asset_classes`
+ * @returns A JSX element containing the metrics dashboard
+ */
 export default function MetricsDashboard({ metrics }: MetricsDashboardProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

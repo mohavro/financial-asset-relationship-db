@@ -4,6 +4,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../lib/api';
 import type { Asset } from '../types/api';
 
+/**
+ * Renders a filterable list of financial assets and the associated UI controls.
+ *
+ * Loads available asset classes and sectors for the filter controls and refreshes
+ * the displayed asset list when the selected filters change.
+ *
+ * @returns A JSX element containing the filter controls and the assets table.
+ */
 export default function AssetList() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
