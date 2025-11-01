@@ -32,7 +32,21 @@ app = FastAPI(
 ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
-    """Validate that an origin matches expected patterns"""
+    """
+    Check whether an origin URL is allowed for CORS.
+    
+    Valid origins include localhost/127.0.0.1 (optional port), Vercel preview deployments, and configured production domains.
+    Note: The example patterns for production domains (e.g., `*.vercel.app`, `*.yourdomain.com`) are placeholders. Update the regex patterns in this function for your actual deployment domains.
+    
+    Parameters:
+        origin (str): The origin URL to validate (including scheme).
+    
+    Returns:
+        True if the origin matches allowed development, Vercel preview, or configured production domain patterns, False otherwise.
+    """
+    # Allow localhost and 127.0.0.1 for development
+    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+    """Validate that an origin matches expected patterns"""  # Move this to the top of the function
     # Allow HTTP localhost only in development
     if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
