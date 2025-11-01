@@ -46,7 +46,7 @@ def test_api():
     response = client.get("/api/visualization")
     assert response.status_code == 200, f"Visualization endpoint failed: {response.status_code}"
     viz_data = response.json()
-    print(f"   ✅ Visualization endpoint passed")
+    print("   ✅ Visualization endpoint passed")
     print(f"      - Nodes: {len(viz_data['nodes'])}")
     print(f"      - Edges: {len(viz_data['edges'])}")
     
