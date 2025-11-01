@@ -3,12 +3,9 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel
 import logging
-import threading
-import os
-import re
 
+from src.logic.asset_graph import AssetRelationshipGraph
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import RealDataFetcher
 from src.models.financial_models import AssetClass
