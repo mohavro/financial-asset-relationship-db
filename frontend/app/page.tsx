@@ -8,7 +8,7 @@ import AssetList from './components/AssetList';
 import type { Metrics, VisualizationData } from './types/api';
 
 /**
- * Render the dashboard home page with a tabbed UI that loads metrics and visualization data,
+ * Renders the dashboard home page with a tabbed UI that loads metrics and visualization data,
  * shows loading and error states, and conditionally displays the 3D visualization, metrics dashboard, or asset explorer.
  *
  * The component fetches metrics and visualization data on mount, provides a retry action on failure,
