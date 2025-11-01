@@ -35,7 +35,7 @@ def validate_origin(origin: str) -> bool:
         origin (str): The origin URL to validate (including scheme).
     
     Returns:
-        `true` if the origin matches allowed development, Vercel preview, or production domain patterns, `false` otherwise.
+        `True` if the origin matches allowed development, Vercel preview, or production domain patterns, `False` otherwise.
     """
     # Allow localhost and 127.0.0.1 for development
     if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
