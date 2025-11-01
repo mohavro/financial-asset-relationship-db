@@ -236,6 +236,9 @@ async def get_asset_detail(asset_id: str):
     """
     Retrieve detailed information for the asset identified by `asset_id`.
     
+    Parameters:
+        asset_id (str): The asset identifier to retrieve detailed information for.
+    
     Returns:
         AssetResponse: Detailed asset data including core fields and an `additional_fields`
         mapping of asset-specific attributes (e.g., `pe_ratio`, `dividend_yield`, `issuer_id`).
