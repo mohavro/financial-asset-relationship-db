@@ -10,7 +10,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from api.main import app, validate_origin, get_graph
-    app,
+    from api.main import (
     validate_origin,
     get_graph,
     graph_lock
