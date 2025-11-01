@@ -159,7 +159,7 @@ async def root():
     Provide basic API metadata and a listing of available endpoints.
     
     Returns:
-        dict: A mapping containing:
+        Dict[str, Union[str, Dict[str, str]]]: A mapping containing:
             - "message": short API description string.
             - "version": API version string.
             - "endpoints": dict mapping endpoint keys to their URL paths (e.g., "assets": "/api/assets").
