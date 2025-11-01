@@ -737,7 +737,7 @@ class TestRealDataFetcherFallback:
         mock_ticker.side_effect = Exception("Ticker API failed")
         
         fetcher = RealDataFetcher()
-        graph = fetcher.create_real_database()
+        fetcher.create_real_database()
         
         # Should log errors for each failed fetch
         assert mock_logger.error.call_count > 0  # Multiple fetch attempts failed
