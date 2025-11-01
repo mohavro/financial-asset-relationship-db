@@ -8,7 +8,7 @@ import logging
 # Remove the unused import statement for threading
 
 from src.logic.asset_graph import AssetRelationshipGraph
-# from src.data.real_data_fetcher import create_real_database
+from src.data.sample_data import create_sample_database
 from src.models.financial_models import AssetClass
 
 # Configure logging
@@ -94,10 +94,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global graph instance with thread-safe initialization
-graph: Optional[AssetRelationshipGraph] = None
-# Remove global graph instance and lazy initializer.
-# Each request should instantiate its own AssetRelationshipGraph.
+# Global graph instance initialized with sample data
+graph: AssetRelationshipGraph = create_sample_database()
 
 
 # Pydantic models for API responses
@@ -248,7 +246,7 @@ async def get_asset_detail(asset_id: str):
         HTTPException: Status 500 for unexpected server errors.
     """
     try:
-        g = get_graph()
+        g = graph
         
         if asset_id not in g.assets:
             raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
@@ -297,7 +295,7 @@ async def get_asset_relationships(asset_id: str):
         List[RelationshipResponse]: A list of relationship objects representing outgoing relationships from the specified asset.
     """
     try:
-        g = get_graph()
+        g = graph
         
         if asset_id not in g.assets:
             raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
@@ -334,7 +332,7 @@ async def get_all_relationships():
         HTTPException: Raised with status code 500 if an internal error occurs while retrieving relationships.
     """
     try:
-        g = get_graph()
+        g = graph
         relationships = []
         
         for source_id, rels in g.relationships.items():
@@ -370,7 +368,7 @@ async def get_metrics():
         HTTPException: With status code 500 if metrics cannot be retrieved.
     """
     try:
-        g = get_graph()
+        g = graph
         metrics = g.calculate_metrics()
         
         # Count assets by class
@@ -406,7 +404,7 @@ async def get_visualization_data():
         HTTPException: If visualization data cannot be retrieved or an internal error occurs.
     """
     try:
-        g = get_graph()
+        g = graph
         viz_data = g.get_3d_visualization_data()
         
         nodes = []
@@ -463,7 +461,7 @@ async def get_sectors():
         HTTPException: Raised with status_code 500 if an unexpected error occurs while retrieving sectors.
     """
     try:
-        g = get_graph()
+        g = graph
         sectors = set()
         for asset in g.assets.values():
             if asset.sector:
