@@ -10,7 +10,7 @@ import os
 import re
 
 from src.logic.asset_graph import AssetRelationshipGraph
-# from src.data.real_data_fetcher import create_real_database
+from src.data.real_data_fetcher import RealDataFetcher
 from src.models.financial_models import AssetClass
 
 # Configure logging
@@ -94,7 +94,6 @@ def get_graph() -> AssetRelationshipGraph:
         with graph_lock:
             # Double-check inside lock
             if graph is None:
-                from src.data.real_data_fetcher import RealDataFetcher
                 fetcher = RealDataFetcher()
                 graph = fetcher.create_real_database()
     return graph
@@ -156,7 +155,8 @@ async def health_check():
     try:
         g = get_graph()
         return {"status": "healthy", "graph_initialized": True}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
         return {"status": "unhealthy", "graph_initialized": False}
 
 
