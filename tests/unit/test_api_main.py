@@ -17,7 +17,6 @@ from api.main import (
     graph,
     graph_lock
 )
-from src.models.financial_models import Bond
 from src.logic.asset_graph import AssetRelationshipGraph
 
 
