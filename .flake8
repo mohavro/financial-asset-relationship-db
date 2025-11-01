@@ -15,11 +15,15 @@ exclude =
     .pytest_cache
 
 # Error codes to ignore
+# E203: Whitespace before ':' (conflicts with black formatter)
+# E501: Line too long (handled by max-line-length and black)
+# W503: Line break before binary operator (conflicts with black formatter)
+# E231: Missing whitespace after ',' (handled by black)
 ignore =
-    E203,   # Whitespace before ':' (conflicts with black formatter)
-    E501,   # Line too long (handled by max-line-length and black)
-    W503,   # Line break before binary operator (conflicts with black formatter)
-    E231    # Missing whitespace after ',' (handled by black)
+    E203,
+    E501,
+    W503,
+    E231
 
 per-file-ignores =
     __init__.py:F401,F403
