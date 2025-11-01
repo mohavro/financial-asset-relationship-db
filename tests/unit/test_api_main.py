@@ -13,7 +13,6 @@ import os
 from api.main import (
     app, 
     validate_origin, 
-    get_graph,
     AssetResponse,
     RelationshipResponse,
     MetricsResponse,
@@ -72,43 +71,22 @@ class TestValidateOrigin:
         assert not validate_origin('https://.com')
 
 
-class TestGetGraph:
-    """Test the thread-safe graph initialization."""
+class TestGraphInitialization:
+    """Test the eager graph initialization at module load."""
     
-    def test_get_graph_initialization(self):
-        """Test graph is initialized on first call."""
-        # Reset global graph
+    def test_graph_initialization(self):
+        """Test graph is initialized at module load."""
         import api.main
-        api.main.graph = None
-        
-        graph = get_graph()
-        assert graph is not None
-        assert hasattr(graph, 'assets')
-        assert hasattr(graph, 'relationships')
+        assert api.main.graph is not None
+        assert hasattr(api.main.graph, 'assets')
+        assert hasattr(api.main.graph, 'relationships')
     
-    def test_get_graph_singleton(self):
-        """Test graph returns the same instance on subsequent calls."""
-        graph1 = get_graph()
-        graph2 = get_graph()
-        assert graph1 is graph2
-    
-    @patch('api.main.create_sample_database')
-    def test_get_graph_thread_safety(self, mock_create):
-        """Test double-check locking pattern for thread safety."""
+    def test_graph_singleton(self):
+        """Test graph is a singleton instance."""
         import api.main
-        api.main.graph = None
-        
-        mock_graph = Mock()
-        mock_create.return_value = mock_graph
-        
-        graph = get_graph()
-        assert graph is mock_graph
-        assert mock_create.call_count == 1
-        
-        # Second call should not create new graph
-        graph2 = get_graph()
-        assert graph2 is mock_graph
-        assert mock_create.call_count == 1
+        graph = api.main.graph
+        # Multiple accesses should return the same instance
+        assert api.main.graph is graph
 
 
 class TestPydanticModels:

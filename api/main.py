@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
-import threading
 import os
 import re
 
@@ -43,9 +42,6 @@ def validate_origin(origin: str) -> bool:
     Returns:
         True if the origin matches allowed development, Vercel preview, or configured production domain patterns, False otherwise.
     """
-    # Allow localhost and 127.0.0.1 for development
-    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
-    """Validate that an origin matches expected patterns"""  # Move this to the top of the function
     # Allow HTTP localhost only in development
     if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
@@ -94,29 +90,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global graph instance with thread-safe initialization
-graph: Optional[AssetRelationshipGraph] = None
-graph_lock = threading.Lock()
-
-def get_graph() -> AssetRelationshipGraph:
-    """
-    Provide the singleton AssetRelationshipGraph instance, initializing it on first use.
-    
-    If the global graph has not been created, this function initializes it by creating the real database and building relationships.
-    
-    Returns:
-        The initialized AssetRelationshipGraph instance.
-    Get or create the global graph instance with thread-safe initialization.
-    Uses double-check locking pattern for efficiency in serverless environments.
-    """
-    global graph
-    if graph is None:
-        with graph_lock:
-            # Double-check inside lock
-            if graph is None:
-                from src.data.sample_data import create_sample_database
-                graph = create_sample_database()
-    return graph
+# Global graph instance initialized with sample data
+# Note: This instance is initialized at module load time, which ensures
+# the database is ready when the API starts. In production, consider
+# using a startup event handler for more explicit initialization timing.
+graph: AssetRelationshipGraph = create_sample_database()
 
 
 # Pydantic models for API responses
