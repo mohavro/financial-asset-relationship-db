@@ -113,20 +113,18 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - node-deps-v1-{{ checksum "frontend/package.json" }}
+            - node-deps-v1-{{ checksum "package.json" }}
       - run:
           name: Install dependencies
           command: |
-            cd frontend
             npm ci
       - save_cache:
-          key: node-deps-v1-{{ checksum "frontend/package.json" }}
+          key: node-deps-v1-{{ checksum "package.json" }}
           paths:
-            - frontend/node_modules
+            - node_modules
       - run:
           name: Run ESLint
           command: |
-            cd frontend
             npm run lint
 
   frontend-build:
@@ -135,23 +133,21 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - node-deps-v1-{{ checksum "frontend/package.json" }}
+            - node-deps-v1-{{ checksum "package.json" }}
       - run:
           name: Install dependencies
           command: |
-            cd frontend
             npm ci
       - save_cache:
-          key: node-deps-v1-{{ checksum "frontend/package.json" }}
+          key: node-deps-v1-{{ checksum "package.json" }}
           paths:
-            - frontend/node_modules
+            - node_modules
       - run:
           name: Build Next.js application
           command: |
-            cd frontend
             npm run build
       - store_artifacts:
-          path: frontend/.next
+          path: .next
           destination: next-build
 
   # Docker Build Job
