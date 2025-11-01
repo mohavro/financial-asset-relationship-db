@@ -32,7 +32,7 @@ var addSorting = (function() {
         // it will be treated as a plain text search
         let searchRegex;
         try {
-            searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
+            searchRegex = new RegExp(escapeRegExp(searchValue.replace(/[^a-zA-Z0-9\s]/g, '')), 'i');
         } catch (error) {
             searchRegex = null;
         }
