@@ -353,6 +353,8 @@ class TestGitignore:
 
 class TestRequirementsTxt:
     """Test cases for requirements.txt."""
+    
+    require_version_pinning = True  # Set to True if project requires version pinning
 
     @pytest.fixture
     def requirements(self):
@@ -381,10 +383,13 @@ class TestRequirementsTxt:
         assert any("pydantic" in req.lower() for req in requirements)
 
     def test_requirements_has_version_constraints(self, requirements):
-        """Test that packages have version constraints."""
+        """Test that packages have version constraints (if project policy requires)."""
+        # Skip this test if project doesn't require version pinning
+        if not self.require_version_pinning:
+            pytest.skip("Version pinning not required for this project")
+        
         for req in requirements:
-            if not req.startswith("-"):  # Skip pip flags
-                # Should have >=, ==, or other version specifier
+            if not req.startswith("-"):
                 assert any(op in req for op in [">=", "==", "~=", "<="]), \
                     f"Package should have version constraint: {req}"
 

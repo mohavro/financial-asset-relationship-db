@@ -53,8 +53,14 @@ describe('API Client', () => {
       
       // Re-import to get new configuration
       jest.resetModules();
+      const { api } = require('../../app/lib/api');
       
+      // Verify the API instance uses the environment variable
+      expect(api.defaults.baseURL).toBe('https://test-api.example.com');
+      
+      // Restore and reset modules
       process.env.NEXT_PUBLIC_API_URL = originalEnv;
+      jest.resetModules();
     });
 
     it('should fall back to localhost:8000 if no environment variable', () => {
