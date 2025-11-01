@@ -51,10 +51,11 @@ The application now consists of two main components:
    npm install
    ```
 
-3. **Create environment file:**
+3. **(Optional) Create environment file:**
+   If you want to override the default API URL or other settings, create a `.env.local` file.  
+   If `.env.example` exists, you can copy it:
    ```bash
-   cp ../.env.example .env.local
-   ```
+   [ -f ../.env.example ] && cp ../.env.example .env.local
 
 4. **Run the Next.js development server:**
    ```bash
