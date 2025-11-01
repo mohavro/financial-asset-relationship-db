@@ -171,7 +171,7 @@ async def get_assets(
         g = get_graph()
         assets = []
         
-        for _, asset in g.assets.items():
+        for asset_id, asset in g.assets.items():
             # Apply filters
             if asset_class and asset.asset_class.value != asset_class:
                 continue
@@ -207,6 +207,7 @@ async def get_assets(
     except Exception as e:
         logger.exception("Error getting assets")
         raise HTTPException(status_code=500, detail=str(e)) from e
+    return assets
 
 
 @app.get("/api/assets/{asset_id}", response_model=AssetResponse)

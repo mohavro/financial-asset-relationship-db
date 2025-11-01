@@ -23,16 +23,6 @@ def client():
     return TestClient(app)
 
 
-@pytest.fixture
-def reset_graph():
-    """Reset the global graph instance before and after tests."""
-    global graph
-    original_graph = graph
-    graph = None
-    yield
-    graph = original_graph
-
-
 class TestValidateOrigin:
     """Test cases for the validate_origin function."""
 
