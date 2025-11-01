@@ -707,7 +707,7 @@ class TestRealDataFetcherFallback:
         mock_fetch_equity.side_effect = RuntimeError("Unexpected failure")
         
         fetcher = RealDataFetcher()
-        fetcher.create_real_database()
+        graph = fetcher.create_real_database()
         
         # Verify error and warning were logged
         assert mock_logger.error.called
