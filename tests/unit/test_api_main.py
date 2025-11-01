@@ -8,7 +8,7 @@ import pytest
 import os
 import threading
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from api.main import (
