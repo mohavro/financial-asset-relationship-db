@@ -32,8 +32,20 @@ app = FastAPI(
 ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
-    """Validate that an origin matches expected patterns"""
-    # Allow HTTP localhost only in development
+    """
+    Check whether an origin URL is allowed for CORS.
+    
+    Valid origins include localhost/127.0.0.1 (optional port), Vercel preview deployments, and configured production domains.
+    Note: The example patterns for production domains (e.g., `*.vercel.app`, `*.yourdomain.com`) are placeholders. Update the regex patterns in this function for your actual deployment domains.
+    
+    Parameters:
+        origin (str): The origin URL to validate (including scheme).
+    
+    Returns:
+        True if the origin matches allowed development, Vercel preview, or configured production domain patterns, False otherwise.
+    """
+    # SECURITY: HTTP is insecure and should not be allowed in production.
+    # Only permit HTTP localhost in development mode to prevent accidental exposure to insecure origins.
     if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
     # Allow HTTPS localhost in any environment
@@ -239,7 +251,6 @@ async def get_assets(
     except Exception as e:
         logger.exception("Error getting assets")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    return assets
 
 
 @app.get("/api/assets/{asset_id}", response_model=AssetResponse)
