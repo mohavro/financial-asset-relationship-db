@@ -52,10 +52,14 @@ The application now consists of two main components:
    ```
 
 3. **(Optional) Create environment file:**
+   
    If you want to override the default API URL or other settings, create a `.env.local` file.  
    If `.env.example` exists, you can copy it:
    ```bash
-   [ -f ../.env.example ] && cp ../.env.example .env.local
+   [ -f ../.env.example ] && cp ../.env.example .env.local || echo "Skipping .env.local creation"
+   ```
+   
+   If `.env.example` does not exist, you can manually create `.env.local` or skip this step—the frontend will use the default fallback URL from `next.config.js`.
 
 4. **Run the Next.js development server:**
    ```bash
