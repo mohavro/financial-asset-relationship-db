@@ -332,7 +332,7 @@ async def get_visualization_data():
 async def get_asset_classes():
     """Get list of available asset classes"""
     return {
-        "asset_classes": [ac.value for ac in AssetClass]
+        from models import AssetClass
     }
 
 
