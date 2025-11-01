@@ -476,7 +476,7 @@ async def get_sectors():
     Return a sorted list of unique sectors present in the asset graph.
     
     Returns:
-        dict: A mapping with key "sectors" to a sorted list of unique sector names (List[str]).
+        Dict[str, List[str]]: A mapping with key "sectors" to a sorted list of unique sector names.
     
     Raises:
         HTTPException: If an error occurs while retrieving sectors (responds with status 500).
