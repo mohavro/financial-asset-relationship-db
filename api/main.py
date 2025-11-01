@@ -100,9 +100,9 @@ def get_graph() -> AssetRelationshipGraph:
     return graph
 
 
-def raise_asset_not_found(asset_id: str) -> None:
-    """Raise HTTPException for asset not found"""
-    raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
+def raise_asset_not_found(asset_id: str, resource_type: str = "Asset") -> None:
+    """Raise HTTPException for resource not found"""
+    raise HTTPException(status_code=404, detail=f"{resource_type} {asset_id} not found")
 
 
 # Pydantic models for API responses

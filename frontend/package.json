@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
+    "test": "jest --silent",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage --silent",
+    "test:ci": "jest --silent --ci --coverage --testResultsProcessor=\"jest-junit\""
   },
   "dependencies": {
     "react": "^18.2.0",

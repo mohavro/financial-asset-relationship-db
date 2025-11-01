@@ -4,6 +4,7 @@ This module tests all API endpoints, CORS configuration, error handling,
 thread-safe graph initialization, and edge cases.
 """
 
+import os
 import pytest
 import threading
 from unittest.mock import patch
@@ -12,7 +13,9 @@ from fastapi.testclient import TestClient
 from api.main import (
     app,
     validate_origin,
-    get_graph
+    get_graph,
+    graph,
+    graph_lock
 )
 from src.logic.asset_graph import AssetRelationshipGraph
 
@@ -104,19 +107,20 @@ class TestGetGraph:
         # All threads should get the same graph instance
         assert len(set(results)) == 1
 
-    @patch('api.main.create_sample_database')
+    @patch('src.data.sample_data.create_sample_database')
     def test_get_graph_initialization_called_once(self, mock_create, _reset_graph):
         """Test that sample database is created only once."""
         mock_graph = AssetRelationshipGraph()
         mock_create.return_value = mock_graph
         
         # Call multiple times
-        get_graph()
-        get_graph()
-        get_graph()
+        graph1 = get_graph()
+        graph2 = get_graph()
+        graph3 = get_graph()
         
-        # Should only be called once
+        # Should only be called once and return same instance
         assert mock_create.call_count == 1
+        assert graph1 is graph2 is graph3
 
 
 class TestRootEndpoint:
