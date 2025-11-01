@@ -315,7 +315,7 @@ async def get_visualization_data():
             })
         
         edges = []
-        for edge in viz_data["edges"]:
+        for edge in viz_data.get("edges", []):
             edges.append({
                 "source": edge["source"],
                 "target": edge["target"],
