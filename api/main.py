@@ -6,9 +6,11 @@ from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
 import threading
+import os
+import re
 
 from src.logic.asset_graph import AssetRelationshipGraph
-from src.data.real_data_fetcher import create_real_database
+# from src.data.real_data_fetcher import create_real_database
 from src.models.financial_models import AssetClass
 
 # Configure logging
@@ -24,8 +26,6 @@ app = FastAPI(
 
 # Configure CORS for Next.js frontend
 # Note: Update allowed origins for production deployment
-import os
-import re
 
 # Determine environment (default to 'development' if not set)
 ENV = os.getenv("ENV", "development").lower()
@@ -39,7 +39,7 @@ def validate_origin(origin: str) -> bool:
     if re.match(r'^https://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
     # Allow Vercel preview deployment URLs (e.g., https://project-git-branch-user.vercel.app)
-    if re.match(r'^https://[a-zA-Z0-9\-_\.]+\.vercel\.app$', origin):
+    if re.match(r'^https://[a-zA-Z0-9\-\.]+\.vercel\.app$', origin):
         return True
     # Allow valid HTTPS URLs with proper domains
     if re.match(r'^https://[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$', origin):
@@ -84,17 +84,18 @@ app.add_middleware(
 graph: Optional[AssetRelationshipGraph] = None
 graph_lock = threading.Lock()
 
-
 def get_graph() -> AssetRelationshipGraph:
-    """Get or initialize the graph instance in a thread-safe manner"""
+    """
+    Get or create the global graph instance with thread-safe initialization.
+    Uses double-check locking pattern for efficiency in serverless environments.
+    """
     global graph
     if graph is None:
         with graph_lock:
-            # Double-check locking pattern to prevent race conditions
+            # Double-check inside lock
             if graph is None:
-                logger.info("Initializing asset relationship graph")
-                graph = create_real_database()
-                graph.build_relationships()
+                from src.data.sample_data import create_sample_database
+                graph = create_sample_database()
     return graph
 
 
@@ -151,7 +152,7 @@ async def root():
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "graph_initialized": graph is not None}
+    return {"status": "healthy"}
 
 
 @app.get("/api/assets", response_model=List[AssetResponse])
@@ -322,26 +323,6 @@ async def get_metrics():
 
 @app.get("/api/visualization", response_model=VisualizationDataResponse)
 async def get_visualization_data():
-    """Get 3D visualization data"""
-    try:
-        g = get_graph()
-        positions, asset_ids, asset_colors, asset_text, edges_xyz = g.get_3d_visualization_data()
-        
-        nodes = []
-        for i, asset_id in enumerate(asset_ids):
-            asset = g.assets[asset_id]
-            nodes.append({
-                "id": asset_id,
-                "name": asset.name,
-                "symbol": asset.symbol,
-                "asset_class": asset.asset_class.value,
-                "x": float(positions[i, 0]),
-                "y": float(positions[i, 1]),
-                "z": float(positions[i, 2]),
-                "color": asset_colors[i],
-                "size": 5
-            })
-    except Exception as e: print(f"An error occurred: {e}")
     """Get 3D visualization data"""
     try:
         g = get_graph()
