@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-// import { api } from './lib/api'; // Removed: file does not exist
+import { api } from './lib/api';
 import NetworkVisualization from './components/NetworkVisualization';
 import MetricsDashboard from './components/MetricsDashboard';
 import AssetList from './components/AssetList';
