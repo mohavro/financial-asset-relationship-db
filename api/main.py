@@ -171,7 +171,7 @@ async def get_assets(
         g = get_graph()
         assets = []
         
-        for _, asset in g.assets.items():
+        for asset_id, asset in g.assets.items():
             # Apply filters
             if asset_class and asset.asset_class.value != asset_class:
                 continue
