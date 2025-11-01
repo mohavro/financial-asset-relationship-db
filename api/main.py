@@ -301,7 +301,7 @@ async def get_visualization_data():
         viz_data = g.get_3d_visualization_data()
         
         nodes = []
-        for node in (viz_data["nodes"] if isinstance(viz_data["nodes"], list) else []):
+        for node in (viz_data.get("nodes") if isinstance(viz_data.get("nodes"), list) else []):
             nodes.append({
                 "id": node["id"],
                 "name": node["name"],
