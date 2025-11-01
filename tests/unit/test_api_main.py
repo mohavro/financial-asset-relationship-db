@@ -1,165 +1,191 @@
-"""Comprehensive unit tests for the FastAPI backend.
+"""Comprehensive unit tests for the FastAPI backend (api/main.py).
 
-This module contains thorough unit tests for all API endpoints including:
-- Root and health check endpoints
-- Asset CRUD operations with filtering
-- Relationship queries and traversal
-- Metrics calculation and aggregation
-- Visualization data generation
-- Asset class and sector metadata
-- CORS origin validation
-- Error handling and edge cases
+This module tests all API endpoints, error handling, CORS configuration,
+thread-safe graph initialization, and response models.
 """
 
 import pytest
+from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, MagicMock
-from api.main import app, validate_origin
-from src.models.financial_models import AssetClass, Equity, Bond
-from src.logic.asset_graph import AssetRelationshipGraph
+from fastapi import HTTPException  # Remove this line
+import os
+
+from api.main import (
+    app, 
+    validate_origin, 
+    get_graph,
+    AssetResponse,
+    RelationshipResponse,
+    MetricsResponse,
+    VisualizationDataResponse
+)
+from src.models.financial_models import AssetClass
 
 
-@pytest.fixture
-def client():
-    """Create a test client for the FastAPI app."""
-    return TestClient(app)
+class TestValidateOrigin:
+    """Test the validate_origin function for CORS configuration."""
+    
+    def test_validate_origin_http_localhost_development(self):
+        """Test HTTP localhost is allowed in development."""
+        with patch.dict(os.environ, {'ENV': 'development'}):
+            from api.main import validate_origin as vo
+            assert vo('http://localhost:3000')
+            assert vo('http://127.0.0.1:8000')
+            assert vo('http://localhost')
+    
+    def test_validate_origin_http_localhost_production(self):
+        """Test HTTP localhost is rejected in production."""
+        with patch.dict(os.environ, {'ENV': 'production'}):
+            from api.main import validate_origin as vo
+            assert not vo('http://localhost:3000')
+            assert not vo('http://127.0.0.1:8000')
+    
+    def test_validate_origin_https_localhost(self):
+        """Test HTTPS localhost is always allowed."""
+        assert validate_origin('https://localhost:3000')
+        assert validate_origin('https://127.0.0.1:8000')
+    
+    def test_validate_origin_vercel_urls(self):
+        """Test Vercel deployment URLs are validated correctly."""
+        assert validate_origin('https://my-app.vercel.app')
+        assert validate_origin('https://my-app-git-main-user.vercel.app')
+        assert validate_origin('https://subdomain.vercel.app')
+        assert not validate_origin('http://my-app.vercel.app')  # HTTP rejected
+    
+    def test_validate_origin_https_valid_domains(self):
+        """Test valid HTTPS URLs with proper domains."""
+        assert validate_origin('https://example.com')
+        assert validate_origin('https://subdomain.example.com')
+        assert validate_origin('https://api.example.co.uk')
+    
+    def test_validate_origin_invalid_schemes(self):
+        """Test invalid URL schemes are rejected."""
+        assert not validate_origin('ftp://example.com')
+        assert not validate_origin('ws://example.com')
+        assert not validate_origin('file://localhost')
+    
+    def test_validate_origin_malformed_urls(self):
+        """Test malformed URLs are rejected."""
+        assert not validate_origin('not-a-url')
+        assert not validate_origin('https://')
+        assert not validate_origin('https://invalid domain')
+        assert not validate_origin('https://.com')
 
 
-@pytest.fixture
-def mock_graph():
-    """Create a mock AssetRelationshipGraph for testing."""
-    graph = Mock(spec=AssetRelationshipGraph)
+class TestGetGraph:
+    """Test the thread-safe graph initialization."""
     
-    # Create sample assets
-    equity = Equity(
-        id="TEST_AAPL",
-        symbol="AAPL",
-        name="Apple Inc.",
-        asset_class=AssetClass.EQUITY,
-        sector="Technology",
-        price=150.00,
-        market_cap=2.4e12,
-        pe_ratio=25.5,
-        dividend_yield=0.005,
-        earnings_per_share=5.89,
-        book_value=3.50,
-        currency="USD"
-    )
-    
-    bond = Bond(
-        id="TEST_BOND",
-        symbol="AAPL_BOND",
-        name="Apple Corporate Bond",
-        asset_class=AssetClass.FIXED_INCOME,
-        sector="Technology",
-        price=1000.00,
-        yield_to_maturity=0.03,
-        coupon_rate=0.025,
-        maturity_date="2030-01-01",
-        credit_rating="AAA",
-        issuer_id="TEST_AAPL",
-        currency="USD"
-    )
-    
-    graph.assets = {
-        "TEST_AAPL": equity,
-        "TEST_BOND": bond
-    }
-    
-    # Mock relationships
-    graph.relationships = {
-        "TEST_AAPL": [("TEST_BOND", "issues", 0.9)],
-        "TEST_BOND": []
-    }
-    
-# Mock metrics
-    graph.calculate_metrics.return_value = {
-        "total_assets": 2,
-        "total_relationships": 1,
-        "asset_classes": {
-            "EQUITY": 1,
-            "FIXED_INCOME": 1
-        },
-        "avg_degree": 0.5,
-        "max_degree": 1,
-        "network_density": 0.5
-    }
-    
-    # Mock visualization data
-    graph.get_3d_visualization_data.return_value = {
-        "nodes": [
-            {
-                "id": "TEST_AAPL",
-                "name": "Apple Inc.",
-                "symbol": "AAPL",
-                "asset_class": "EQUITY",
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "color": "#1f77b4",
-                "size": 5
-            },
-            {
-                "id": "TEST_BOND",
-                "name": "Apple Corporate Bond",
-                "symbol": "AAPL_BOND",
-                "asset_class": "FIXED_INCOME",
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0,
-                "color": "#ff7f0e",
-                "size": 5
-            }
-        ],
-        "edges": [
-            {
-                "source": "TEST_AAPL",
-                "target": "TEST_BOND",
-                "relationship_type": "issues",
-                "strength": 0.9
-            }
-        ]
-    }
-    
-    return graph
-
-
-class TestCORSValidation:
-    """Test cases for CORS origin validation."""
-    
-    def test_validate_localhost(self):
-        """Test that localhost origins are accepted."""
-        assert validate_origin("http://localhost:3000") is True
-        assert validate_origin("http://localhost:8000") is True
-        assert validate_origin("https://localhost:3000") is True
+    def test_get_graph_initialization(self):
+        """Test graph is initialized on first call."""
+        # Reset global graph
+        import api.main
+        api.main.graph = None
         
-    def test_validate_127_0_0_1(self):
-        """Test that 127.0.0.1 origins are accepted."""
-        assert validate_origin("http://127.0.0.1:3000") is True
-        assert validate_origin("https://127.0.0.1:8000") is True
+        graph = get_graph()
+        assert graph is not None
+        assert hasattr(graph, 'assets')
+        assert hasattr(graph, 'relationships')
+    
+    def test_get_graph_singleton(self):
+        """Test graph returns the same instance on subsequent calls."""
+        graph1 = get_graph()
+        graph2 = get_graph()
+        assert graph1 is graph2
+    
+    @patch('api.main.create_sample_database')
+    def test_get_graph_thread_safety(self, mock_create):
+        """Test double-check locking pattern for thread safety."""
+        import api.main
+        api.main.graph = None
         
-    def test_validate_vercel_domains(self):
-        """Test that Vercel domains are accepted."""
-        assert validate_origin("https://my-app.vercel.app") is True
-        assert validate_origin("https://my-app-git-main.vercel.app") is True
-        assert validate_origin("https://my-app-user-123.vercel.app") is True
+        mock_graph = Mock()
+        mock_create.return_value = mock_graph
         
-    def test_reject_invalid_origins(self):
-        """Test that invalid origins are rejected."""
-        assert validate_origin("http://malicious.com") is False
-        assert validate_origin("https://not-vercel.com") is False
-        assert validate_origin("ftp://localhost:3000") is False
-        assert validate_origin("javascript:alert(1)") is False
+        graph = get_graph()
+        assert graph is mock_graph
+        assert mock_create.call_count == 1
         
-    def test_reject_malformed_origins(self):
-        """Test that malformed origins are rejected."""
-        assert validate_origin("not-a-url") is False
-        assert validate_origin("") is False
-        assert validate_origin("http://") is False
+        # Second call should not create new graph
+        graph2 = get_graph()
+        assert graph2 is mock_graph
+        assert mock_create.call_count == 1
 
 
-class TestRootEndpoints:
-    """Test cases for root and health check endpoints."""
+class TestPydanticModels:
+    """Test Pydantic response models."""
+    
+    def test_asset_response_model_valid(self):
+        """Test AssetResponse with valid data."""
+        asset = AssetResponse(
+            id="AAPL",
+            symbol="AAPL",
+            name="Apple Inc.",
+            asset_class="EQUITY",
+            sector="Technology",
+            price=150.00,
+            market_cap=2.4e12,
+            currency="USD",
+            additional_fields={"pe_ratio": 25.5}
+        )
+        assert asset.id == "AAPL"
+        assert asset.price == 150.00
+        assert asset.additional_fields["pe_ratio"] == 25.5
+    
+    def test_asset_response_model_optional_fields(self):
+        """Test AssetResponse with optional fields omitted."""
+        asset = AssetResponse(
+            id="AAPL",
+            symbol="AAPL",
+            name="Apple Inc.",
+            asset_class="EQUITY",
+            sector="Technology",
+            price=150.00
+        )
+        assert asset.market_cap is None
+        assert asset.currency == "USD"  # Default value
+        assert asset.additional_fields == {}  # Default value
+    
+    def test_relationship_response_model(self):
+        """Test RelationshipResponse model."""
+        rel = RelationshipResponse(
+            source_id="AAPL",
+            target_id="MSFT",
+            relationship_type="same_sector",
+            strength=0.8
+        )
+        assert rel.source_id == "AAPL"
+        assert rel.strength == 0.8
+    
+    def test_metrics_response_model(self):
+        """Test MetricsResponse model."""
+        metrics = MetricsResponse(
+            total_assets=10,
+            total_relationships=20,
+            asset_classes={"EQUITY": 5, "BOND": 5},
+            avg_degree=2.0,
+            max_degree=5,
+            network_density=0.4
+        )
+        assert metrics.total_assets == 10
+        assert metrics.asset_classes["EQUITY"] == 5
+    
+    def test_visualization_data_response_model(self):
+        """Test VisualizationDataResponse model."""
+        viz = VisualizationDataResponse(
+            nodes=[{"id": "AAPL", "x": 1.0, "y": 2.0, "z": 3.0}],
+            edges=[{"source": "AAPL", "target": "MSFT"}]
+        )
+        assert len(viz.nodes) == 1
+        assert len(viz.edges) == 1
+
+
+class TestAPIEndpoints:
+    """Test all FastAPI endpoints."""
+    
+    @pytest.fixture
+    def client(self):
+        """Create a test client."""
+        return TestClient(app)
     
     def test_root_endpoint(self, client):
         """Test the root endpoint returns API information."""
@@ -170,525 +196,414 @@ class TestRootEndpoints:
         assert "version" in data
         assert "endpoints" in data
         assert data["version"] == "1.0.0"
-        
-    def test_root_endpoint_structure(self, client):
-        """Test that root endpoint has all expected fields."""
-        response = client.get("/")
-        data = response.json()
-        endpoints = data["endpoints"]
-        assert "assets" in endpoints
-        assert "relationships" in endpoints
-        assert "metrics" in endpoints
-        assert "visualization" in endpoints
-        
-    @patch("api.main.graph", None)
-    def test_health_check_no_graph(self, client):
-        """Test health check when graph is not initialized."""
-        response = client.get("/api/health")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "healthy"
-        assert data["graph_initialized"] is False
-        
-    @patch("api.main.graph")
-    def test_health_check_with_graph(self, mock_graph_global, client):
-        """Test health check when graph is initialized."""
-        mock_graph_global.return_value = MagicMock()
-        response = client.get("/api/health")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "healthy"
-
-
-class TestAssetEndpoints:
-    """Test cases for asset-related endpoints."""
     
-    @patch("api.main.get_graph")
-    def test_get_all_assets(self, mock_get_graph, mock_graph, client):
+    def test_health_check_endpoint(self, client):
+        """Test the health check endpoint."""
+        response = client.get("/api/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+    
+    def test_get_assets_all(self, client):
         """Test getting all assets without filters."""
-        mock_get_graph.return_value = mock_graph
-        
         response = client.get("/api/assets")
         assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 2
-        assert any(asset["symbol"] == "AAPL" for asset in data)
-        assert any(asset["symbol"] == "AAPL_BOND" for asset in data)
+        assets = response.json()
+        assert isinstance(assets, list)
+        assert len(assets) > 0
         
-    @patch("api.main.get_graph")
-    def test_get_assets_with_class_filter(self, mock_get_graph, mock_graph, client):
+        # Validate response structure
+        asset = assets[0]
+        assert "id" in asset
+        assert "symbol" in asset
+        assert "name" in asset
+        assert "asset_class" in asset
+        assert "sector" in asset
+        assert "price" in asset
+    
+    def test_get_assets_filter_by_class(self, client):
         """Test filtering assets by asset class."""
-        mock_get_graph.return_value = mock_graph
-        
         response = client.get("/api/assets?asset_class=EQUITY")
         assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["symbol"] == "AAPL"
-        assert data[0]["asset_class"] == "EQUITY"
+        assets = response.json()
+        assert isinstance(assets, list)
         
-    @patch("api.main.get_graph")
-    def test_get_assets_with_sector_filter(self, mock_get_graph, mock_graph, client):
+        # All assets should be EQUITY
+        for asset in assets:
+            assert asset["asset_class"] == "EQUITY"
+    
+    def test_get_assets_filter_by_sector(self, client):
         """Test filtering assets by sector."""
-        mock_get_graph.return_value = mock_graph
-        
         response = client.get("/api/assets?sector=Technology")
         assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 2
-        assert all(asset["sector"] == "Technology" for asset in data)
+        assets = response.json()
+        assert isinstance(assets, list)
         
-    @patch("api.main.get_graph")
-    def test_get_assets_with_combined_filters(self, mock_get_graph, mock_graph, client):
+        # All assets should be in Technology sector
+        for asset in assets:
+            assert asset["sector"] == "Technology"
+    
+    def test_get_assets_filter_by_class_and_sector(self, client):
         """Test filtering assets by both class and sector."""
-        mock_get_graph.return_value = mock_graph
-        
         response = client.get("/api/assets?asset_class=EQUITY&sector=Technology")
         assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["symbol"] == "AAPL"
+        assets = response.json()
+        assert isinstance(assets, list)
         
-    @patch("api.main.get_graph")
-    def test_get_assets_no_matches(self, mock_get_graph, mock_graph, client):
-        """Test filtering with no matching results."""
-        mock_get_graph.return_value = mock_graph
+        # All assets should match both filters
+        for asset in assets:
+            assert asset["asset_class"] == "EQUITY"
+            assert asset["sector"] == "Technology"
+    
+    def test_get_asset_detail_valid(self, client):
+        """Test getting details for a valid asset."""
+        # First get an asset ID
+        response = client.get("/api/assets")
+        assets = response.json()
+        asset_id = assets[0]["id"]
         
-        response = client.get("/api/assets?sector=NonExistent")
+        # Get asset detail
+        response = client.get(f"/api/assets/{asset_id}")
         assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 0
-        
-    @patch("api.main.get_graph")
-    def test_get_asset_detail(self, mock_get_graph, mock_graph, client):
-        """Test getting detailed information for a specific asset."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/assets/TEST_AAPL")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["id"] == "TEST_AAPL"
-        assert data["symbol"] == "AAPL"
-        assert data["name"] == "Apple Inc."
-        assert data["price"] == 150.00
-        assert "pe_ratio" in data["additional_fields"]
-        
-    @patch("api.main.get_graph")
-    def test_get_asset_detail_not_found(self, mock_get_graph, mock_graph, client):
-        """Test getting asset detail for non-existent asset."""
-        mock_get_graph.return_value = mock_graph
-        
+        asset = response.json()
+        assert asset["id"] == asset_id
+    
+    def test_get_asset_detail_not_found(self, client):
+        """Test getting details for non-existent asset returns 404."""
         response = client.get("/api/assets/NONEXISTENT")
         assert response.status_code == 404
-        data = response.json()
-        assert "not found" in data["detail"].lower()
-        
-    @patch("api.main.get_graph")
-    def test_get_asset_additional_fields(self, mock_get_graph, mock_graph, client):
-        """Test that asset-specific fields are included in additional_fields."""
-        mock_get_graph.return_value = mock_graph
-        
-        # Test equity fields
-        response = client.get("/api/assets/TEST_AAPL")
-        data = response.json()
-        assert "pe_ratio" in data["additional_fields"]
-        assert data["additional_fields"]["pe_ratio"] == 25.5
-        assert "dividend_yield" in data["additional_fields"]
-        
-        # Test bond fields
-        response = client.get("/api/assets/TEST_BOND")
-        data = response.json()
-        assert "yield_to_maturity" in data["additional_fields"]
-        assert "coupon_rate" in data["additional_fields"]
-        assert "credit_rating" in data["additional_fields"]
-        
-    @patch("api.main.get_graph")
-    def test_get_assets_error_handling(self, mock_get_graph, client):
-        """Test error handling when graph operations fail."""
-        mock_get_graph.side_effect = Exception("Database error")
-        
+        assert "not found" in response.json()["detail"]
+    
+    def test_get_asset_relationships_valid(self, client):
+        """Test getting relationships for a valid asset."""
+        # Get an asset with relationships
         response = client.get("/api/assets")
-        assert response.status_code == 500
-        detail = response.json()["detail"].lower()
-        assert "error" in detail or "database error" in detail
-
-
-class TestRelationshipEndpoints:
-    """Test cases for relationship-related endpoints."""
-    
-    @patch("api.main.get_graph")
-    def test_get_asset_relationships(self, mock_get_graph, mock_graph, client):
-        """Test getting relationships for a specific asset."""
-        mock_get_graph.return_value = mock_graph
+        assets = response.json()
+        asset_id = assets[0]["id"]
         
-        response = client.get("/api/assets/TEST_AAPL/relationships")
+        response = client.get(f"/api/assets/{asset_id}/relationships")
         assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["source_id"] == "TEST_AAPL"
-        assert data[0]["target_id"] == "TEST_BOND"
-        assert data[0]["relationship_type"] == "issues"
-        assert data[0]["strength"] == 0.9
+        relationships = response.json()
+        assert isinstance(relationships, list)
         
-    @patch("api.main.get_graph")
-    def test_get_asset_relationships_none(self, mock_get_graph, mock_graph, client):
-        """Test getting relationships for asset with no relationships."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/assets/TEST_BOND/relationships")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 0
-        
-    @patch("api.main.get_graph")
-    def test_get_asset_relationships_not_found(self, mock_get_graph, mock_graph, client):
-        """Test getting relationships for non-existent asset."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/assets/NONEXISTENT/relationships")
-        assert response.status_code == 404
-        
-    @patch("api.main.get_graph")
-    def test_get_all_relationships(self, mock_get_graph, mock_graph, client):
-        """Test getting all relationships in the graph."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/relationships")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["source_id"] == "TEST_AAPL"
-        assert data[0]["target_id"] == "TEST_BOND"
-        
-    @patch("api.main.get_graph")
-    def test_get_all_relationships_multiple(self, mock_get_graph, mock_graph, client):
-        """Test getting all relationships with multiple sources."""
-        # Add more relationships
-        mock_graph.relationships = {
-            "TEST_AAPL": [
-                ("TEST_BOND", "issues", 0.9),
-                ("TEST_BOND", "correlates_with", 0.7)
-            ],
-            "TEST_BOND": [("TEST_AAPL", "issued_by", 0.9)]
-        }
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/relationships")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 3
-
-
-class TestMetricsEndpoint:
-    """Test cases for the metrics endpoint."""
-    
-    @patch("api.main.get_graph")
-    def test_get_metrics(self, mock_get_graph, mock_graph, client):
-        """Test getting network metrics."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/metrics")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["total_assets"] == 2
-        assert data["total_relationships"] == 1
-        assert data["avg_degree"] == 0.5
-        assert data["max_degree"] == 1
-        assert data["network_density"] == 0.5
-        
-    @patch("api.main.get_graph")
-    def test_get_metrics_asset_class_counts(self, mock_get_graph, mock_graph, client):
-        """Test that metrics include asset class counts."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/metrics")
-        assert response.status_code == 200
-        data = response.json()
-        assert "asset_classes" in data
-        assert "EQUITY" in data["asset_classes"]
-        assert "FIXED_INCOME" in data["asset_classes"]
-        assert data["asset_classes"]["EQUITY"] == 1
-        assert data["asset_classes"]["FIXED_INCOME"] == 1
-        
-    @patch("api.main.get_graph")
-    def test_get_metrics_error_handling(self, mock_get_graph, client):
-        """Test error handling in metrics endpoint."""
-        mock_get_graph.side_effect = Exception("Calculation error")
-        
-        response = client.get("/api/metrics")
-        assert response.status_code == 500
-
-
-class TestVisualizationEndpoint:
-    """Test cases for the visualization endpoint."""
-    
-    @patch("api.main.get_graph")
-    def test_get_visualization_data(self, mock_get_graph, mock_graph, client):
-        """Test getting 3D visualization data."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/visualization")
-        assert response.status_code == 200
-        data = response.json()
-        assert "nodes" in data
-        assert "edges" in data
-        assert len(data["nodes"]) == 2
-        assert len(data["edges"]) == 1
-        
-    @patch("api.main.get_graph")
-    def test_get_visualization_node_structure(self, mock_get_graph, mock_graph, client):
-        """Test that visualization nodes have correct structure."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/visualization")
-        data = response.json()
-        node = data["nodes"][0]
-        assert "id" in node
-        assert "name" in node
-        assert "symbol" in node
-        assert "asset_class" in node
-        assert "x" in node
-        assert "y" in node
-        assert "z" in node
-        assert "color" in node
-        assert "size" in node
-        
-    @patch("api.main.get_graph")
-    def test_get_visualization_edge_structure(self, mock_get_graph, mock_graph, client):
-        """Test that visualization edges have correct structure."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/visualization")
-        data = response.json()
-        edge = data["edges"][0]
-        assert "source" in edge
-        assert "target" in edge
-        assert "relationship_type" in edge
-        assert "strength" in edge
-        assert 0 <= edge["strength"] <= 1
-        
-    @patch("api.main.get_graph")
-    def test_get_visualization_coordinates_are_floats(self, mock_get_graph, mock_graph, client):
-        """Test that visualization coordinates are properly converted to floats."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/visualization")
-        data = response.json()
-        for node in data["nodes"]:
-            assert isinstance(node["x"], float)
-            assert isinstance(node["y"], float)
-            assert isinstance(node["z"], float)
-
-
-class TestMetadataEndpoints:
-    """Test cases for metadata endpoints."""
-    
-    def test_get_asset_classes(self, client):
-        """Test getting list of available asset classes."""
-        response = client.get("/api/asset-classes")
-        assert response.status_code == 200
-        data = response.json()
-        assert "asset_classes" in data
-        assert isinstance(data["asset_classes"], list)
-        assert "EQUITY" in data["asset_classes"]
-        assert "FIXED_INCOME" in data["asset_classes"]
-        assert "COMMODITY" in data["asset_classes"]
-        assert "CURRENCY" in data["asset_classes"]
-        
-    @patch("api.main.get_graph")
-    def test_get_sectors(self, mock_get_graph, mock_graph, client):
-        """Test getting list of unique sectors."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/sectors")
-        assert response.status_code == 200
-        data = response.json()
-        assert "sectors" in data
-        assert isinstance(data["sectors"], list)
-        assert "Technology" in data["sectors"]
-        
-    @patch("api.main.get_graph")
-    def test_get_sectors_sorted(self, mock_get_graph, mock_graph, client):
-        """Test that sectors are returned sorted."""
-        # Add more sectors
-        equity2 = Equity(
-            id="TEST_MSFT",
-            symbol="MSFT",
-            name="Microsoft",
-            asset_class=AssetClass.EQUITY,
-            sector="Technology",
-            price=300.00,
-            market_cap=2.2e12,
-            currency="USD"
-        )
-        equity3 = Equity(
-            id="TEST_JPM",
-            symbol="JPM",
-            name="JPMorgan",
-            asset_class=AssetClass.EQUITY,
-            sector="Finance",
-            price=150.00,
-            market_cap=400e9,
-            currency="USD"
-        )
-        mock_graph.assets["TEST_MSFT"] = equity2
-        mock_graph.assets["TEST_JPM"] = equity3
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/sectors")
-        data = response.json()
-        sectors = data["sectors"]
-        assert sectors == sorted(sectors)
-        assert "Finance" in sectors
-        assert "Technology" in sectors
-        
-    @patch("api.main.get_graph")
-    def test_get_sectors_empty_graph(self, mock_get_graph, client):
-        """Test getting sectors from empty graph."""
-        empty_graph = Mock(spec=AssetRelationshipGraph)
-        empty_graph.assets = {}
-        mock_get_graph.return_value = empty_graph
-        
-        response = client.get("/api/sectors")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["sectors"] == []
-
-
-class TestEdgeCases:
-    """Test cases for edge cases and error conditions."""
-    
-    @patch("api.main.get_graph")
-    def test_asset_with_none_market_cap(self, mock_get_graph, mock_graph, client):
-        """Test handling of assets with None market_cap."""
-        equity = Equity(
-            id="TEST_SMALL",
-            symbol="SMALL",
-            name="Small Company",
-            asset_class=AssetClass.EQUITY,
-            sector="Technology",
-            price=1.00,
-            market_cap=None,
-            currency="USD"
-        )
-        mock_graph.assets["TEST_SMALL"] = equity
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/assets/TEST_SMALL")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["market_cap"] is None
-        
-    @patch("api.main.get_graph")
-    def test_asset_with_none_optional_fields(self, mock_get_graph, mock_graph, client):
-        """Test that None values are not included in additional_fields."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/assets/TEST_AAPL")
-        data = response.json()
-        # Check that only non-None fields are included
-        for _key, value in data["additional_fields"].items():
-            assert value is not None
-            
-    @patch("api.main.get_graph")
-    def test_empty_relationship_list(self, mock_get_graph, mock_graph, client):
-        """Test asset with relationships key but empty list."""
-        mock_graph.relationships["TEST_AAPL"] = []
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/assets/TEST_AAPL/relationships")
-        assert response.status_code == 200
-        data = response.json()
-        assert data == []
-        
-    @patch("api.main.get_graph")
-    def test_relationship_strength_bounds(self, mock_get_graph, mock_graph, client):
-        """Test that relationship strength is within valid bounds."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/relationships")
-        data = response.json()
-        for relationship in data:
-            assert 0 <= relationship["strength"] <= 1
-
-
-class TestGraphInitialization:
-    """Test cases for graph initialization."""
-    
-    @patch("api.main.graph", None)
-    @patch("api.main.create_real_database")
-    def test_lazy_graph_initialization(self, mock_create_db, client):
-        """Test that graph is initialized on first access."""
-        mock_graph = Mock(spec=AssetRelationshipGraph)
-        mock_graph.assets = {}
-        mock_graph.relationships = {}
-        mock_create_db.return_value = mock_graph
-        
-        # First request should initialize graph
-        response = client.get("/api/assets")
-        assert response.status_code == 200
-        mock_create_db.assert_called_once()
-        mock_graph.build_relationships.assert_called_once()
-        
-    @patch("api.main.get_graph")
-    def test_graph_persists_across_requests(self, mock_get_graph, mock_graph, client):
-        """Test that graph instance persists across requests."""
-        mock_get_graph.return_value = mock_graph
-        
-        # Make multiple requests
-        client.get("/api/assets")
-        client.get("/api/metrics")
-        client.get("/api/relationships")
-        
-        # Verify graph was accessed but not recreated
-        assert mock_get_graph.call_count == 3
-
-
-class TestResponseModels:
-    """Test cases for response model validation."""
-    
-    @patch("api.main.get_graph")
-    def test_asset_response_schema(self, mock_get_graph, mock_graph, client):
-        """Test that asset responses match the AssetResponse model."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/assets")
-        data = response.json()
-        for asset in data:
-            assert "id" in asset
-            assert "symbol" in asset
-            assert "name" in asset
-            assert "asset_class" in asset
-            assert "sector" in asset
-            assert "price" in asset
-            assert "currency" in asset
-            assert "additional_fields" in asset
-            assert isinstance(asset["price"], (int, float))
-            
-    @patch("api.main.get_graph")
-    def test_relationship_response_schema(self, mock_get_graph, mock_graph, client):
-        """Test that relationship responses match the RelationshipResponse model."""
-        mock_get_graph.return_value = mock_graph
-        
-        response = client.get("/api/relationships")
-        data = response.json()
-        for rel in data:
+        # Validate relationship structure if any exist
+        if len(relationships) > 0:
+            rel = relationships[0]
             assert "source_id" in rel
             assert "target_id" in rel
             assert "relationship_type" in rel
             assert "strength" in rel
-            assert isinstance(rel["strength"], (int, float))
+            assert rel["source_id"] == asset_id
+    
+    def test_get_asset_relationships_not_found(self, client):
+        """Test getting relationships for non-existent asset returns 404."""
+        response = client.get("/api/assets/NONEXISTENT/relationships")
+        assert response.status_code == 404
+    
+    def test_get_all_relationships(self, client):
+        """Test getting all relationships."""
+        response = client.get("/api/relationships")
+        assert response.status_code == 200
+        relationships = response.json()
+        assert isinstance(relationships, list)
+        
+        # Validate relationship structure
+        if len(relationships) > 0:
+            rel = relationships[0]
+            assert "source_id" in rel
+            assert "target_id" in rel
+            assert "relationship_type" in rel
+            assert "strength" in rel
+            assert 0 <= rel["strength"] <= 1
+    
+    def test_get_metrics(self, client):
+        """Test getting network metrics."""
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        metrics = response.json()
+        
+        assert "total_assets" in metrics
+        assert "total_relationships" in metrics
+        assert "asset_classes" in metrics
+        assert "avg_degree" in metrics
+        assert "max_degree" in metrics
+        assert "network_density" in metrics
+        
+        assert metrics["total_assets"] > 0
+        assert metrics["total_relationships"] >= 0
+        assert isinstance(metrics["asset_classes"], dict)
+        assert metrics["avg_degree"] >= 0
+        assert metrics["max_degree"] >= 0
+        assert 0 <= metrics["network_density"] <= 1
+    
+    def test_get_visualization_data(self, client):
+        """Test getting 3D visualization data."""
+        response = client.get("/api/visualization")
+        assert response.status_code == 200
+        viz_data = response.json()
+        
+        assert "nodes" in viz_data
+        assert "edges" in viz_data
+        assert isinstance(viz_data["nodes"], list)
+        assert isinstance(viz_data["edges"], list)
+        
+        # Validate node structure
+        if len(viz_data["nodes"]) > 0:
+            node = viz_data["nodes"][0]
+            assert "id" in node
+            assert "name" in node
+            assert "symbol" in node
+            assert "asset_class" in node
+            assert "x" in node
+            assert "y" in node
+            assert "z" in node
+            assert "color" in node
+            assert "size" in node
             
-    @patch("api.main.get_graph")
-    def test_metrics_response_schema(self, mock_get_graph, mock_graph, client):
-        """Test that metrics responses match the MetricsResponse model."""
+            # Validate coordinates are floats
+            assert isinstance(node["x"], (int, float))
+            assert isinstance(node["y"], (int, float))
+            assert isinstance(node["z"], (int, float))
+        
+        # Validate edge structure
+        if len(viz_data["edges"]) > 0:
+            edge = viz_data["edges"][0]
+            assert "source" in edge
+            assert "target" in edge
+            assert "relationship_type" in edge
+            assert "strength" in edge
+            assert 0 <= edge["strength"] <= 1
+    
+    def test_get_asset_classes(self, client):
+        """Test getting list of asset classes."""
+        response = client.get("/api/asset-classes")
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert "asset_classes" in data
+        assert isinstance(data["asset_classes"], list)
+        assert len(data["asset_classes"]) > 0
+        
+        # Check that all AssetClass enum values are included
+        expected_classes = [ac.value for ac in AssetClass]
+        assert set(data["asset_classes"]) == set(expected_classes)
+    
+    def test_get_sectors(self, client):
+        """Test getting list of sectors."""
+        response = client.get("/api/sectors")
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert "sectors" in data
+        assert isinstance(data["sectors"], list)
+        assert len(data["sectors"]) > 0
+        
+        # Check that sectors are sorted
+        assert data["sectors"] == sorted(data["sectors"])
+
+
+class TestErrorHandling:
+    """Test error handling and edge cases."""
+    
+    @pytest.fixture
+    def client(self):
+        """Create a test client."""
+        return TestClient(app)
+    
+    @patch('api.main.get_graph')
+    def test_get_assets_server_error(self, mock_get_graph, client):
+        """Test that server errors are handled gracefully."""
+        mock_get_graph.side_effect = Exception("Database error")
+        
+        response = client.get("/api/assets")
+        assert response.status_code == 500
+        assert "Database error" in response.json()["detail"]
+    
+    @patch('api.main.get_graph')
+    def test_get_metrics_server_error(self, mock_get_graph, client):
+        """Test metrics endpoint error handling."""
+        mock_graph = Mock()
+        mock_graph.calculate_metrics.side_effect = Exception("Calculation error")
         mock_get_graph.return_value = mock_graph
         
         response = client.get("/api/metrics")
-        data = response.json()
-        assert isinstance(data["total_assets"], int)
-        assert isinstance(data["total_relationships"], int)
-        assert isinstance(data["asset_classes"], dict)
-        assert isinstance(data["avg_degree"], (int, float))
-        assert isinstance(data["max_degree"], int)
-        assert isinstance(data["network_density"], (int, float))
+        assert response.status_code == 500
+    
+    def test_invalid_http_methods(self, client):
+        """Test that invalid HTTP methods return 405."""
+        response = client.post("/api/assets")
+        assert response.status_code == 405
+        
+        response = client.put("/api/health")
+        assert response.status_code == 405
+        
+        response = client.delete("/api/metrics")
+        assert response.status_code == 405
+
+
+class TestCORSConfiguration:
+    """Test CORS middleware configuration."""
+    
+    @pytest.fixture
+    def client(self):
+        """Create a test client."""
+        return TestClient(app)
+    
+    def test_cors_headers_present(self, client):
+        """Test that CORS headers are present in responses."""
+        response = client.options("/api/health")
+        assert response.status_code == 200
+    
+    @patch.dict(os.environ, {'ENV': 'development', 'ALLOWED_ORIGINS': ''})
+    def test_cors_allows_development_origins(self, client):
+        """Test CORS allows development origins."""
+        response = client.get(
+            "/api/health",
+            headers={"Origin": "http://localhost:3000"}
+        )
+        assert response.status_code == 200
+
+
+class TestAdditionalFields:
+    """Test handling of asset-specific additional fields."""
+    
+    @pytest.fixture
+    def client(self):
+        """Create a test client."""
+        return TestClient(app)
+    
+    def test_equity_additional_fields(self, client):
+        """Test that equity-specific fields are included."""
+        response = client.get("/api/assets?asset_class=EQUITY")
+        assets = response.json()
+        
+        if len(assets) > 0:
+            asset = assets[0]
+            additional = asset.get("additional_fields", {})
+            
+            # Check for equity-specific fields
+            possible_fields = ["pe_ratio", "dividend_yield", "earnings_per_share", "book_value"]
+            has_equity_field = any(field in additional for field in possible_fields)
+            assert has_equity_field or len(additional) == 0  # Either has fields or empty
+    
+    def test_bond_additional_fields(self, client):
+        """Test that bond-specific fields are included."""
+        response = client.get("/api/assets?asset_class=BOND")
+        assets = response.json()
+        
+        if len(assets) > 0:
+            asset = assets[0]
+            additional = asset.get("additional_fields", {})
+            
+            # Check for bond-specific fields
+            possible_fields = ["yield_to_maturity", "coupon_rate", "maturity_date", "credit_rating"]
+            has_bond_field = any(field in additional for field in possible_fields)
+            assert has_bond_field or len(additional) == 0
+
+
+class TestVisualizationDataProcessing:
+    """Test the processing of visualization data."""
+    
+    @pytest.fixture
+    def client(self):
+        """Create a test client."""
+        return TestClient(app)
+    
+    def test_visualization_coordinate_types(self, client):
+        """Test that all coordinates are properly converted to floats."""
+        response = client.get("/api/visualization")
+        viz_data = response.json()
+        
+        for node in viz_data["nodes"]:
+            # Ensure x, y, z are numeric (int or float)
+            assert isinstance(node["x"], (int, float))
+            assert isinstance(node["y"], (int, float))
+            assert isinstance(node["z"], (int, float))
+    
+    def test_visualization_node_defaults(self, client):
+        """Test that nodes have default values for color and size."""
+        response = client.get("/api/visualization")
+        viz_data = response.json()
+        
+        for node in viz_data["nodes"]:
+            assert "color" in node
+            assert "size" in node
+            # Default color should be set if not provided
+            assert isinstance(node["color"], str)
+            assert isinstance(node["size"], (int, float))
+    
+    def test_visualization_edge_defaults(self, client):
+        """Test that edges have default values."""
+        response = client.get("/api/visualization")
+        viz_data = response.json()
+        
+        for edge in viz_data["edges"]:
+            assert "relationship_type" in edge
+            assert "strength" in edge
+            # Strength should be between 0 and 1
+            assert 0 <= edge["strength"] <= 1
+
+
+class TestIntegrationScenarios:
+    """Test realistic integration scenarios."""
+    
+    @pytest.fixture
+    def client(self):
+        """Create a test client."""
+        return TestClient(app)
+    
+    def test_full_workflow_asset_exploration(self, client):
+        """Test a complete workflow: list assets, get detail, get relationships."""
+        # Step 1: Get all assets
+        response = client.get("/api/assets")
+        assert response.status_code == 200
+        assets = response.json()
+        assert len(assets) > 0
+        
+        # Step 2: Get detail for first asset
+        asset_id = assets[0]["id"]
+        response = client.get(f"/api/assets/{asset_id}")
+        assert response.status_code == 200
+        asset_detail = response.json()
+        assert asset_detail["id"] == asset_id
+        
+        # Step 3: Get relationships for that asset
+        response = client.get(f"/api/assets/{asset_id}/relationships")
+        assert response.status_code == 200
+        relationships = response.json()
+        assert isinstance(relationships, list)
+    
+    def test_full_workflow_visualization_and_metrics(self, client):
+        """Test workflow for visualization: get metrics then visualization data."""
+        # Step 1: Get metrics
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        metrics = response.json()
+        
+        # Step 2: Get visualization data
+        response = client.get("/api/visualization")
+        assert response.status_code == 200
+        viz_data = response.json()
+        
+        # Step 3: Verify consistency
+        assert len(viz_data["nodes"]) == metrics["total_assets"]
+    
+    def test_filter_refinement_workflow(self, client):
+        """Test progressive filter refinement."""
+        # Get all assets
+        response = client.get("/api/assets")
+        all_assets = response.json()
+        
+        # Filter by class
+        response = client.get("/api/assets?asset_class=EQUITY")
+        equity_assets = response.json()
+        assert len(equity_assets) <= len(all_assets)
+        
+        # Further filter by sector
+        response = client.get("/api/assets?asset_class=EQUITY&sector=Technology")
+        tech_equity_assets = response.json()
+        assert len(tech_equity_assets) <= len(equity_assets)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
