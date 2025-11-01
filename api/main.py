@@ -94,8 +94,12 @@ def get_graph() -> AssetRelationshipGraph:
         with graph_lock:
             # Double-check inside lock
             if graph is None:
-                fetcher = RealDataFetcher()
-                graph = fetcher.create_real_database()
+                try:
+                    fetcher = RealDataFetcher()
+                    graph = fetcher.create_real_database()
+                except Exception as e:
+                    logger.error(f"Failed to initialize graph: {str(e)}")
+                    raise
     return graph
 
 
@@ -156,7 +160,7 @@ async def health_check():
         g = get_graph()
         return {"status": "healthy", "graph_initialized": True}
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        logger.error(f"Health check failed: {str(e)}")
         return {"status": "unhealthy", "graph_initialized": False}
 
 
