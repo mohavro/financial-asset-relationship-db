@@ -1,7 +1,6 @@
 """Unit tests for validating configuration files."""
 
 import json
-import json
 # Remove the unused import statement
 
 
