@@ -309,7 +309,8 @@ class TestAssetEndpoints:
         
         response = client.get("/api/assets")
         assert response.status_code == 500
-        assert "error" in response.json()["detail"].lower() or "database error" in response.json()["detail"].lower()
+        detail = response.json()["detail"].lower()
+        assert "error" in detail or "database error" in detail
 
 
 class TestRelationshipEndpoints:
