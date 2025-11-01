@@ -141,8 +141,10 @@ jobs:
 
   frontend-build:
     executor: node-executor
+    working_directory: ~/project/frontend
     steps:
-      - checkout
+      - checkout:
+          path: ~/project
       - restore_cache:
           keys:
             - node-deps-v1-{{ checksum "package.json" }}
