@@ -53,6 +53,8 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
         const sourceNode = nodeMap.get(edge.source);
         const targetNode = nodeMap.get(edge.target);
         
+        // Validate that both nodes exist before accessing their properties
+        if (!sourceNode || !targetNode) return null;
 
         return {
           type: 'scatter3d' as const,

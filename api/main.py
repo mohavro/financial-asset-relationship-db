@@ -5,7 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
-# Remove the unused import statement for threading
+import threading
+import os
+import re
 
 from src.logic.asset_graph import AssetRelationshipGraph
 # from src.data.real_data_fetcher import create_real_database
@@ -24,8 +26,6 @@ app = FastAPI(
 
 # Configure CORS for Next.js frontend
 # Note: Update allowed origins for production deployment
-import os
-import re
 
 # Determine environment (default to 'development' if not set)
 ENV = os.getenv("ENV", "development").lower()
@@ -82,8 +82,21 @@ app.add_middleware(
 
 # Global graph instance with thread-safe initialization
 graph: Optional[AssetRelationshipGraph] = None
-# Remove global graph instance and lazy initializer.
-# Each request should instantiate its own AssetRelationshipGraph.
+graph_lock = threading.Lock()
+
+def get_graph() -> AssetRelationshipGraph:
+    """
+    Get or create the global graph instance with thread-safe initialization.
+    Uses double-check locking pattern for efficiency in serverless environments.
+    """
+    global graph
+    if graph is None:
+        with graph_lock:
+            # Double-check inside lock
+            if graph is None:
+                from src.data.sample_data import create_sample_database
+                graph = create_sample_database()
+    return graph
 
 
 # Pydantic models for API responses
