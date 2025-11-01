@@ -5,7 +5,7 @@ thread-safe graph initialization, and edge cases.
 """
 
 import pytest
-import os
+import threading
 import threading
 import time
 from unittest.mock import patch
