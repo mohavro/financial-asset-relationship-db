@@ -5,10 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
-import threading
+# Remove the unused import statement for threading
 
 from src.logic.asset_graph import AssetRelationshipGraph
-from src.data.real_data_fetcher import create_real_database
+# from src.data.real_data_fetcher import create_real_database
 from src.models.financial_models import AssetClass
 
 # Configure logging
@@ -402,26 +402,6 @@ async def get_visualization_data():
     Raises:
         HTTPException: If visualization data cannot be retrieved or an internal error occurs.
     """
-    try:
-        g = get_graph()
-        positions, asset_ids, asset_colors, asset_text, edges_xyz = g.get_3d_visualization_data()
-        
-        nodes = []
-        for i, asset_id in enumerate(asset_ids):
-            asset = g.assets[asset_id]
-            nodes.append({
-                "id": asset_id,
-                "name": asset.name,
-                "symbol": asset.symbol,
-                "asset_class": asset.asset_class.value,
-                "x": float(positions[i, 0]),
-                "y": float(positions[i, 1]),
-                "z": float(positions[i, 2]),
-                "color": asset_colors[i],
-                "size": 5
-            })
-    except Exception as e: print(f"An error occurred: {e}")
-    """Get 3D visualization data"""
     try:
         g = get_graph()
         viz_data = g.get_3d_visualization_data()
