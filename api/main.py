@@ -190,7 +190,7 @@ async def get_assets(
         HTTPException: Raised with status code 500 if an unexpected error occurs while retrieving assets.
     """
     try:
-        g = get_graph()
+        g = graph
         assets = []
         
         for asset_id, asset in g.assets.items():
