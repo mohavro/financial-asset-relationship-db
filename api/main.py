@@ -202,6 +202,8 @@ async def get_assets(
                         asset_dict["additional_fields"][field] = value
             
             assets.append(AssetResponse(**asset_dict))
+        
+        return assets
     except Exception as e:
         logger.exception("Error getting assets")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -269,13 +271,13 @@ async def get_asset_relationships(asset_id: str):
                     relationship_type=rel_type,
                     strength=strength
                 ))
+        
+        return relationships
     except HTTPException:
         raise
     except Exception as e:
         logger.exception("Error getting asset relationships")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    else:
-        return relationships
 
 
 @app.get("/api/relationships", response_model=List[RelationshipResponse])
@@ -293,11 +295,11 @@ async def get_all_relationships():
                     relationship_type=rel_type,
                     strength=strength
                 ))
+        
+        return relationships
     except Exception as e:
         logger.exception("Error getting relationships")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    else:
-        return relationships
 
 
 @app.get("/api/metrics", response_model=MetricsResponse)
