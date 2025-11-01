@@ -163,10 +163,9 @@ async def health_check():
     Return API health status and whether the global graph has been initialized.
     
     Returns:
-        dict: {
-            "status": "healthy",  # string indicating overall service health
-            "graph_initialized": bool  # True if the global graph has been created, False otherwise
-        }
+        dict: A dictionary with the following keys:
+            - status (str): String indicating overall service health ("healthy").
+            - graph_initialized (bool): True if the global graph has been created, False otherwise.
     """
     return {"status": "healthy", "graph_initialized": graph is not None}
 
