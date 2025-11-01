@@ -14,7 +14,7 @@ This module contains thorough unit tests for all API endpoints including:
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch, MagicMock
-from api.main import app, validate_origin, get_graph
+from api.main import app, validate_origin
 from src.models.financial_models import AssetClass, Equity, Bond
 from src.logic.asset_graph import AssetRelationshipGraph
 
