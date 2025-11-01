@@ -1,9 +1,6 @@
 """Unit tests for validating configuration files."""
 
 import json
-# Remove the unused import statement
-
-
 def test_vercel_json_valid():
     """Test that vercel.json is valid JSON."""
     with open("vercel.json") as f:
