@@ -1,3 +1,4 @@
+# Comprehensive test coverage available in tests/unit/test_api_main.py
 """FastAPI backend for Financial Asset Relationship Database"""
 
 from fastapi import FastAPI, HTTPException
@@ -100,6 +101,17 @@ def get_graph() -> AssetRelationshipGraph:
                     logger.error(f"Failed to initialize graph: {str(e)}")
                     raise
     return graph
+
+
+def raise_asset_not_found(asset_id: str, resource_type: str = "Asset") -> None:
+    """
+    Raise HTTPException for missing resources.
+
+    Args:
+        asset_id (str): ID of the asset that was not found.
+        resource_type (str): Type of resource (default: "Asset").
+    """
+    raise HTTPException(status_code=404, detail=f"{resource_type} {asset_id} not found")
 
 
 # Pydantic models for API responses
@@ -246,7 +258,7 @@ async def get_asset_detail(asset_id: str):
         g = get_graph()
         
         if asset_id not in g.assets:
-            raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
+            raise_asset_not_found(asset_id)
         
         asset = g.assets[asset_id]
         
@@ -298,7 +310,7 @@ async def get_asset_relationships(asset_id: str):
         g = get_graph()
         
         if asset_id not in g.assets:
-            raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
+            raise_asset_not_found(asset_id)
         
         relationships = []
         
