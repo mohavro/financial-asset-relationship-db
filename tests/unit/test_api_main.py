@@ -19,7 +19,7 @@ from api.main import (
     graph,
     graph_lock
 )
-from src.models.financial_models import AssetClass, Equity, Bond
+from src.models.financial_models import Equity, Bond
 from src.logic.asset_graph import AssetRelationshipGraph
 
 
