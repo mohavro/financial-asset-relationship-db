@@ -10,7 +10,6 @@ import os
 import re
 
 from src.logic.asset_graph import AssetRelationshipGraph
-from src.data.sample_data import create_sample_database
 from src.models.financial_models import AssetClass
 
 # Configure logging
