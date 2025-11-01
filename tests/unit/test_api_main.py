@@ -32,11 +32,11 @@ def client():
 @pytest.fixture
 def reset_graph():
     """Reset the global graph instance before and after tests."""
-    import api.main
-    original_graph = api.main.graph
-    api.main.graph = None
+    global graph
+    original_graph = graph
+    graph = None
     yield
-    api.main.graph = original_graph
+    graph = original_graph
 
 
 class TestValidateOrigin:
