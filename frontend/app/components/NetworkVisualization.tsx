@@ -55,6 +55,8 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
         
         // Validate that both nodes exist before accessing their properties
         if (!sourceNode || !targetNode) return null;
+        // Validate that both nodes exist before accessing their properties
+        if (!sourceNode || !targetNode) return null;
 
         return {
           type: 'scatter3d' as const,
