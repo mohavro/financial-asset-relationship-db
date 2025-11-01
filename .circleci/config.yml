@@ -24,15 +24,17 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - python-deps-v1-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            - python-deps-v1-{{ checksum "requirements.txt" }}
       - run:
           name: Install dependencies
           command: |
             pip install --upgrade pip
             pip install -r requirements.txt
-            pip install -r requirements-dev.txt
+            if [ -f requirements-dev.txt ]; then
+              pip install -r requirements-dev.txt
+            fi
       - save_cache:
-          key: python-deps-v1-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          key: python-deps-v1-{{ checksum "requirements.txt" }}
           paths:
             - ~/.cache/pip
       - run:
@@ -60,15 +62,17 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - python-deps-v1-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            - python-deps-v1-{{ checksum "requirements.txt" }}
       - run:
           name: Install dependencies
           command: |
             pip install --upgrade pip
             pip install -r requirements.txt
-            pip install -r requirements-dev.txt
+            if [ -f requirements-dev.txt ]; then
+              pip install -r requirements-dev.txt
+            fi
       - save_cache:
-          key: python-deps-v1-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          key: python-deps-v1-{{ checksum "requirements.txt" }}
           paths:
             - ~/.cache/pip
       - run:
@@ -89,13 +93,16 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - python-deps-v1-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            - python-deps-v1-{{ checksum "requirements.txt" }}
       - run:
           name: Install dependencies
           command: |
             pip install --upgrade pip
             pip install -r requirements.txt
             pip install safety bandit
+            if [ -f requirements-dev.txt ]; then
+              pip install -r requirements-dev.txt
+            fi
       - run:
           name: Security check with safety
           command: safety check --json || true
