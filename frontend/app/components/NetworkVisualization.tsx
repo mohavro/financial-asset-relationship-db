@@ -14,6 +14,17 @@ interface NetworkVisualizationProps {
   data: VisualizationData;
 }
 
+/**
+ * Renders a 3D asset relationship network using the provided visualization data.
+ *
+ * The component builds Plotly traces for nodes (scatter3d markers with labels) and edges (3D lines)
+ * and displays a loading message while traces are being constructed or data is missing.
+ *
+ * @param data - Visualization payload containing `nodes` and `edges`. `nodes` should include objects with
+ *   `id`, `x`, `y`, `z`, `symbol`, `name`, `asset_class`, `size`, and `color`. `edges` should include objects
+ *   with `source`, `target`, and `strength`.
+ * @returns A JSX element that renders the interactive 3D network plot (or a loading placeholder when data is unavailable).
+ */
 export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
   const [plotData, setPlotData] = useState<any[]>([]);
 

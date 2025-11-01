@@ -26,7 +26,17 @@ import os
 import re
 
 def validate_origin(origin: str) -> bool:
-    """Validate that an origin matches expected patterns"""
+    """
+    Check whether an origin URL is allowed for CORS.
+    
+    Valid origins include localhost/127.0.0.1 (optional port), Vercel preview deployments, and configured production domains such as `*.vercel.app` and `*.yourdomain.com`.
+    
+    Parameters:
+        origin (str): The origin URL to validate (including scheme).
+    
+    Returns:
+        `true` if the origin matches allowed development, Vercel preview, or production domain patterns, `false` otherwise.
+    """
     # Allow localhost and 127.0.0.1 for development
     if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
@@ -67,7 +77,14 @@ graph: Optional[AssetRelationshipGraph] = None
 
 
 def get_graph() -> AssetRelationshipGraph:
-    """Get or initialize the graph instance"""
+    """
+    Provide the singleton AssetRelationshipGraph instance, initializing it on first use.
+    
+    If the global graph has not been created, this function initializes it by creating the real database and building relationships.
+    
+    Returns:
+        The initialized AssetRelationshipGraph instance.
+    """
     global graph
     if graph is None:
         logger.info("Initializing asset relationship graph")
@@ -112,7 +129,15 @@ class VisualizationDataResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
+    """
+    Provide basic API metadata and a listing of available endpoints.
+    
+    Returns:
+        dict: A mapping containing:
+            - "message": short API description string.
+            - "version": API version string.
+            - "endpoints": dict mapping endpoint keys to their URL paths (e.g., "assets": "/api/assets").
+    """
     return {
         "message": "Financial Asset Relationship API",
         "version": "1.0.0",
@@ -128,7 +153,15 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
+    """
+    Return API health status and whether the global graph has been initialized.
+    
+    Returns:
+        dict: {
+            "status": "healthy",  # string indicating overall service health
+            "graph_initialized": bool  # `True` if the global graph has been created, `False` otherwise
+        }
+    """
     return {"status": "healthy", "graph_initialized": graph is not None}
 
 
@@ -137,7 +170,16 @@ async def get_assets(
     asset_class: Optional[str] = None,
     sector: Optional[str] = None
 ):
-    """Get all assets with optional filters"""
+    """
+    Return a list of assets, optionally filtered by asset class and sector.
+    
+    Parameters:
+        asset_class (Optional[str]): Filter to include only assets whose `asset_class.value` equals this string.
+        sector (Optional[str]): Filter to include only assets whose `sector` equals this string.
+    
+    Returns:
+        List[AssetResponse]: AssetResponse objects matching the filters. Each object's `additional_fields` contains any non-null, asset-specific attributes (e.g., `pe_ratio`, `dividend_yield`, `earnings_per_share`, `book_value`, `yield_to_maturity`, `coupon_rate`, `maturity_date`, `credit_rating`, `contract_size`, `delivery_date`, `volatility`, `exchange_rate`, `country`, `central_bank_rate`).
+    """
     try:
         g = get_graph()
         assets = []
@@ -182,7 +224,16 @@ async def get_assets(
 
 @app.get("/api/assets/{asset_id}", response_model=AssetResponse)
 async def get_asset_detail(asset_id: str):
-    """Get detailed information about a specific asset"""
+    """
+    Retrieve detailed information for the asset identified by `asset_id`.
+    
+    Returns:
+        AssetResponse: Detailed asset information including core fields (id, symbol, name, asset_class, sector, price, market_cap, currency) and an `additional_fields` map containing any asset-specific attributes that are present and non-null.
+    
+    Raises:
+        HTTPException: 404 if the asset is not found.
+        HTTPException: 500 for unexpected errors while retrieving the asset.
+    """
     try:
         g = get_graph()
         
@@ -223,7 +274,18 @@ async def get_asset_detail(asset_id: str):
 
 @app.get("/api/assets/{asset_id}/relationships", response_model=List[RelationshipResponse])
 async def get_asset_relationships(asset_id: str):
-    """Get all relationships for a specific asset"""
+    """
+    Return all outgoing relationships for the asset identified by `asset_id`.
+    
+    Parameters:
+        asset_id (str): Identifier of the asset whose relationships are requested.
+    
+    Returns:
+        List[RelationshipResponse]: A list of relationship records (source_id, target_id, relationship_type, strength).
+    
+    Raises:
+        HTTPException: 404 if the asset is not found; 500 for other errors.
+    """
     try:
         g = get_graph()
         
@@ -252,7 +314,12 @@ async def get_asset_relationships(asset_id: str):
 
 @app.get("/api/relationships", response_model=List[RelationshipResponse])
 async def get_all_relationships():
-    """Get all relationships in the graph"""
+    """
+    Return a list of all relationships present in the initialized asset graph.
+    
+    Returns:
+        List[RelationshipResponse]: List of directed relationships; each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
+    """
     try:
         g = get_graph()
         relationships = []
@@ -274,7 +341,23 @@ async def get_all_relationships():
 
 @app.get("/api/metrics", response_model=MetricsResponse)
 async def get_metrics():
-    """Get network metrics"""
+    """
+    Retrieve network metrics and counts of assets grouped by asset class from the global graph.
+    
+    Builds a MetricsResponse containing aggregated network statistics and a mapping of asset class names to their asset counts.
+    
+    Returns:
+        MetricsResponse: Object with fields:
+            - total_assets: total number of assets in the graph.
+            - total_relationships: total number of relationships in the graph.
+            - asset_classes: dict mapping asset class name to count of assets.
+            - avg_degree: average node degree in the network.
+            - max_degree: maximum node degree in the network.
+            - network_density: density of the network.
+    
+    Raises:
+        HTTPException: with status code 500 if metrics cannot be obtained.
+    """
     try:
         g = get_graph()
         metrics = g.calculate_metrics()
@@ -300,7 +383,17 @@ async def get_metrics():
 
 @app.get("/api/visualization", response_model=VisualizationDataResponse)
 async def get_visualization_data():
-    """Get 3D visualization data"""
+    """
+    Provide nodes and edges prepared for 3D visualization of the asset graph.
+    
+    Builds a list of node dictionaries (each with id, name, symbol, asset_class, x, y, z, color, size) and a list of edge dictionaries (each with source, target, relationship_type, strength) suitable for the API response.
+    
+    Returns:
+        VisualizationDataResponse: An object with `nodes` (list of node dicts) and `edges` (list of edge dicts).
+    
+    Raises:
+        HTTPException: If visualization data cannot be retrieved or processed; results in a 500 status with the error detail.
+    """
     try:
         g = get_graph()
         positions, asset_ids, asset_colors, asset_text, edges_xyz = g.get_3d_visualization_data()
@@ -356,7 +449,12 @@ async def get_visualization_data():
 
 @app.get("/api/asset-classes")
 async def get_asset_classes():
-    """Get list of available asset classes"""
+    """
+    List available asset classes.
+    
+    Returns:
+        dict: A mapping with key "asset_classes" whose value is a list of asset class string values.
+    """
     return {
         "asset_classes": [ac.value for ac in AssetClass]
     }
@@ -364,7 +462,15 @@ async def get_asset_classes():
 
 @app.get("/api/sectors")
 async def get_sectors():
-    """Get list of unique sectors in the graph"""
+    """
+    Return a sorted list of unique sectors present in the asset graph.
+    
+    Returns:
+        dict: A mapping with key "sectors" to a sorted list of unique sector names (List[str]).
+    
+    Raises:
+        HTTPException: If an error occurs while retrieving sectors (responds with status 500).
+    """
     try:
         g = get_graph()
         sectors = set()
