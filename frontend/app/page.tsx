@@ -12,7 +12,7 @@ import type { Metrics, VisualizationData } from './types/api';
  *
  * Fetches metrics and visualization data on mount, shows loading and error states, and exposes a retry action when data loading fails.
  *
- * @returns The React element for the home page including header, navigation tabs, loading/error UI, and tab-specific content.
+ * @returns The home page React element with header, tab navigation, and dynamic content based on selected tab and loading state.
  */
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'visualization' | 'metrics' | 'assets'>('visualization');
