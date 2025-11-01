@@ -44,9 +44,6 @@ def validate_origin(origin: str) -> bool:
     Returns:
         True if the origin matches allowed development, Vercel preview, or configured production domain patterns, False otherwise.
     """
-    # Allow localhost and 127.0.0.1 for development
-    if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
-    """Validate that an origin matches expected patterns"""  # Move this to the top of the function
     # Allow HTTP localhost only in development
     if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
