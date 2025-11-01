@@ -1,255 +1,258 @@
 /**
- * Unit tests for API client library.
- * 
- * Tests cover:
- * - API client initialization
- * - All endpoint functions
- * - Error handling
- * - Request/response transformation
+ * Unit tests for the API client library.
+ * Tests all API methods, error handling, and configuration.
  */
 
-import axios from 'axios';
-import { api } from '../api';
-import type { Asset, Relationship, Metrics, VisualizationData } from '../../types/api';
+import axios from 'axios'
+import { api } from '../api'
 
 // Mock axios
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.mock('axios')
+const mockedAxios = axios as jest.Mocked<typeof axios>
 
 describe('API Client', () => {
-  const mockAxiosInstance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn(),
-  };
+  let mockAxiosInstance: any
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
-  });
+    // Reset all mocks before each test
+    jest.clearAllMocks()
+
+    // Create a mock axios instance
+    mockAxiosInstance = {
+      get: jest.fn(),
+      post: jest.fn(),
+      put: jest.fn(),
+      delete: jest.fn(),
+    }
+
+    // Mock axios.create to return our mock instance
+    mockedAxios.create = jest.fn(() => mockAxiosInstance)
+  })
+
+  describe('Configuration', () => {
+    it('should create axios instance with correct base URL', () => {
+      // Re-import to trigger initialization
+      jest.isolateModules(() => {
+        require('../api')
+      })
+
+      expect(mockedAxios.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          baseURL: expect.any(String),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+      )
+    })
+
+    it('should use environment variable for API URL', () => {
+      const customUrl = 'https://api.example.com'
+      process.env.NEXT_PUBLIC_API_URL = customUrl
+
+      jest.isolateModules(() => {
+        require('../api')
+      })
+
+      expect(mockedAxios.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          baseURL: customUrl,
+        })
+      )
+    })
+  })
 
   describe('healthCheck', () => {
-    it('should call health check endpoint', async () => {
-      const mockResponse = { status: 'healthy', graph_initialized: true };
-      mockAxiosInstance.get.mockResolvedValue({ data: mockResponse });
+    it('should call health endpoint and return data', async () => {
+      const mockData = { status: 'healthy' }
+      mockAxiosInstance.get.mockResolvedValue({ data: mockData })
 
-      const result = await api.healthCheck();
+      const result = await api.healthCheck()
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/health');
-      expect(result).toEqual(mockResponse);
-    });
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/health')
+      expect(result).toEqual(mockData)
+    })
 
-    it('should handle health check errors', async () => {
-      mockAxiosInstance.get.mockRejectedValue(new Error('Network error'));
+    it('should handle errors from health check', async () => {
+      const error = new Error('Network error')
+      mockAxiosInstance.get.mockRejectedValue(error)
 
-      await expect(api.healthCheck()).rejects.toThrow('Network error');
-    });
-  });
+      await expect(api.healthCheck()).rejects.toThrow('Network error')
+    })
+  })
 
   describe('getAssets', () => {
-    const mockAssets: Asset[] = [
-      {
-        id: 'TEST1',
-        symbol: 'AAPL',
-        name: 'Apple Inc.',
-        asset_class: 'EQUITY',
-        sector: 'Technology',
-        price: 150.0,
-        market_cap: 2.4e12,
-        currency: 'USD',
-        additional_fields: { pe_ratio: 25.5 },
-      },
-    ];
+    it('should fetch all assets without params', async () => {
+      const mockAssets = [
+        { id: '1', symbol: 'AAPL', name: 'Apple Inc.' },
+        { id: '2', symbol: 'MSFT', name: 'Microsoft' },
+      ]
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets })
 
-    it('should fetch all assets without filters', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+      const result = await api.getAssets()
 
-      const result = await api.getAssets();
-
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', { params: undefined });
-      expect(result).toEqual(mockAssets);
-    });
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', { params: undefined })
+      expect(result).toEqual(mockAssets)
+    })
 
     it('should fetch assets with asset_class filter', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+      const mockAssets = [{ id: '1', symbol: 'AAPL', asset_class: 'EQUITY' }]
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets })
 
-      const result = await api.getAssets({ asset_class: 'EQUITY' });
+      const result = await api.getAssets({ asset_class: 'EQUITY' })
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
         params: { asset_class: 'EQUITY' },
-      });
-      expect(result).toEqual(mockAssets);
-    });
+      })
+      expect(result).toEqual(mockAssets)
+    })
 
     it('should fetch assets with sector filter', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+      const mockAssets = [{ id: '1', symbol: 'AAPL', sector: 'Technology' }]
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets })
 
-      await api.getAssets({ sector: 'Technology' });
+      const result = await api.getAssets({ sector: 'Technology' })
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
         params: { sector: 'Technology' },
-      });
-    });
+      })
+      expect(result).toEqual(mockAssets)
+    })
 
     it('should fetch assets with multiple filters', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+      mockAxiosInstance.get.mockResolvedValue({ data: [] })
 
-      await api.getAssets({ asset_class: 'EQUITY', sector: 'Technology' });
+      await api.getAssets({ asset_class: 'EQUITY', sector: 'Technology' })
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
         params: { asset_class: 'EQUITY', sector: 'Technology' },
-      });
-    });
-  });
+      })
+    })
+  })
 
   describe('getAssetDetail', () => {
-    const mockAsset: Asset = {
-      id: 'TEST1',
-      symbol: 'AAPL',
-      name: 'Apple Inc.',
-      asset_class: 'EQUITY',
-      sector: 'Technology',
-      price: 150.0,
-      market_cap: 2.4e12,
-      currency: 'USD',
-      additional_fields: {},
-    };
+    it('should fetch asset detail by ID', async () => {
+      const mockAsset = { id: 'AAPL', symbol: 'AAPL', name: 'Apple Inc.' }
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAsset })
 
-    it('should fetch asset details', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockAsset });
+      const result = await api.getAssetDetail('AAPL')
 
-      const result = await api.getAssetDetail('TEST1');
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets/AAPL')
+      expect(result).toEqual(mockAsset)
+    })
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets/TEST1');
-      expect(result).toEqual(mockAsset);
-    });
+    it('should handle 404 for non-existent asset', async () => {
+      const error = { response: { status: 404 } }
+      mockAxiosInstance.get.mockRejectedValue(error)
 
-    it('should handle not found errors', async () => {
-      mockAxiosInstance.get.mockRejectedValue({
-        response: { status: 404, data: { detail: 'Asset not found' } },
-      });
-
-      await expect(api.getAssetDetail('NONEXISTENT')).rejects.toThrow();
-    });
-  });
+      await expect(api.getAssetDetail('INVALID')).rejects.toEqual(error)
+    })
+  })
 
   describe('getAssetRelationships', () => {
-    const mockRelationships: Relationship[] = [
-      {
-        source_id: 'TEST1',
-        target_id: 'TEST2',
-        relationship_type: 'same_sector',
-        strength: 0.8,
-      },
-    ];
+    it('should fetch relationships for an asset', async () => {
+      const mockRelationships = [
+        { source_id: 'AAPL', target_id: 'MSFT', relationship_type: 'same_sector' },
+      ]
+      mockAxiosInstance.get.mockResolvedValue({ data: mockRelationships })
 
-    it('should fetch asset relationships', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockRelationships });
+      const result = await api.getAssetRelationships('AAPL')
 
-      const result = await api.getAssetRelationships('TEST1');
-
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets/TEST1/relationships');
-      expect(result).toEqual(mockRelationships);
-    });
-  });
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets/AAPL/relationships')
+      expect(result).toEqual(mockRelationships)
+    })
+  })
 
   describe('getAllRelationships', () => {
-    const mockRelationships: Relationship[] = [
-      {
-        source_id: 'TEST1',
-        target_id: 'TEST2',
-        relationship_type: 'same_sector',
-        strength: 0.8,
-      },
-    ];
-
     it('should fetch all relationships', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockRelationships });
+      const mockRelationships = [
+        { source_id: 'AAPL', target_id: 'MSFT', relationship_type: 'same_sector' },
+      ]
+      mockAxiosInstance.get.mockResolvedValue({ data: mockRelationships })
 
-      const result = await api.getAllRelationships();
+      const result = await api.getAllRelationships()
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/relationships');
-      expect(result).toEqual(mockRelationships);
-    });
-  });
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/relationships')
+      expect(result).toEqual(mockRelationships)
+    })
+  })
 
   describe('getMetrics', () => {
-    const mockMetrics: Metrics = {
-      total_assets: 10,
-      total_relationships: 15,
-      asset_classes: { EQUITY: 5, BOND: 3, COMMODITY: 2 },
-      avg_degree: 3.0,
-      max_degree: 5,
-      network_density: 0.3,
-    };
+    it('should fetch network metrics', async () => {
+      const mockMetrics = {
+        total_assets: 10,
+        total_relationships: 20,
+        asset_classes: { EQUITY: 5, BOND: 5 },
+        avg_degree: 2.0,
+        max_degree: 5,
+        network_density: 0.4,
+      }
+      mockAxiosInstance.get.mockResolvedValue({ data: mockMetrics })
 
-    it('should fetch metrics', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockMetrics });
+      const result = await api.getMetrics()
 
-      const result = await api.getMetrics();
-
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/metrics');
-      expect(result).toEqual(mockMetrics);
-    });
-  });
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/metrics')
+      expect(result).toEqual(mockMetrics)
+    })
+  })
 
   describe('getVisualizationData', () => {
-    const mockVizData: VisualizationData = {
-      nodes: [
-        {
-          id: 'TEST1',
-          name: 'Apple Inc.',
-          symbol: 'AAPL',
-          asset_class: 'EQUITY',
-          x: 1.0,
-          y: 2.0,
-          z: 3.0,
-          color: '#1f77b4',
-          size: 10,
-        },
-      ],
-      edges: [
-        {
-          source: 'TEST1',
-          target: 'TEST2',
-          relationship_type: 'same_sector',
-          strength: 0.8,
-        },
-      ],
-    };
-
     it('should fetch visualization data', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockVizData });
+      const mockVizData = {
+        nodes: [{ id: 'AAPL', x: 1, y: 2, z: 3 }],
+        edges: [{ source: 'AAPL', target: 'MSFT' }],
+      }
+      mockAxiosInstance.get.mockResolvedValue({ data: mockVizData })
 
-      const result = await api.getVisualizationData();
+      const result = await api.getVisualizationData()
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/visualization');
-      expect(result).toEqual(mockVizData);
-    });
-  });
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/visualization')
+      expect(result).toEqual(mockVizData)
+    })
+  })
 
   describe('getAssetClasses', () => {
     it('should fetch available asset classes', async () => {
-      const mockData = { asset_classes: ['EQUITY', 'BOND', 'COMMODITY', 'CURRENCY'] };
-      mockAxiosInstance.get.mockResolvedValue({ data: mockData });
+      const mockClasses = { asset_classes: ['EQUITY', 'BOND', 'COMMODITY', 'CURRENCY'] }
+      mockAxiosInstance.get.mockResolvedValue({ data: mockClasses })
 
-      const result = await api.getAssetClasses();
+      const result = await api.getAssetClasses()
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/asset-classes');
-      expect(result).toEqual(mockData);
-    });
-  });
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/asset-classes')
+      expect(result).toEqual(mockClasses)
+    })
+  })
 
   describe('getSectors', () => {
     it('should fetch available sectors', async () => {
-      const mockData = { sectors: ['Technology', 'Energy', 'Finance'] };
-      mockAxiosInstance.get.mockResolvedValue({ data: mockData });
+      const mockSectors = { sectors: ['Technology', 'Finance', 'Energy'] }
+      mockAxiosInstance.get.mockResolvedValue({ data: mockSectors })
 
-      const result = await api.getSectors();
+      const result = await api.getSectors()
 
-      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/sectors');
-      expect(result).toEqual(mockData);
-    });
-  });
-});
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/sectors')
+      expect(result).toEqual(mockSectors)
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('should propagate network errors', async () => {
+      const networkError = new Error('Network Error')
+      mockAxiosInstance.get.mockRejectedValue(networkError)
+
+      await expect(api.getAssets()).rejects.toThrow('Network Error')
+    })
+
+    it('should propagate HTTP errors', async () => {
+      const httpError = {
+        response: {
+          status: 500,
+          data: { detail: 'Internal Server Error' },
+        },
+      }
+      mockAxiosInstance.get.mockRejectedValue(httpError)
+
+      await expect(api.getMetrics()).rejects.toEqual(httpError)
+    })
+  })
+})

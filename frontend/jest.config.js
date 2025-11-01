@@ -10,7 +10,6 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
-    // Handle module aliases
     '^@/(.*)$': '<rootDir>/$1',
   },
   testMatch: [
@@ -20,8 +19,8 @@ const customJestConfig = {
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
     '!app/**/*.d.ts',
-    '!app/**/*.stories.{js,jsx,ts,tsx}',
-    '!app/**/index.{js,jsx,ts,tsx}',
+    '!app/**/_*.{js,jsx,ts,tsx}',
+    '!**/node_modules/**',
   ],
 }
 
