@@ -38,7 +38,7 @@ jest.mock('next/dynamic', () => ({
           })
           .catch(() => {
             if (!cancelled) {
-              setComponent(() => () => <div data-testid="mock-plot-error">Failed to load visualization</div>);
+              setComponent(() => function ErrorComponent() { return <div data-testid="mock-plot-error">Failed to load visualization</div>; });
             }
           });
 
