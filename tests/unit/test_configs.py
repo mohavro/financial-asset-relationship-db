@@ -1,6 +1,6 @@
 """Unit tests for validating configuration files."""
 
-import pytest
+import json
 import json
 # Remove the unused import statement
 
