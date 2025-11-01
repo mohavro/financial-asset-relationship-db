@@ -30,6 +30,9 @@ def validate_origin(origin: str) -> bool:
     # Allow localhost for development
     if re.match(r'^https?://localhost(:\d+)?$', origin):
         return True
+    # Allow Vercel preview deployment URLs (e.g., https://project-git-branch-user.vercel.app)
+    if re.match(r'^https://[a-zA-Z0-9\-_\.]+\.vercel\.app$', origin):
+        return True
     # Allow specific production domains (update for your deployment)
     allowed_domains = [
         r'^https://[\w-]+\.vercel\.app$',
