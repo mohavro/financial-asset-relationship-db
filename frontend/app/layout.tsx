@@ -7,11 +7,11 @@ export const metadata: Metadata = {
 }
 
 /**
- * Root layout component that provides the top-level HTML skeleton and renders application content.
+ * Application root layout that renders a complete HTML document with language set to English.
+ * Places the app content inside the document body.
  *
- * Sets the document language to `"en"` and places `children` inside the `<body>` element.
- *
- * @param children - The React node(s) to render as the page content inside the document body
+ * @param children - The React nodes to render inside the `<body>` of the document
+ * @returns The root `<html>` element containing the rendered children
  */
 export default function RootLayout({
   children,
