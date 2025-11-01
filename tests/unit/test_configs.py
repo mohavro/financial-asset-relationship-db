@@ -1,8 +1,6 @@
 """Unit tests for validating configuration files."""
 
 import json
-import json
-import json
 
 
 def test_vercel_json_valid():
