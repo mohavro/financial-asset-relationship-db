@@ -13,7 +13,6 @@ from api.main import (
     app,
     validate_origin,
     get_graph,
-    graph,
     graph_lock
 )
 from src.logic.asset_graph import AssetRelationshipGraph
