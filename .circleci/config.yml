@@ -78,7 +78,7 @@ jobs:
       - run:
           name: Run tests with pytest
           command: |
-            pytest --cov=src --cov-report=xml --cov-report=term-missing -v --junitxml=test-results/pytest/results.xml
+            pytest --cov=src --cov-report=xml --cov-report=term-missing --cov-report=html -v --junitxml=test-results/pytest/results.xml
       - codecov/upload:
           file: coverage.xml
       - store_test_results:
