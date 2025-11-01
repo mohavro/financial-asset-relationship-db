@@ -355,7 +355,7 @@ async def get_metrics():
     Produce aggregated network metrics for the asset relationship graph.
     
     Returns:
-        metrics (MetricsResponse): Aggregated metrics including:
+        MetricsResponse: Aggregated metrics including:
             - total_assets: total number of assets
             - total_relationships: total number of relationships
             - asset_classes: mapping from asset class name to asset count
