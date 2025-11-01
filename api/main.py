@@ -463,7 +463,7 @@ async def get_asset_classes():
     List available asset classes.
     
     Returns:
-        dict: A mapping with key "asset_classes" whose value is a list of asset class string values.
+        Dict[str, List[str]]: A mapping with key "asset_classes" whose value is a list of asset class string values.
     """
     return {
         "asset_classes": [ac.value for ac in AssetClass]
