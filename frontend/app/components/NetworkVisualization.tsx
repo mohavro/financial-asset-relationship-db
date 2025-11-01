@@ -20,7 +20,7 @@ interface NetworkVisualizationProps {
  * The component builds Plotly traces for nodes (scatter3d markers with labels) and edges (3D lines)
  * and displays a loading message while traces are being constructed or data is missing.
  *
- * @param {VisualizationData} data - Visualization payload containing `nodes` and `edges`.
+ * @param data - Visualization payload containing `nodes` and `edges`.
  *   - `nodes`: Array of node objects, each with properties:
  *       - `id`: string
  *       - `x`, `y`, `z`: number (3D coordinates)
