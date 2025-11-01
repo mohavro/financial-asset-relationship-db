@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Any
+from pydantic import BaseModel
 import logging
 import os
 import re
@@ -157,11 +158,10 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     try:
-        get_graph()
-        return {"status": "healthy"}
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return {"status": "unhealthy"}
+        g = get_graph()
+        return {"status": "healthy", "graph_initialized": True}
+    except Exception:
+        return {"status": "unhealthy", "graph_initialized": False}
 
 
 @app.get("/api/assets", response_model=List[AssetResponse])
