@@ -12,7 +12,7 @@ This module tests all API endpoints including:
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from api.main import app, validate_origin
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import (
