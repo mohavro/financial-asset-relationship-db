@@ -2,7 +2,7 @@
 
 import pytest
 import json
-from pathlib import Path
+# Remove the unused import statement
 
 
 def test_vercel_json_valid():
