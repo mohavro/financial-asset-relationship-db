@@ -152,7 +152,7 @@ async def root():
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "graph_initialized": graph is not None}
+    return {"status": "healthy"}
 
 
 @app.get("/api/assets", response_model=List[AssetResponse])
