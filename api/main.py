@@ -35,7 +35,7 @@ def validate_origin(origin: str) -> bool:
         origin (str): The origin URL to validate (including scheme).
     
     Returns:
-        `True` if the origin matches allowed development, Vercel preview, or production domain patterns, `False` otherwise.
+        True if the origin matches allowed development, Vercel preview, or production domain patterns, False otherwise.
     """
     # Allow localhost and 127.0.0.1 for development
     if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
@@ -137,12 +137,6 @@ async def root():
             - "message": short API description string.
             - "version": API version string.
             - "endpoints": dict mapping endpoint keys to their URL paths (e.g., "assets": "/api/assets").
-    
-        Returns:
-            dict: A mapping containing:
-                - "message": short API description string.
-                - "version": API version string.
-                - "endpoints": dict mapping endpoint keys to their URL paths (e.g., "assets": "/api/assets").
     """
     return {
         "message": "Financial Asset Relationship API",
@@ -234,6 +228,7 @@ async def get_asset_detail(asset_id: str):
     
     Parameters:
         asset_id (str): Identifier of the asset to retrieve.
+        asset_id (str): Identifier of the asset whose details are requested.
     
     Returns:
         AssetResponse: Detailed asset information as defined in the AssetResponse model, including core fields and an `additional_fields` map containing any asset-specific attributes that are present and non-null.
