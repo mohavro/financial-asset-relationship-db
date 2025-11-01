@@ -27,7 +27,7 @@ Use this checklist to ensure a smooth deployment to Vercel.
 Python dependencies (requirements.txt):
 - [ ] fastapi>=0.104.0
 - [ ] uvicorn[standard]>=0.24.0
-- [ ] pydantic>=2.0.0
+- [ ] pydantic>=2.4.0
 - [ ] gradio>=4.0.0
 - [ ] plotly>=5.0.0
 - [ ] numpy>=1.21.0
