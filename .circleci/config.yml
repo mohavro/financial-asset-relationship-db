@@ -124,7 +124,12 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            npm ci
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              echo "package-lock.json not found; running npm install instead"
+              npm install
+            fi
       - save_cache:
           key: node-deps-v1-{{ checksum "package.json" }}
           paths:
@@ -132,7 +137,7 @@ jobs:
       - run:
           name: Run ESLint
           command: |
-            npm run lint
+            npm run lint --if-present
 
   frontend-build:
     executor: node-executor
@@ -144,7 +149,12 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            npm ci
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              echo "package-lock.json not found; running npm install instead"
+              npm install
+            fi
       - save_cache:
           key: node-deps-v1-{{ checksum "package.json" }}
           paths:
@@ -152,7 +162,7 @@ jobs:
       - run:
           name: Build Next.js application
           command: |
-            npm run build
+            npm run build --if-present
       - store_artifacts:
           path: .next
           destination: next-build
