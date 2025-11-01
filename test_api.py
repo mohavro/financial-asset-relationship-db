@@ -37,7 +37,7 @@ def test_api():
     response = client.get("/api/metrics")
     assert response.status_code == 200, f"Metrics endpoint failed: {response.status_code}"
     metrics = response.json()
-    print(f"   ✅ Metrics endpoint passed")
+    print("   ✅ Metrics endpoint passed")
     print(f"      - Total assets: {metrics['total_assets']}")
     print(f"      - Total relationships: {metrics['total_relationships']}")
     
