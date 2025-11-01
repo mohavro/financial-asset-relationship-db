@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 REM Start backend in background
 echo 🔧 Starting FastAPI backend on port 8000...
-start /B python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+start /B python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
 
 REM Wait for backend to start
 timeout /t 3 /nobreak >nul
