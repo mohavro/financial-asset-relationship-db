@@ -137,6 +137,12 @@ async def root():
             - "message": short API description string.
             - "version": API version string.
             - "endpoints": dict mapping endpoint keys to their URL paths (e.g., "assets": "/api/assets").
+    
+        Returns:
+            dict: A mapping containing:
+                - "message": short API description string.
+                - "version": API version string.
+                - "endpoints": dict mapping endpoint keys to their URL paths (e.g., "assets": "/api/assets").
     """
     return {
         "message": "Financial Asset Relationship API",
