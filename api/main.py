@@ -184,7 +184,7 @@ async def get_assets(
         sector (Optional[str]): Filter to include only assets whose `sector` equals this string.
     
     Returns:
-        List[AssetResponse]: AssetResponse objects matching the filters. Each object's `additional_fields` contains any non-null, asset-specific attributes (e.g., `pe_ratio`, `dividend_yield`, `earnings_per_share`, `book_value`, `yield_to_maturity`, `coupon_rate`, `maturity_date`, `credit_rating`, `contract_size`, `delivery_date`, `volatility`, `exchange_rate`, `country`, `central_bank_rate`).
+        List[AssetResponse]: AssetResponse objects matching the filters. Each object's `additional_fields` contains any non-null, asset-type-specific attributes as defined in the respective asset model classes.
     """
     try:
         g = get_graph()
