@@ -137,7 +137,7 @@ jobs:
       - run:
           name: Run ESLint
           command: |
-            npm run lint --if-present
+            cd frontend && npm run lint --if-present
 
   frontend-build:
     executor: node-executor
@@ -162,7 +162,7 @@ jobs:
       - run:
           name: Build Next.js application
           command: |
-            npm run build --if-present
+            cd frontend && npm run build --if-present
       - store_artifacts:
           path: .next
           destination: next-build
