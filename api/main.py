@@ -5,9 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
-import threading
-import os
-import re
+# Remove the unused import statement for threading
 
 from src.logic.asset_graph import AssetRelationshipGraph
 # from src.data.real_data_fetcher import create_real_database
@@ -26,6 +24,8 @@ app = FastAPI(
 
 # Configure CORS for Next.js frontend
 # Note: Update allowed origins for production deployment
+import os
+import re
 
 # Determine environment (default to 'development' if not set)
 ENV = os.getenv("ENV", "development").lower()
@@ -82,21 +82,16 @@ app.add_middleware(
 
 # Global graph instance with thread-safe initialization
 graph: Optional[AssetRelationshipGraph] = None
-graph_lock = threading.Lock()
-
+# Remove global graph instance and lazy initializer.
 def get_graph() -> AssetRelationshipGraph:
+    """Get or initialize the graph instance with real data.
+    
+    Creates a new graph instance on each call to ensure data freshness.
+    In production, consider caching this with a TTL or using a singleton pattern.
     """
-    Get or create the global graph instance with thread-safe initialization.
-    Uses double-check locking pattern for efficiency in serverless environments.
-    """
-    global graph
-    if graph is None:
-        with graph_lock:
-            # Double-check inside lock
-            if graph is None:
-                from src.data.sample_data import create_sample_database
-                graph = create_sample_database()
-    return graph
+    from src.data.real_data_fetcher import RealDataFetcher
+    fetcher = RealDataFetcher()
+    return fetcher.create_real_database()
 
 
 # Pydantic models for API responses
@@ -152,7 +147,7 @@ async def root():
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy"}
+    return {"status": "healthy", "graph_initialized": graph is not None}
 
 
 @app.get("/api/assets", response_model=List[AssetResponse])
@@ -165,7 +160,7 @@ async def get_assets(
         g = get_graph()
         assets = []
         
-        for asset_id, asset in g.assets.items():
+        for _asset_id, asset in g.assets.items():
             # Apply filters
             if asset_class and asset.asset_class.value != asset_class:
                 continue
@@ -196,22 +191,22 @@ async def get_assets(
                         asset_dict["additional_fields"][field] = value
             
             assets.append(AssetResponse(**asset_dict))
-        
-        return assets
     except Exception as e:
-        logger.error(f"Error getting assets: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Error getting assets:")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    else:
+        return assets
 
 
 @app.get("/api/assets/{asset_id}", response_model=AssetResponse)
 async def get_asset_detail(asset_id: str):
     """Get detailed information about a specific asset"""
+    g = get_graph()
+    
+    if asset_id not in g.assets:
+        raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
+    
     try:
-        g = get_graph()
-        
-        if asset_id not in g.assets:
-            raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
-        
         asset = g.assets[asset_id]
         
         asset_dict = {
@@ -237,22 +232,22 @@ async def get_asset_detail(asset_id: str):
                     asset_dict["additional_fields"][field] = value
         
         return AssetResponse(**asset_dict)
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Error getting asset detail: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        if isinstance(e, HTTPException):
+            raise
+        logger.exception("Error getting asset detail:")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/api/assets/{asset_id}/relationships", response_model=List[RelationshipResponse])
 async def get_asset_relationships(asset_id: str):
     """Get all relationships for a specific asset"""
+    g = get_graph()
+    
+    if asset_id not in g.assets:
+        raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
+    
     try:
-        g = get_graph()
-        
-        if asset_id not in g.assets:
-            raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
-        
         relationships = []
         
         # Outgoing relationships
@@ -264,13 +259,13 @@ async def get_asset_relationships(asset_id: str):
                     relationship_type=rel_type,
                     strength=strength
                 ))
-        
-        return relationships
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Error getting asset relationships: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        if isinstance(e, HTTPException):
+            raise
+        logger.exception("Error getting asset relationships:")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    else:
+        return relationships
 
 
 @app.get("/api/relationships", response_model=List[RelationshipResponse])
@@ -288,11 +283,11 @@ async def get_all_relationships():
                     relationship_type=rel_type,
                     strength=strength
                 ))
-        
-        return relationships
     except Exception as e:
-        logger.error(f"Error getting relationships: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Error getting relationships:")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    else:
+        return relationships
 
 
 @app.get("/api/metrics", response_model=MetricsResponse)
@@ -317,8 +312,8 @@ async def get_metrics():
             network_density=metrics.get("network_density", 0.0)
         )
     except Exception as e:
-        logger.error(f"Error getting metrics: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Error getting metrics:")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/api/visualization", response_model=VisualizationDataResponse)
@@ -353,8 +348,8 @@ async def get_visualization_data():
         
         return VisualizationDataResponse(nodes=nodes, edges=edges)
     except Exception as e:
-        logger.error(f"Error getting visualization data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Error getting visualization data:")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/api/asset-classes")
@@ -376,8 +371,8 @@ async def get_sectors():
                 sectors.add(asset.sector)
         return {"sectors": sorted(list(sectors))}
     except Exception as e:
-        logger.error(f"Error getting sectors: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Error getting sectors:")
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 if __name__ == "__main__":
