@@ -19,13 +19,13 @@ Comprehensive tests for the FastAPI backend (`api/main.py`):
 
 **Run with**: `pytest tests/unit/test_api_main.py -v`
 
-#### `unit/test_configs.py`
+#### `unit/test_config_validation.py`
 Configuration file validation tests:
 - JSON syntax validation
 - Required fields verification
 - Configuration consistency checks
 
-**Run with**: `pytest tests/unit/test_configs.py -v`
+**Run with**: `pytest tests/unit/test_config_validation.py -v`
 
 ### Frontend Tests
 
