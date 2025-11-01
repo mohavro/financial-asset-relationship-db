@@ -4,6 +4,15 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../lib/api';
 import type { Asset } from '../types/api';
 
+/**
+ * Renders an asset list UI with filter controls and data fetching.
+ *
+ * Loads asset classes and sectors on mount and reloads the asset list whenever the selected
+ * asset class or sector changes. Displays loading and empty states and, when available,
+ * a table of assets showing symbol, name, class, sector, price, and market capitalization.
+ *
+ * @returns The rendered JSX element for the asset list component.
+ */
 export default function AssetList() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
