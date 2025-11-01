@@ -157,11 +157,10 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     try:
-        get_graph()
-        return {"status": "healthy"}
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return {"status": "unhealthy"}
+        g = get_graph()
+        return {"status": "healthy", "graph_initialized": True}
+    except Exception:
+        return {"status": "unhealthy", "graph_initialized": False}
 
 
 @app.get("/api/assets", response_model=List[AssetResponse])
