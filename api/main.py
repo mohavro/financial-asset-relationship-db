@@ -29,13 +29,14 @@ def validate_origin(origin: str) -> bool:
     """
     Check whether an origin URL is allowed for CORS.
     
-    Valid origins include localhost/127.0.0.1 (optional port), Vercel preview deployments, and configured production domains such as `*.vercel.app` and `*.yourdomain.com`.
+    Valid origins include localhost/127.0.0.1 (optional port), Vercel preview deployments, and configured production domains.
+    Note: The example patterns for production domains (e.g., `*.vercel.app`, `*.yourdomain.com`) are placeholders. Update the regex patterns in this function for your actual deployment domains.
     
     Parameters:
         origin (str): The origin URL to validate (including scheme).
     
     Returns:
-        True if the origin matches allowed development, Vercel preview, or production domain patterns, False otherwise.
+        True if the origin matches allowed development, Vercel preview, or configured production domain patterns, False otherwise.
     """
     # Allow localhost and 127.0.0.1 for development
     if re.match(r'^https?://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
