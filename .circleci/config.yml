@@ -108,7 +108,7 @@ jobs:
     command: safety check --json
       - run:
           name: Security check with bandit
-          command: bandit -r src/ -ll -f json -o bandit-report.json || true
+          command: bandit -r src/ -ll -f json -o bandit-report.json
       - store_artifacts:
           path: bandit-report.json
           destination: security-reports
