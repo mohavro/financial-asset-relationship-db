@@ -1,0 +1,227 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.1.0
+  python: circleci/python@2.1.1
+  codecov: codecov/codecov@4.0.1
+
+executors:
+  python-executor:
+    docker:
+      - image: cimg/python:3.11
+    working_directory: ~/project
+  
+  node-executor:
+    docker:
+      - image: cimg/node:18.19
+    working_directory: ~/project
+
+jobs:
+  # Python Backend Jobs
+  python-lint:
+    executor: python-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - python-deps-v1-{{ checksum "requirements.txt" }}
+      - run:
+          name: Install dependencies
+          command: |
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            if [ -f requirements-dev.txt ]; then
+              pip install -r requirements-dev.txt
+            fi
+      - save_cache:
+          key: python-deps-v1-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/.cache/pip
+      - run:
+          name: Run flake8
+          command: |
+            flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+            flake8 . --count --statistics
+      - run:
+          name: Check formatting with black
+          command: black --check --diff .
+      - run:
+          name: Check imports with isort
+          command: isort --check-only --diff .
+      - run:
+          name: Type check with mypy
+          command: mypy src/ --ignore-missing-imports
+      - run:
+          name: Lint with pylint
+          command: pylint src/ --fail-under=7.0
+
+  python-test:
+    executor: python-executor
+    parallelism: 4
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - python-deps-v1-{{ checksum "requirements.txt" }}
+      - run:
+          name: Install dependencies
+          command: |
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            if [ -f requirements-dev.txt ]; then
+              pip install -r requirements-dev.txt
+            fi
+      - save_cache:
+          key: python-deps-v1-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/.cache/pip
+      - run:
+          name: Run tests with pytest
+          command: |
+            pytest --cov=src --cov-report=xml --cov-report=term-missing -v --junitxml=test-results/pytest/results.xml
+      - codecov/upload:
+          file: coverage.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: htmlcov
+          destination: coverage-report
+
+  python-security:
+    executor: python-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - python-deps-v1-{{ checksum "requirements.txt" }}
+      - run:
+          name: Install dependencies
+          command: |
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install safety bandit
+            if [ -f requirements-dev.txt ]; then
+              pip install -r requirements-dev.txt
+            fi
+      - run:
+          name: Security check with safety
+          command: safety check --json || true
+      - run:
+          name: Security check with bandit
+          command: bandit -r src/ -ll -f json -o bandit-report.json || true
+      - store_artifacts:
+          path: bandit-report.json
+          destination: security-reports
+
+  # Frontend Jobs
+  frontend-lint:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - node-deps-v1-{{ checksum "package.json" }}
+      - run:
+          name: Install dependencies
+          command: |
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              echo "package-lock.json not found; running npm install instead"
+              npm install
+            fi
+      - save_cache:
+          key: node-deps-v1-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Run ESLint
+          command: |
+            npm run lint --if-present
+
+  frontend-build:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - node-deps-v1-{{ checksum "package.json" }}
+      - run:
+          name: Install dependencies
+          command: |
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              echo "package-lock.json not found; running npm install instead"
+              npm install
+            fi
+      - save_cache:
+          key: node-deps-v1-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Build Next.js application
+          command: |
+            npm run build --if-present
+      - store_artifacts:
+          path: .next
+          destination: next-build
+
+  # Docker Build Job
+  docker-build:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t financial-asset-relationship-db:${CIRCLE_SHA1} .
+      - run:
+          name: Test Docker image
+          command: |
+            docker run --rm financial-asset-relationship-db:${CIRCLE_SHA1} python --version
+
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      # Backend workflow
+      - python-lint
+      - python-test:
+          requires:
+            - python-lint
+      - python-security:
+          requires:
+            - python-test
+      
+      # Frontend workflow
+      - frontend-lint
+      - frontend-build:
+          requires:
+            - frontend-lint
+      
+      # Docker build (only on main branch)
+      - docker-build:
+          requires:
+            - python-test
+            - frontend-build
+          filters:
+            branches:
+              only:
+                - main
+                - develop
+
+  # Nightly security scan
+  nightly-security:
+    triggers:
+      - schedule:
+          cron: "0 2 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - python-security
