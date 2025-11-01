@@ -30,10 +30,12 @@ def validate_origin(origin: str) -> bool:
     # Allow localhost for development
     if re.match(r'^https?://localhost(:\d+)?$', origin):
         return True
-    # Allow valid HTTPS URLs with proper domains
-    if re.match(r'^https://[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$', origin):
-        return True
-    return False
+    # Allow specific production domains (update for your deployment)
+    allowed_domains = [
+        r'^https://[\w-]+\.vercel\.app$',
+        r'^https://[\w-]+\.yourdomain\.com$'
+    ]
+    return any(re.match(pattern, origin) for pattern in allowed_domains)
 
 allowed_origins = [
     "http://localhost:3000",
