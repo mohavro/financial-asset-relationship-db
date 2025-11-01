@@ -358,7 +358,7 @@ class TestGitignore:
 class TestRequirementsTxt:
     """Test cases for requirements.txt."""
     
-    require_version_pinning = True  # Project enforces version pinning for all dependencies; set to True to require version constraints in requirements.txt
+    require_version_pinning = True  # When True, enforces version constraints for all dependencies in requirements.txt
 
     @pytest.fixture
     def requirements(self):
