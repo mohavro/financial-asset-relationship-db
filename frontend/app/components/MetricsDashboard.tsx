@@ -13,7 +13,7 @@ interface MetricsDashboardProps {
  * Displays Total Assets, Total Relationships, Network Density (as a percentage),
  * Average Degree, Max Degree, and a list of Asset Classes with counts in a 1–3 column grid.
  *
- * @param metrics - Object containing metric values:
+ * @param props.metrics - Object containing metric values:
  *   - `total_assets`: total number of assets
  *   - `total_relationships`: total number of relationships
  *   - `network_density`: density value in the range 0–1 (rendered as percentage)
