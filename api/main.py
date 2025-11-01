@@ -227,7 +227,6 @@ async def get_asset_detail(asset_id: str):
     Retrieve detailed information for the asset identified by `asset_id`.
     
     Parameters:
-        asset_id (str): Identifier of the asset to retrieve.
         asset_id (str): Identifier of the asset whose details are requested.
     
     Returns:
