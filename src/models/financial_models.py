@@ -18,6 +18,8 @@ class RegulatoryActivity(Enum):
     BOND_ISSUANCE = "Bond Issuance"
     ACQUISITION = "Acquisition"
     BANKRUPTCY = "Bankruptcy"
+    INTEREST_RATE_CHANGE = "Interest Rate Change"
+    MARKET_DISRUPTION = "Market Disruption"
 
 @dataclass
 class Asset:
