@@ -264,7 +264,7 @@ async def get_asset_detail(asset_id: str):
         HTTPException: 500 for unexpected errors while retrieving the asset.
     """
     try:
-        g = graph
+        g = get_graph()
         
         if asset_id not in g.assets:
             raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
