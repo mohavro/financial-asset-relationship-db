@@ -170,7 +170,7 @@ def create_sample_database() -> AssetRelationshipGraph:
         )
 
         fed_rate_decision = RegulatoryEvent(
-            id="FED_RATE_2024", asset_id="US10Y", event_type=RegulatoryActivity.SEC_FILING,
+            id="FED_RATE_2024", asset_id="US10Y", event_type=RegulatoryActivity.INTEREST_RATE_DECISION,
             date="2024-03-20", description="Federal Reserve Rate Cut", impact_score=0.25,
             related_assets=["US2Y", "JPM", "AAPL_BOND_2030", "MSFT_BOND_2028"]
         )
