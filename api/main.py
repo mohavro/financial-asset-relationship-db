@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
-import threading
+# Remove the unused import statement for threading
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import create_real_database
