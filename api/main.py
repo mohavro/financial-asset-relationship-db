@@ -104,8 +104,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global graph instance initialized with sample data
-graph: AssetRelationshipGraph = create_sample_database()
+# Global graph instance - initialized during startup event
+graph: Optional[AssetRelationshipGraph] = None
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Initialize the asset relationship graph during application startup.
+    
+    This startup event handler explicitly creates and builds the in-memory asset
+    relationship graph. The initialization includes:
+    - Creating sample assets across multiple asset classes
+    - Adding regulatory events
+    - Building all relationships between assets
+    
+    This approach makes the initialization cost explicit and ensures it happens
+    once during API startup rather than at module import time.
+    """
+    global graph
+    logger.info("Starting asset relationship graph initialization")
+    graph = create_sample_database()
+    logger.info("Asset relationship graph initialized successfully")
 
 
 # Pydantic models for API responses
