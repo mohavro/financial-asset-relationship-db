@@ -7,7 +7,6 @@ thread-safe graph initialization, and response models.
 import pytest
 from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
-from fastapi import HTTPException  # Remove this line
 import os
 
 from api.main import (
