@@ -1,7 +1,7 @@
 """Comprehensive unit tests for the FastAPI backend (api/main.py).
 
 This module tests all API endpoints, error handling, CORS configuration,
-eager graph initialization, and response models.
+lazy graph initialization with thread-safe double-check locking, and response models.
 """
 
 import pytest
