@@ -91,7 +91,7 @@ try:
     fetcher = RealDataFetcher()
     graph: AssetRelationshipGraph = fetcher.create_real_database()
     logger.info("Graph initialized successfully at module load")
-except Exception as e:
+except Exception:
     logger.exception("Failed to initialize graph at module load")
     raise
 
