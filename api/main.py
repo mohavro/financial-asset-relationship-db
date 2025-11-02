@@ -32,8 +32,11 @@ ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
+    # Get current environment dynamically
+    current_env = os.getenv("ENV", "development").lower()
+    
     # Allow HTTP localhost only in development
-    if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+    if current_env == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
     # Allow HTTPS localhost in any environment
     if re.match(r'^https://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
@@ -394,30 +397,63 @@ async def get_visualization_data():
         HTTPException: If visualization data cannot be retrieved or processed; results in a 500 status with the error detail.
     """
     try:
-        viz_data = graph.get_3d_visualization_data()
+        # get_3d_visualization_data returns: (positions, asset_ids, asset_colors, asset_text, (edges_x, edges_y, edges_z))
+        positions, asset_ids, asset_colors, asset_text, edge_coords = graph.get_3d_visualization_data()
         
         nodes = []
-        for node in (viz_data.get("nodes") if isinstance(viz_data.get("nodes"), list) else []):
+        for i, asset_id in enumerate(asset_ids):
+            asset = graph.assets[asset_id]
             nodes.append({
-                "id": node["id"],
-                "name": node["name"],
-                "symbol": node["symbol"],
-                "asset_class": node["asset_class"],
-                "x": float(node["x"]),
-                "y": float(node["y"]),
-                "z": float(node["z"]),
-                "color": node.get("color", "#1f77b4"),
-                "size": node.get("size", 5)
+                "id": asset_id,
+                "name": asset.name,
+                "symbol": asset.symbol,
+                "asset_class": asset.asset_class.value,
+                "x": float(positions[i, 0]),
+                "y": float(positions[i, 1]),
+                "z": float(positions[i, 2]),
+                "color": asset_colors[i],
+                "size": 5
             })
         
         edges = []
-        for edge in viz_data.get("edges", []):
-            edges.append({
-                "source": edge["source"],
-                "target": edge["target"],
-                "relationship_type": edge.get("relationship_type", "unknown"),
-                "strength": edge.get("strength", 0.5)
-            })
+        # Parse edge coordinates to build edge list
+        # Edge coords follow pattern: [source_x, target_x, None, source_x, target_x, None, ...]
+        edges_x, edges_y, edges_z = edge_coords
+        i = 0
+        while i < len(edges_x) - 2:  # Ensure we have at least 3 elements (source, target, None)
+            if edges_x[i] is not None and edges_x[i+1] is not None:
+                # Find source and target from coordinates
+                source_idx = None
+                target_idx = None
+                for j, (x, y, z) in enumerate(positions):
+                    if source_idx is None and abs(x - edges_x[i]) < 0.01 and abs(y - edges_y[i]) < 0.01 and abs(z - edges_z[i]) < 0.01:
+                        source_idx = j
+                    if target_idx is None and abs(x - edges_x[i+1]) < 0.01 and abs(y - edges_y[i+1]) < 0.01 and abs(z - edges_z[i+1]) < 0.01:
+                        target_idx = j
+                    if source_idx is not None and target_idx is not None:
+                        break  # Found both, stop searching
+                
+                if source_idx is not None and target_idx is not None:
+                    source_id = asset_ids[source_idx]
+                    target_id = asset_ids[target_idx]
+                    
+                    # Find relationship type and strength from graph.relationships
+                    rel_type = "unknown"
+                    strength = 0.5
+                    if source_id in graph.relationships:
+                        for t_id, r_type, r_strength in graph.relationships[source_id]:
+                            if t_id == target_id:
+                                rel_type = r_type
+                                strength = r_strength
+                                break
+                    
+                    edges.append({
+                        "source": source_id,
+                        "target": target_id,
+                        "relationship_type": rel_type,
+                        "strength": float(strength)
+                    })
+            i += 3  # Skip to next edge (each edge has 3 elements: source, target, None separator)
         
         return VisualizationDataResponse(nodes=nodes, edges=edges)
     except Exception as e:

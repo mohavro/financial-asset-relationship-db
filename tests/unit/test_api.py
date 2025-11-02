@@ -193,11 +193,11 @@ class TestAssetsEndpoint:
         mock_graph_instance.calculate_metrics = mock_graph.calculate_metrics
         mock_graph_instance.get_3d_visualization_data = mock_graph.get_3d_visualization_data
 
-        response = client.get("/api/assets?asset_class=EQUITY")
+        response = client.get("/api/assets?asset_class=Equity")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
-        assert data[0]["asset_class"] == "EQUITY"
+        assert data[0]["asset_class"] == "Equity"
         assert data[0]["symbol"] == "AAPL"
 
     @patch('api.main.graph')
@@ -224,11 +224,11 @@ class TestAssetsEndpoint:
         mock_graph_instance.calculate_metrics = mock_graph.calculate_metrics
         mock_graph_instance.get_3d_visualization_data = mock_graph.get_3d_visualization_data
 
-        response = client.get("/api/assets?asset_class=EQUITY&sector=Technology")
+        response = client.get("/api/assets?asset_class=Equity&sector=Technology")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
-        assert data[0]["asset_class"] == "EQUITY"
+        assert data[0]["asset_class"] == "Equity"
         assert data[0]["sector"] == "Technology"
 
     @patch('api.main.graph')
@@ -240,7 +240,7 @@ class TestAssetsEndpoint:
         mock_graph_instance.calculate_metrics = mock_graph.calculate_metrics
         mock_graph_instance.get_3d_visualization_data = mock_graph.get_3d_visualization_data
 
-        response = client.get("/api/assets?asset_class=EQUITY")
+        response = client.get("/api/assets?asset_class=Equity")
         assert response.status_code == 200
         data = response.json()
 
@@ -278,7 +278,7 @@ class TestAssetDetailEndpoint:
         assert data["id"] == "TEST_AAPL"
         assert data["symbol"] == "AAPL"
         assert data["name"] == "Apple Inc."
-        assert data["asset_class"] == "EQUITY"
+        assert data["asset_class"] == "Equity"
         assert data["price"] == 150.00
 
     @patch('api.main.graph')
@@ -306,7 +306,7 @@ class TestAssetDetailEndpoint:
         response = client.get("/api/assets/TEST_CORP")
         assert response.status_code == 200
         data = response.json()
-        assert data["asset_class"] == "BOND"
+        assert data["asset_class"] == "Fixed Income"
         assert "issuer_id" in data["additional_fields"]
         assert data["additional_fields"]["issuer_id"] == "TEST_AAPL"
 
@@ -411,10 +411,10 @@ class TestMetricsEndpoint:
         response = client.get("/api/metrics")
         data = response.json()
 
-        assert "EQUITY" in data["asset_classes"]
-        assert "BOND" in data["asset_classes"]
-        assert data["asset_classes"]["EQUITY"] == 1
-        assert data["asset_classes"]["BOND"] == 1
+        assert "Equity" in data["asset_classes"]
+        assert "Fixed Income" in data["asset_classes"]
+        assert data["asset_classes"]["Equity"] == 1
+        assert data["asset_classes"]["Fixed Income"] == 1
 
 
 class TestVisualizationEndpoint:
@@ -499,10 +499,10 @@ class TestMetadataEndpoints:
 
         assert "asset_classes" in data
         assert isinstance(data["asset_classes"], list)
-        assert "EQUITY" in data["asset_classes"]
-        assert "BOND" in data["asset_classes"]
-        assert "COMMODITY" in data["asset_classes"]
-        assert "CURRENCY" in data["asset_classes"]
+        assert "Equity" in data["asset_classes"]
+        assert "Fixed Income" in data["asset_classes"]
+        assert "Commodity" in data["asset_classes"]
+        assert "Currency" in data["asset_classes"]
 
     @patch('api.main.graph')
     def test_get_sectors(self, mock_graph_instance, client, mock_graph):
@@ -532,7 +532,11 @@ class TestEdgeCases:
     def test_empty_graph(self, mock_graph_instance, client):
         """Test handling of empty graph."""
         empty_graph = AssetRelationshipGraph()
-        mock_graph_instance.return_value = empty_graph
+        # Configure empty graph attributes
+        mock_graph_instance.assets = empty_graph.assets
+        mock_graph_instance.relationships = empty_graph.relationships
+        mock_graph_instance.calculate_metrics = empty_graph.calculate_metrics
+        mock_graph_instance.get_3d_visualization_data = empty_graph.get_3d_visualization_data
 
         response = client.get("/api/assets")
         assert response.status_code == 200
@@ -686,16 +690,10 @@ class TestRealDataFetcherFallback:
         # Individual fetch failures result in empty lists, not fallback
         assert len(graph.assets) == 0
 
-    @patch('api.main.RealDataFetcher')
-    @patch('src.data.sample_data.create_sample_database')
     @patch('src.data.real_data_fetcher.RealDataFetcher._fetch_equity_data')
-    def test_fetcher_falls_back_on_unhandled_exception(self, mock_fetch_equity, mock_sample_db):
+    def test_fetcher_falls_back_on_unhandled_exception(self, mock_fetch_equity):
         """Test that unhandled exceptions in create_real_database trigger fallback."""
         from src.data.real_data_fetcher import RealDataFetcher
-
-        # Create a mock sample database
-        sample_graph = AssetRelationshipGraph()
-        mock_sample_db.return_value = sample_graph
 
         # Simulate unhandled exception in fetching
         mock_fetch_equity.side_effect = RuntimeError("Unexpected error")
@@ -703,12 +701,12 @@ class TestRealDataFetcherFallback:
         fetcher = RealDataFetcher()
         graph = fetcher.create_real_database()
 
-        # Should have called the fallback
-        mock_sample_db.assert_called_once()
-        assert graph == sample_graph
+        # Should have created a graph with fallback data
+        assert graph is not None
+        assert isinstance(graph, AssetRelationshipGraph)
+        # After fallback to sample data, should have assets
+        assert len(graph.assets) > 0
 
-    @patch('api.main.graph')
-    @patch('api.main.graph')
     @patch('src.data.real_data_fetcher.yf.Ticker')
     def test_real_data_fetcher_empty_history_graceful_handling(self, mock_ticker):
         """Test RealDataFetcher handles empty ticker history gracefully."""
@@ -727,7 +725,6 @@ class TestRealDataFetcherFallback:
         assert graph is not None
         assert isinstance(graph, AssetRelationshipGraph)
 
-    @patch('api.main.graph')
     @patch('src.data.real_data_fetcher.logger')
     @patch('src.data.real_data_fetcher.RealDataFetcher._fetch_equity_data')
     def test_real_data_fetcher_logs_fallback_on_exception(self, mock_fetch_equity, mock_logger):
@@ -747,7 +744,6 @@ class TestRealDataFetcherFallback:
         warning_calls = [str(call) for call in mock_logger.warning.call_args_list]
         assert any("Falling back" in call for call in warning_calls)
 
-    @patch('api.main.graph')
     @patch('src.data.real_data_fetcher.logger')
     @patch('src.data.real_data_fetcher.yf.Ticker')
     def test_individual_asset_class_fetch_failures_logged(self, mock_ticker, mock_logger):
