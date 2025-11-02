@@ -184,7 +184,6 @@ async def get_assets(
         List[AssetResponse]: AssetResponse objects matching the filters. Each object's `additional_fields` contains any non-null, asset-type-specific attributes as defined in the respective asset model classes.
     """
     try:
-        g = get_graph()
         assets = []
         
         for asset_id, asset in graph.assets.items():
@@ -291,8 +290,6 @@ async def get_asset_relationships(asset_id: str):
         HTTPException: 404 if the asset is not found; 500 for unexpected errors.
     """
     try:
-        g = get_graph()
-        
         if asset_id not in graph.assets:
             raise_asset_not_found(asset_id)
         
@@ -325,7 +322,6 @@ async def get_all_relationships():
         List[RelationshipResponse]: List of relationships where each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
     """
     try:
-        g = get_graph()
         relationships = []
         
         for source_id, rels in graph.relationships.items():
@@ -363,8 +359,7 @@ async def get_metrics():
         HTTPException: with status code 500 if metrics cannot be obtained.
     """
     try:
-        g = get_graph()
-        metrics = g.calculate_metrics()
+        metrics = graph.calculate_metrics()
         
         # Count assets by class
         asset_classes = {}
@@ -399,8 +394,7 @@ async def get_visualization_data():
         HTTPException: If visualization data cannot be retrieved or processed; results in a 500 status with the error detail.
     """
     try:
-        g = get_graph()
-        viz_data = g.get_3d_visualization_data()
+        viz_data = graph.get_3d_visualization_data()
         
         nodes = []
         for node in (viz_data.get("nodes") if isinstance(viz_data.get("nodes"), list) else []):
@@ -456,7 +450,6 @@ async def get_sectors():
         HTTPException: Raised with status code 500 if an unexpected error occurs while retrieving sectors.
     """
     try:
-        g = get_graph()
         sectors = set()
         for asset in graph.assets.values():
             if asset.sector:
