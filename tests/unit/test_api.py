@@ -193,11 +193,11 @@ class TestAssetsEndpoint:
         mock_graph_instance.calculate_metrics = mock_graph.calculate_metrics
         mock_graph_instance.get_3d_visualization_data = mock_graph.get_3d_visualization_data
 
-        response = client.get("/api/assets?asset_class=EQUITY")
+        response = client.get("/api/assets?asset_class=Equity")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
-        assert data[0]["asset_class"] == "EQUITY"
+        assert data[0]["asset_class"] == "Equity"
         assert data[0]["symbol"] == "AAPL"
 
     @patch('api.main.graph')
@@ -224,11 +224,11 @@ class TestAssetsEndpoint:
         mock_graph_instance.calculate_metrics = mock_graph.calculate_metrics
         mock_graph_instance.get_3d_visualization_data = mock_graph.get_3d_visualization_data
 
-        response = client.get("/api/assets?asset_class=EQUITY&sector=Technology")
+        response = client.get("/api/assets?asset_class=Equity&sector=Technology")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 1
-        assert data[0]["asset_class"] == "EQUITY"
+        assert data[0]["asset_class"] == "Equity"
         assert data[0]["sector"] == "Technology"
 
     @patch('api.main.graph')
@@ -240,7 +240,7 @@ class TestAssetsEndpoint:
         mock_graph_instance.calculate_metrics = mock_graph.calculate_metrics
         mock_graph_instance.get_3d_visualization_data = mock_graph.get_3d_visualization_data
 
-        response = client.get("/api/assets?asset_class=EQUITY")
+        response = client.get("/api/assets?asset_class=Equity")
         assert response.status_code == 200
         data = response.json()
 
@@ -278,7 +278,7 @@ class TestAssetDetailEndpoint:
         assert data["id"] == "TEST_AAPL"
         assert data["symbol"] == "AAPL"
         assert data["name"] == "Apple Inc."
-        assert data["asset_class"] == "EQUITY"
+        assert data["asset_class"] == "Equity"
         assert data["price"] == 150.00
 
     @patch('api.main.graph')
@@ -306,7 +306,7 @@ class TestAssetDetailEndpoint:
         response = client.get("/api/assets/TEST_CORP")
         assert response.status_code == 200
         data = response.json()
-        assert data["asset_class"] == "BOND"
+        assert data["asset_class"] == "Fixed Income"
         assert "issuer_id" in data["additional_fields"]
         assert data["additional_fields"]["issuer_id"] == "TEST_AAPL"
 
@@ -411,10 +411,10 @@ class TestMetricsEndpoint:
         response = client.get("/api/metrics")
         data = response.json()
 
-        assert "EQUITY" in data["asset_classes"]
-        assert "BOND" in data["asset_classes"]
-        assert data["asset_classes"]["EQUITY"] == 1
-        assert data["asset_classes"]["BOND"] == 1
+        assert "Equity" in data["asset_classes"]
+        assert "Fixed Income" in data["asset_classes"]
+        assert data["asset_classes"]["Equity"] == 1
+        assert data["asset_classes"]["Fixed Income"] == 1
 
 
 class TestVisualizationEndpoint:
@@ -499,10 +499,10 @@ class TestMetadataEndpoints:
 
         assert "asset_classes" in data
         assert isinstance(data["asset_classes"], list)
-        assert "EQUITY" in data["asset_classes"]
-        assert "BOND" in data["asset_classes"]
-        assert "COMMODITY" in data["asset_classes"]
-        assert "CURRENCY" in data["asset_classes"]
+        assert "Equity" in data["asset_classes"]
+        assert "Fixed Income" in data["asset_classes"]
+        assert "Commodity" in data["asset_classes"]
+        assert "Currency" in data["asset_classes"]
 
     @patch('api.main.graph')
     def test_get_sectors(self, mock_graph_instance, client, mock_graph):
