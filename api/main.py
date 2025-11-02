@@ -207,7 +207,9 @@ async def get_assets(
         g = get_graph()
         assets = []
         
-        for asset_id, asset in g.assets.items():
+except Exception as e:
+    logger.exception("Error getting assets:")
+    raise HTTPException(status_code=500, detail=str(e)) from e
             # Apply filters
             if asset_class and asset.asset_class.value != asset_class:
                 continue
