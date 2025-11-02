@@ -73,19 +73,29 @@ class TestValidateOrigin:
 class TestGraphInitialization:
     """Test the eager graph initialization at module load."""
 
-    def test_graph_initialization(self):
-        """Test graph is initialized at module load."""
+    def test_graph_lazy_initialization(self):
+        """Test graph is lazily initialized on first get_graph() call."""
         import api.main
-        assert api.main.graph is not None
-        assert hasattr(api.main.graph, 'assets')
-        assert hasattr(api.main.graph, 'relationships')
+        # Reset graph to None to test initialization
+        api.main.graph = None
+        assert api.main.graph is None
+        
+        # First call to get_graph should initialize
+        graph = api.main.get_graph()
+        assert graph is not None
+        assert hasattr(graph, 'assets')
+        assert hasattr(graph, 'relationships')
 
     def test_graph_singleton(self):
         """Test graph is a singleton instance."""
         import api.main
-        graph = api.main.graph
-        # Multiple accesses should return the same instance
-        assert api.main.graph is graph
+        # Reset graph to None
+        api.main.graph = None
+        
+        # Multiple calls to get_graph should return the same instance
+        graph1 = api.main.get_graph()
+        graph2 = api.main.get_graph()
+        assert graph1 is graph2
 
 
 class TestPydanticModels:
@@ -387,26 +397,26 @@ class TestErrorHandling:
         """Create a test client."""
         return TestClient(app)
 
-    @patch('api.main.graph')
-    def test_get_assets_server_error(self, mock_graph_instance, client):
+    @patch('api.main.get_graph')
+    def test_get_assets_server_error(self, mock_get_graph, client):
         """Test that server errors are handled gracefully."""
         # Make graph.assets raise exception
-        type(mock_graph_instance).assets = property(lambda self: (_ for _ in ()).throw(Exception("Database error")))
+        mock_graph = Mock()
+        type(mock_graph).assets = property(lambda self: (_ for _ in ()).throw(Exception("Database error")))
+        mock_get_graph.return_value = mock_graph
 
         response = client.get("/api/assets")
         assert response.status_code == 500
         assert "Database error" in response.json()["detail"]
 
-    @patch('api.main.graph')
-    def test_get_metrics_server_error(self, mock_graph_instance, client):
+    @patch('api.main.get_graph')
+    def test_get_metrics_server_error(self, mock_get_graph, client):
         """Test metrics endpoint error handling."""
         mock_graph = Mock()
         mock_graph.calculate_metrics.side_effect = Exception("Calculation error")
-        # Configure patched graph with mock_graph attributes
-        mock_graph_instance.assets = mock_graph.assets
-        mock_graph_instance.relationships = mock_graph.relationships
-        mock_graph_instance.calculate_metrics = mock_graph.calculate_metrics
-        mock_graph_instance.get_3d_visualization_data = mock_graph.get_3d_visualization_data
+        mock_graph.assets = {}
+        mock_graph.relationships = {}
+        mock_get_graph.return_value = mock_graph
 
         response = client.get("/api/metrics")
         assert response.status_code == 500
