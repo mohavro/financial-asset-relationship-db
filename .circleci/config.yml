@@ -75,17 +75,17 @@ jobs:
           key: python-deps-v1-{{ checksum "requirements.txt" }}
           paths:
             - ~/.cache/pip
-- run:
-    name: Run tests with pytest
-    command: |
-      pytest --cov=src --cov=tests --cov-report=xml --cov-report=html --cov-report=term-missing -v --junitxml=test-results/pytest/results.xml
-- codecov/upload:
-    file: coverage.xml
-- store_test_results:
-    path: test-results
-- store_artifacts:
-    path: htmlcov
-    destination: coverage-report
+      - run:
+          name: Run tests with pytest
+          command: |
+            pytest --cov=src --cov=tests --cov-report=xml --cov-report=html --cov-report=term-missing -v --junitxml=test-results/pytest/results.xml
+      - codecov/upload:
+          file: coverage.xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: htmlcov
+          destination: coverage-report
 
   python-security:
     executor: python-executor
@@ -103,9 +103,9 @@ jobs:
             if [ -f requirements-dev.txt ]; then
               pip install -r requirements-dev.txt
             fi
-- run:
-    name: Security check with safety
-    command: safety check --json
+      - run:
+          name: Security check with safety
+          command: safety check --json
       - run:
           name: Security check with bandit
           command: bandit -r src/ -ll -f json -o bandit-report.json
