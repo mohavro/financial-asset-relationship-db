@@ -295,16 +295,16 @@ async def get_asset_detail(asset_id: str):
 @app.get("/api/assets/{asset_id}/relationships", response_model=List[RelationshipResponse])
 async def get_asset_relationships(asset_id: str):
     """
-    Return all outgoing relationships for the asset identified by `asset_id`.
+    List outgoing relationships for the specified asset.
     
     Parameters:
-        asset_id (str): Identifier of the asset whose relationships are requested.
+        asset_id (str): Identifier of the asset whose outgoing relationships are requested.
     
     Returns:
-        List[RelationshipResponse]: A list of relationship records (source_id, target_id, relationship_type, strength).
+        List[RelationshipResponse]: Outgoing relationship records for the asset (each with source_id, target_id, relationship_type, and strength).
     
     Raises:
-        HTTPException: 404 if the asset is not found; 500 for other errors.
+        HTTPException: 404 if the asset is not found; 500 for unexpected errors.
     """
     try:
         g = get_graph()
@@ -335,10 +335,10 @@ async def get_asset_relationships(asset_id: str):
 @app.get("/api/relationships", response_model=List[RelationshipResponse])
 async def get_all_relationships():
     """
-    Return a list of all relationships present in the initialized asset graph.
+    List all directed relationships in the initialized asset graph.
     
     Returns:
-        List[RelationshipResponse]: List of directed relationships; each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
+        List[RelationshipResponse]: List of relationships where each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
     """
     try:
         g = get_graph()
@@ -362,18 +362,18 @@ async def get_all_relationships():
 @app.get("/api/metrics", response_model=MetricsResponse)
 async def get_metrics():
     """
-    Retrieve network metrics and counts of assets grouped by asset class from the global graph.
+    Return aggregated network metrics and counts of assets grouped by asset class.
     
-    Builds a MetricsResponse containing aggregated network statistics and a mapping of asset class names to their asset counts.
+    Builds a MetricsResponse containing overall network statistics and a mapping from asset class name to the number of assets in that class.
     
     Returns:
-        MetricsResponse: Object with fields:
+        MetricsResponse: Object with the following fields:
             - total_assets: total number of assets in the graph.
-            - total_relationships: total number of relationships in the graph.
-            - asset_classes: dict mapping asset class name to count of assets.
-            - avg_degree: average node degree in the network.
-            - max_degree: maximum node degree in the network.
-            - network_density: density of the network.
+            - total_relationships: total number of directed relationships in the graph.
+            - asset_classes: dict mapping asset class name (str) to its asset count (int).
+            - avg_degree: average node degree (float).
+            - max_degree: maximum node degree (int).
+            - network_density: network density (float).
     
     Raises:
         HTTPException: with status code 500 if metrics cannot be obtained.
@@ -463,13 +463,13 @@ async def get_asset_classes():
 @app.get("/api/sectors")
 async def get_sectors():
     """
-    Return a sorted list of unique sectors present in the asset graph.
+    List unique sector names present in the global asset graph in sorted order.
     
     Returns:
-        Dict[str, List[str]]: A mapping with key "sectors" to a sorted list of unique sector names.
+        Dict[str, List[str]]: Mapping with key "sectors" to a sorted list of unique sector names.
     
     Raises:
-        HTTPException: If an error occurs while retrieving sectors (responds with status 500).
+        HTTPException: Raised with status code 500 if an unexpected error occurs while retrieving sectors.
     """
     try:
         g = get_graph()
