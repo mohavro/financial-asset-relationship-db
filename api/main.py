@@ -417,18 +417,21 @@ async def get_visualization_data():
         
         edges = []
         # Parse edge coordinates to build edge list
+        # Edge coords follow pattern: [source_x, target_x, None, source_x, target_x, None, ...]
         edges_x, edges_y, edges_z = edge_coords
         i = 0
-        while i < len(edges_x):
+        while i < len(edges_x) - 2:  # Ensure we have at least 3 elements (source, target, None)
             if edges_x[i] is not None and edges_x[i+1] is not None:
                 # Find source and target from coordinates
                 source_idx = None
                 target_idx = None
                 for j, (x, y, z) in enumerate(positions):
-                    if abs(x - edges_x[i]) < 0.01 and abs(y - edges_y[i]) < 0.01 and abs(z - edges_z[i]) < 0.01:
+                    if source_idx is None and abs(x - edges_x[i]) < 0.01 and abs(y - edges_y[i]) < 0.01 and abs(z - edges_z[i]) < 0.01:
                         source_idx = j
-                    if abs(x - edges_x[i+1]) < 0.01 and abs(y - edges_y[i+1]) < 0.01 and abs(z - edges_z[i+1]) < 0.01:
+                    if target_idx is None and abs(x - edges_x[i+1]) < 0.01 and abs(y - edges_y[i+1]) < 0.01 and abs(z - edges_z[i+1]) < 0.01:
                         target_idx = j
+                    if source_idx is not None and target_idx is not None:
+                        break  # Found both, stop searching
                 
                 if source_idx is not None and target_idx is not None:
                     source_id = asset_ids[source_idx]
@@ -450,7 +453,7 @@ async def get_visualization_data():
                         "relationship_type": rel_type,
                         "strength": float(strength)
                     })
-            i += 3  # Skip to next edge (source, target, None pattern)
+            i += 3  # Skip to next edge (each edge has 3 elements: source, target, None separator)
         
         return VisualizationDataResponse(nodes=nodes, edges=edges)
     except Exception as e:
