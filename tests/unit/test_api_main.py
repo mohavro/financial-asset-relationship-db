@@ -82,7 +82,7 @@ class TestGraphInitialization:
         assert hasattr(graph, 'relationships')
 
     def test_graph_singleton(self):
-        """Test graph is a singleton instance."""
+        """Test graph is a singleton instance via get_graph()."""
         import api.main
         graph1 = api.main.get_graph()
         graph2 = api.main.get_graph()
