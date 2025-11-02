@@ -15,7 +15,7 @@ class TestAPIMain:
         from api.main import app
         
         # Create TestClient which triggers startup events
-        with TestClient(app) as client:
+        with TestClient(app):
             # Import api.main to access the graph
             import api.main
             assert api.main.graph is not None
