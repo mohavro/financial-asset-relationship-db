@@ -82,8 +82,8 @@ class FormulaicVisualizer:
         correlation_matrix = empirical_relationships.get('correlation_matrix', {})
         if correlation_matrix:
             # Convert correlation matrix to heatmap format
-            assets = list(set([pair.split('-')[0] for pair in correlation_matrix.keys()] +
-                            [pair.split('-')[1] for pair in correlation_matrix.keys()]))
+            assets = list(set([pair.split('-')[0] for pair in correlation_matrix.keys()]
+                              + [pair.split('-')[1] for pair in correlation_matrix.keys()]))
 
             # Create correlation matrix
             n_assets = min(len(assets), 8)  # Limit to 8x8 for visibility
@@ -212,15 +212,15 @@ class FormulaicVisualizer:
 
         # Create a text-based visualization of the formula
         fig.add_annotation(
-            text=f"<b>{formula.name}</b><br><br>" +
-                 f"<b>Mathematical Expression:</b><br>{formula.formula}<br><br>" +
-                 f"<b>LaTeX:</b><br>{formula.latex}<br><br>" +
-                 f"<b>Description:</b><br>{formula.description}<br><br>" +
-                 f"<b>Category:</b> {formula.category}<br>" +
-                 f"<b>Reliability (R²):</b> {formula.r_squared:.3f}<br><br>" +
-                 "<b>Variables:</b><br>" +
-                 "<br>".join([f"• {var}: {desc}" for var, desc in formula.variables.items()]) +
-                 f"<br><br><b>Example Calculation:</b><br>{formula.example_calculation}",
+            text=(f"<b>{formula.name}</b><br><br>"
+                  + f"<b>Mathematical Expression:</b><br>{formula.formula}<br><br>"
+                  + f"<b>LaTeX:</b><br>{formula.latex}<br><br>"
+                  + f"<b>Description:</b><br>{formula.description}<br><br>"
+                  + f"<b>Category:</b> {formula.category}<br>"
+                  + f"<b>Reliability (R²):</b> {formula.r_squared:.3f}<br><br>"
+                  + "<b>Variables:</b><br>"
+                  + "<br>".join([f"• {var}: {desc}" for var, desc in formula.variables.items()])
+                  + f"<br><br><b>Example Calculation:</b><br>{formula.example_calculation}"),
             xref="paper", yref="paper",
             x=0.5, y=0.5,
             showarrow=False,
@@ -259,8 +259,8 @@ class FormulaicVisualizer:
             return fig
 
         # Extract unique assets
-        assets = list(set([corr['asset1'] for corr in strongest_correlations] +
-                         [corr['asset2'] for corr in strongest_correlations]))
+        assets = list(set([corr['asset1'] for corr in strongest_correlations]
+                          + [corr['asset2'] for corr in strongest_correlations]))
 
         # Create positions in a circle
         n_assets = len(assets)

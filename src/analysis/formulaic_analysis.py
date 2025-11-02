@@ -49,8 +49,8 @@ class FormulaicdAnalyzer:
         cross_asset_formulas = self._analyze_cross_asset_relationships(graph)
 
         all_formulas = (
-            fundamental_formulas + correlation_formulas + valuation_formulas +
-            risk_return_formulas + portfolio_formulas + cross_asset_formulas
+            fundamental_formulas + correlation_formulas + valuation_formulas
+            + risk_return_formulas + portfolio_formulas + cross_asset_formulas
         )
 
         # Calculate empirical relationships from actual data

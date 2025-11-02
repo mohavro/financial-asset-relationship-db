@@ -194,9 +194,9 @@ def create_sample_database() -> AssetRelationshipGraph:
         relationship_count = sum(len(rels) for rels in graph.relationships.values())
         logger.info(f"Expanded sample database created with {asset_count} assets and {relationship_count} relationships")
         logger.info(f"Asset classes covered: Equity ({len([a for a in all_assets if a.asset_class == AssetClass.EQUITY])}), "
-                   f"Fixed Income ({len([a for a in all_assets if a.asset_class == AssetClass.FIXED_INCOME])}), "
-                   f"Commodity ({len([a for a in all_assets if a.asset_class == AssetClass.COMMODITY])}), "
-                   f"Currency ({len([a for a in all_assets if a.asset_class == AssetClass.CURRENCY])})")
+                    f"Fixed Income ({len([a for a in all_assets if a.asset_class == AssetClass.FIXED_INCOME])}), "
+                    f"Commodity ({len([a for a in all_assets if a.asset_class == AssetClass.COMMODITY])}), "
+                    f"Currency ({len([a for a in all_assets if a.asset_class == AssetClass.CURRENCY])})")
 
         return graph
     except Exception as e:

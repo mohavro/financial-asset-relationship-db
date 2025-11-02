@@ -86,15 +86,21 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     return fig
 
 
-def _create_relationship_traces(graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]) -> List[go.Scatter3d]:
-    """Create separate traces for different types of relationships with enhanced visibility"""
-    traces = []
+def _check_if_bidirectional(graph: AssetRelationshipGraph, source_id: str, target_id: str, rel_type: str) -> bool:
+    """Check if a relationship exists in both directions."""
+    if target_id not in graph.relationships:
+        return False
 
-    # Track bidirectional relationships to avoid duplicates
-    bidirectional_pairs = set()
+    for reverse_target, reverse_rel_type, _ in graph.relationships[target_id]:
+        if reverse_target == source_id and reverse_rel_type == rel_type:
+            return True
+    return False
 
-    # Collect all relationships with their directionality info
+
+def _collect_relationships(graph: AssetRelationshipGraph, asset_ids: List[str]) -> List[dict]:
+    """Collect all relationships with directionality information."""
     all_relationships = []
+    bidirectional_pairs = set()
 
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids:
@@ -104,58 +110,66 @@ def _create_relationship_traces(graph: AssetRelationshipGraph, positions: np.nda
             if target_id not in asset_ids:
                 continue
 
-            # Check if this is bidirectional
-            is_bidirectional = False
-            reverse_exists = False
-
-            if target_id in graph.relationships:
-                for reverse_target, reverse_rel_type, reverse_strength in graph.relationships[target_id]:
-                    if reverse_target == source_id and reverse_rel_type == rel_type:
-                        reverse_exists = True
-                        break
-
-            # Create a unique pair identifier
+            is_bidirectional = _check_if_bidirectional(graph, source_id, target_id, rel_type)
             pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
 
-            if reverse_exists and pair_key not in bidirectional_pairs:
-                is_bidirectional = True
+            if is_bidirectional and pair_key not in bidirectional_pairs:
                 bidirectional_pairs.add(pair_key)
+                all_relationships.append({
+                    'source_id': source_id,
+                    'target_id': target_id,
+                    'rel_type': rel_type,
+                    'strength': strength,
+                    'is_bidirectional': True,
+                    'pair_key': pair_key
+                })
+            elif not is_bidirectional:
+                all_relationships.append({
+                    'source_id': source_id,
+                    'target_id': target_id,
+                    'rel_type': rel_type,
+                    'strength': strength,
+                    'is_bidirectional': False,
+                    'pair_key': pair_key
+                })
 
-            all_relationships.append({
-                'source_id': source_id,
-                'target_id': target_id,
-                'rel_type': rel_type,
-                'strength': strength,
-                'is_bidirectional': is_bidirectional,
-                'pair_key': pair_key
-            })
+    return all_relationships
+
+
+def _get_relationship_style(rel_type: str, is_bidirectional: bool) -> tuple:
+    """Get color, width, and dash style for a relationship type."""
+    rel_type_colors = {
+        'same_sector': '#FF6B6B',
+        'market_cap_similar': '#4ECDC4',
+        'correlation': '#45B7D1',
+        'corporate_bond_to_equity': '#96CEB4',
+        'commodity_currency': '#FFEAA7',
+        'income_comparison': '#DDA0DD',
+        'regulatory_impact': '#FFA07A',
+        'default': '#888888'
+    }
+
+    color = rel_type_colors.get(rel_type, rel_type_colors['default'])
+    line_width = 4 if is_bidirectional else 2
+    line_dash = 'solid' if is_bidirectional else 'dash'
+
+    return color, line_width, line_dash
+
+
+def _create_relationship_traces(graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]) -> List[go.Scatter3d]:
+    """Create separate traces for different types of relationships with enhanced visibility"""
+    traces = []
+
+    # Collect all relationships
+    all_relationships = _collect_relationships(graph, asset_ids)
 
     # Group relationships by type and directionality
     relationship_groups = {}
-
     for rel in all_relationships:
-        # Skip if we already processed this bidirectional relationship
-        if rel['is_bidirectional'] and rel['pair_key'] in bidirectional_pairs:
-            bidirectional_pairs.discard(rel['pair_key'])  # Remove to prevent duplicate processing
-        elif rel['is_bidirectional']:
-            continue  # Skip duplicate of bidirectional relationship
-
         group_key = (rel['rel_type'], rel['is_bidirectional'])
         if group_key not in relationship_groups:
             relationship_groups[group_key] = []
         relationship_groups[group_key].append(rel)
-
-    # Color and style mapping for relationship types
-    rel_type_colors = {
-        'same_sector': '#FF6B6B',           # Red for sector relationships
-        'market_cap_similar': '#4ECDC4',    # Teal for market cap
-        'correlation': '#45B7D1',           # Blue for correlations
-        'corporate_bond_to_equity': '#96CEB4',  # Green for corporate bonds
-        'commodity_currency': '#FFEAA7',    # Yellow for commodity-currency
-        'income_comparison': '#DDA0DD',     # Plum for income comparisons
-        'regulatory_impact': '#FFA07A',     # Light salmon for regulatory
-        'default': '#888888'                # Gray for others
-    }
 
     # Create traces for each relationship group
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
@@ -176,15 +190,10 @@ def _create_relationship_traces(graph: AssetRelationshipGraph, positions: np.nda
             hover_texts.extend([hover_text, hover_text, None])
 
         if edges_x:  # Only create trace if there are edges
-            color = rel_type_colors.get(rel_type, rel_type_colors['default'])
-            line_width = 4 if is_bidirectional else 2
-            line_dash = 'solid' if is_bidirectional else 'dash'
+            color, line_width, line_dash = _get_relationship_style(rel_type, is_bidirectional)
 
             trace_name = f"{rel_type.replace('_', ' ').title()}"
-            if is_bidirectional:
-                trace_name += " (↔)"
-            else:
-                trace_name += " (→)"
+            trace_name += " (↔)" if is_bidirectional else " (→)"
 
             trace = go.Scatter3d(
                 x=edges_x, y=edges_y, z=edges_z,
@@ -379,24 +388,10 @@ def visualize_3d_graph_with_filters(
     return fig
 
 
-def _create_filtered_relationship_traces(
-    graph: AssetRelationshipGraph,
-    positions: np.ndarray,
-    asset_ids: List[str],
-    relationship_filters: dict = None
-) -> List[go.Scatter3d]:
-    """Create relationship traces with optional filtering"""
-    traces = []
-
-    if relationship_filters is None:
-        # Show all relationships - use original logic
-        return _create_relationship_traces(graph, positions, asset_ids)
-
-    # Track bidirectional relationships to avoid duplicates
-    bidirectional_pairs = set()
-
-    # Collect all relationships with their directionality info
+def _collect_filtered_relationships(graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict) -> List[dict]:
+    """Collect relationships with optional filtering."""
     all_relationships = []
+    bidirectional_pairs = set()
 
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids:
@@ -410,58 +405,55 @@ def _create_filtered_relationship_traces(
             if rel_type in relationship_filters and not relationship_filters[rel_type]:
                 continue
 
-            # Check if this is bidirectional
-            is_bidirectional = False
-            reverse_exists = False
-
-            if target_id in graph.relationships:
-                for reverse_target, reverse_rel_type, reverse_strength in graph.relationships[target_id]:
-                    if reverse_target == source_id and reverse_rel_type == rel_type:
-                        reverse_exists = True
-                        break
-
-            # Create a unique pair identifier
+            is_bidirectional = _check_if_bidirectional(graph, source_id, target_id, rel_type)
             pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
 
-            if reverse_exists and pair_key not in bidirectional_pairs:
-                is_bidirectional = True
+            if is_bidirectional and pair_key not in bidirectional_pairs:
                 bidirectional_pairs.add(pair_key)
+                all_relationships.append({
+                    'source_id': source_id,
+                    'target_id': target_id,
+                    'rel_type': rel_type,
+                    'strength': strength,
+                    'is_bidirectional': True,
+                    'pair_key': pair_key
+                })
+            elif not is_bidirectional:
+                all_relationships.append({
+                    'source_id': source_id,
+                    'target_id': target_id,
+                    'rel_type': rel_type,
+                    'strength': strength,
+                    'is_bidirectional': False,
+                    'pair_key': pair_key
+                })
 
-            all_relationships.append({
-                'source_id': source_id,
-                'target_id': target_id,
-                'rel_type': rel_type,
-                'strength': strength,
-                'is_bidirectional': is_bidirectional,
-                'pair_key': pair_key
-            })
+    return all_relationships
+
+
+def _create_filtered_relationship_traces(
+    graph: AssetRelationshipGraph,
+    positions: np.ndarray,
+    asset_ids: List[str],
+    relationship_filters: dict = None
+) -> List[go.Scatter3d]:
+    """Create relationship traces with optional filtering"""
+    if relationship_filters is None:
+        # Show all relationships - use original logic
+        return _create_relationship_traces(graph, positions, asset_ids)
+
+    traces = []
+
+    # Collect filtered relationships
+    all_relationships = _collect_filtered_relationships(graph, asset_ids, relationship_filters)
 
     # Group relationships by type and directionality
     relationship_groups = {}
-
     for rel in all_relationships:
-        # Skip if we already processed this bidirectional relationship
-        if rel['is_bidirectional'] and rel['pair_key'] in bidirectional_pairs:
-            bidirectional_pairs.discard(rel['pair_key'])
-        elif rel['is_bidirectional']:
-            continue
-
         group_key = (rel['rel_type'], rel['is_bidirectional'])
         if group_key not in relationship_groups:
             relationship_groups[group_key] = []
         relationship_groups[group_key].append(rel)
-
-    # Color and style mapping for relationship types
-    rel_type_colors = {
-        'same_sector': '#FF6B6B',
-        'market_cap_similar': '#4ECDC4',
-        'correlation': '#45B7D1',
-        'corporate_bond_to_equity': '#96CEB4',
-        'commodity_currency': '#FFEAA7',
-        'income_comparison': '#DDA0DD',
-        'regulatory_impact': '#FFA07A',
-        'default': '#888888'
-    }
 
     # Create traces for each relationship group
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
@@ -481,15 +473,10 @@ def _create_filtered_relationship_traces(
             hover_texts.extend([hover_text, hover_text, None])
 
         if edges_x:
-            color = rel_type_colors.get(rel_type, rel_type_colors['default'])
-            line_width = 4 if is_bidirectional else 2
-            line_dash = 'solid' if is_bidirectional else 'dash'
+            color, line_width, line_dash = _get_relationship_style(rel_type, is_bidirectional)
 
             trace_name = f"{rel_type.replace('_', ' ').title()}"
-            if is_bidirectional:
-                trace_name += " (↔)"
-            else:
-                trace_name += " (→)"
+            trace_name += " (↔)" if is_bidirectional else " (→)"
 
             trace = go.Scatter3d(
                 x=edges_x, y=edges_y, z=edges_z,

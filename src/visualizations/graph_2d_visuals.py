@@ -10,15 +10,15 @@ from src.logic.asset_graph import AssetRelationshipGraph
 
 
 def visualize_2d_graph(graph: AssetRelationshipGraph,
-                      show_same_sector: bool = True,
-                      show_market_cap: bool = True,
-                      show_correlation: bool = True,
-                      show_corporate_bond: bool = True,
-                      show_commodity_currency: bool = True,
-                      show_income_comparison: bool = True,
-                      show_regulatory: bool = True,
-                      show_all_relationships: bool = False,
-                      layout_type: str = "spring") -> go.Figure:
+                       show_same_sector: bool = True,
+                       show_market_cap: bool = True,
+                       show_correlation: bool = True,
+                       show_corporate_bond: bool = True,
+                       show_commodity_currency: bool = True,
+                       show_income_comparison: bool = True,
+                       show_regulatory: bool = True,
+                       show_all_relationships: bool = False,
+                       layout_type: str = "spring") -> go.Figure:
     """Create 2D network visualization of asset relationship graph"""
 
     # Get enhanced visualization data
@@ -165,7 +165,7 @@ def _create_grid_layout(asset_ids: List[str]) -> Dict[str, Tuple[float, float]]:
 
 
 def _create_spring_layout_2d(positions_3d: Dict[str, Tuple[float, float, float]],
-                            asset_ids: List[str]) -> Dict[str, Tuple[float, float]]:
+                             asset_ids: List[str]) -> Dict[str, Tuple[float, float]]:
     """Convert 3D positions to 2D using projection"""
     positions = {}
 
@@ -178,16 +178,16 @@ def _create_spring_layout_2d(positions_3d: Dict[str, Tuple[float, float, float]]
 
 
 def _create_2d_relationship_traces(graph: AssetRelationshipGraph,
-                                  positions: Dict[str, Tuple[float, float]],
-                                  asset_ids: List[str],
-                                  show_same_sector: bool,
-                                  show_market_cap: bool,
-                                  show_correlation: bool,
-                                  show_corporate_bond: bool,
-                                  show_commodity_currency: bool,
-                                  show_income_comparison: bool,
-                                  show_regulatory: bool,
-                                  show_all_relationships: bool) -> List[go.Scatter]:
+                                   positions: Dict[str, Tuple[float, float]],
+                                   asset_ids: List[str],
+                                   show_same_sector: bool,
+                                   show_market_cap: bool,
+                                   show_correlation: bool,
+                                   show_corporate_bond: bool,
+                                   show_commodity_currency: bool,
+                                   show_income_comparison: bool,
+                                   show_regulatory: bool,
+                                   show_all_relationships: bool) -> List[go.Scatter]:
     """Create 2D relationship traces with filtering"""
 
     traces = []
@@ -245,7 +245,7 @@ def _create_2d_relationship_traces(graph: AssetRelationshipGraph,
 
             # Determine line style based on relationship directionality
             bidirectional_types = ['same_sector', 'market_cap_similar', 'correlation',
-                                 'commodity_currency', 'income_comparison']
+                                   'commodity_currency', 'income_comparison']
             line_width = 3 if rel_type in bidirectional_types else 2
             line_dash = 'solid' if rel_type in bidirectional_types else 'dash'
 
