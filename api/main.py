@@ -91,10 +91,8 @@ try:
     fetcher = RealDataFetcher()
     graph: AssetRelationshipGraph = fetcher.create_real_database()
     logger.info("Graph initialized successfully at module load")
-except Exception as e:
-except Exception as e:
+except Exception:
     logger.exception("Failed to initialize graph at module load")
-    raise
     raise
 
 
@@ -418,44 +416,20 @@ async def get_visualization_data():
             })
         
         edges = []
-        # Parse edge coordinates to build edge list
-        # Edge coords follow pattern: [source_x, target_x, None, source_x, target_x, None, ...]
-        edges_x, edges_y, edges_z = edge_coords
-        i = 0
-        while i < len(edges_x) - 2:  # Ensure we have at least 3 elements (source, target, None)
-            if edges_x[i] is not None and edges_x[i+1] is not None:
-                # Find source and target from coordinates
-                source_idx = None
-                target_idx = None
-                for j, (x, y, z) in enumerate(positions):
-                    if source_idx is None and abs(x - edges_x[i]) < 0.01 and abs(y - edges_y[i]) < 0.01 and abs(z - edges_z[i]) < 0.01:
-                        source_idx = j
-                    if target_idx is None and abs(x - edges_x[i+1]) < 0.01 and abs(y - edges_y[i+1]) < 0.01 and abs(z - edges_z[i+1]) < 0.01:
-                        target_idx = j
-                    if source_idx is not None and target_idx is not None:
-                        break  # Found both, stop searching
-                
-                if source_idx is not None and target_idx is not None:
-                    source_id = asset_ids[source_idx]
-                    target_id = asset_ids[target_idx]
-                    
-                    # Find relationship type and strength from graph.relationships
-                    rel_type = "unknown"
-                    strength = 0.5
-                    if source_id in graph.relationships:
-                        for t_id, r_type, r_strength in graph.relationships[source_id]:
-                            if t_id == target_id:
-                                rel_type = r_type
-                                strength = r_strength
-                                break
-                    
+        # Build edges directly from graph relationships (O(e) instead of O(e × n²))
+        # Only include edges where both source and target are in the asset_ids list
+        asset_id_set = set(asset_ids)
+        for source_id in graph.relationships:
+            if source_id not in asset_id_set:
+                continue
+            for target_id, rel_type, strength in graph.relationships[source_id]:
+                if target_id in asset_id_set:
                     edges.append({
                         "source": source_id,
                         "target": target_id,
                         "relationship_type": rel_type,
                         "strength": float(strength)
                     })
-            i += 3  # Skip to next edge (each edge has 3 elements: source, target, None separator)
         
         return VisualizationDataResponse(nodes=nodes, edges=edges)
     except Exception as e:
