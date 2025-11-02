@@ -135,11 +135,11 @@ jobs:
           key: node-deps-v1-{{ checksum "frontend/package.json" }}
           paths:
             - frontend/node_modules
-      - run:
+- run:
           name: Run ESLint
           command: |
             cd frontend
-            npm run lint --if-present
+            npm run lint
 
   frontend-build:
     executor: node-executor
