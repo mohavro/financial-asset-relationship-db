@@ -207,7 +207,7 @@ async def get_assets(
         g = get_graph()
         assets = []
         
-except Exception as e:
+        assets = []  # This line should be inside the try block
     logger.exception("Error getting assets:")
     raise HTTPException(status_code=500, detail=str(e)) from e
             # Apply filters
