@@ -297,6 +297,9 @@ async def get_asset_relationships(asset_id: str):
     """
     List outgoing relationships for the specified asset.
     
+    Parameters:
+        asset_id (str): Identifier of the asset whose outgoing relationships are requested.
+    
     Returns:
         List[RelationshipResponse]: Outgoing relationship records for the asset (each with source_id, target_id, relationship_type, and strength).
     
