@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Any
 import logging
 import os
 import re
+import threading
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import RealDataFetcher
@@ -30,11 +31,12 @@ app = FastAPI(
 # Determine environment (default to 'development' if not set)
 ENV = os.getenv("ENV", "development").lower()
 
+
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
     # Use module-level ENV variable for environment
     current_env = ENV
-    
+
     # Allow HTTP localhost only in development
     if current_env == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
@@ -48,6 +50,7 @@ def validate_origin(origin: str) -> bool:
     if re.match(r'^https://[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$', origin):
         return True
     return False
+
 
 # Set allowed_origins based on environment
 allowed_origins = []
@@ -83,17 +86,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global graph instance initialized with real data at module load
-# Note: This instance is initialized at module load time, which ensures
-# the database is ready when the API starts. In production, consider
-# using a startup event handler for more explicit initialization timing.
-try:
-    fetcher = RealDataFetcher()
-    graph: AssetRelationshipGraph = fetcher.create_real_database()
-    logger.info("Graph initialized successfully at module load")
-except Exception:
-    logger.exception("Failed to initialize graph at module load")
-    raise
+# Global graph instance and lock for thread-safe lazy initialization
+graph: Optional[AssetRelationshipGraph] = None
+graph_lock = threading.Lock()
+
+
+def get_graph() -> AssetRelationshipGraph:
+    """
+    Get or create the global graph instance with thread-safe initialization.
+
+    Uses double-check locking pattern for efficiency. If the graph has not been
+    initialized, this function will create it using real data.
+
+    Returns:
+        AssetRelationshipGraph: The initialized graph instance.
+
+    Raises:
+        Exception: If graph initialization fails.
+    """
+    global graph
+    if graph is None:
+        with graph_lock:
+            # Double-check inside lock
+            if graph is None:
+                try:
+                    fetcher = RealDataFetcher()
+                    graph = fetcher.create_real_database()
+                    logger.info("Graph initialized successfully")
+                except Exception:
+                    logger.exception("Failed to initialize graph")
+                    raise
+    return graph
 
 
 def raise_asset_not_found(asset_id: str, resource_type: str = "Asset") -> None:
@@ -145,7 +168,7 @@ class VisualizationDataResponse(BaseModel):
 async def root():
     """
     Provide basic API metadata and a listing of available endpoints.
-    
+
     Returns:
         Dict[str, Union[str, Dict[str, str]]]: A mapping containing:
             - "message": short API description string.
@@ -178,24 +201,25 @@ async def get_assets(
 ):
     """
     List assets, optionally filtered by asset class and sector.
-    
+
     Parameters:
         asset_class (Optional[str]): Filter to include only assets whose `asset_class.value` equals this string.
         sector (Optional[str]): Filter to include only assets whose `sector` equals this string.
-    
+
     Returns:
         List[AssetResponse]: AssetResponse objects matching the filters. Each object's `additional_fields` contains any non-null, asset-type-specific attributes as defined in the respective asset model classes.
     """
     try:
+        g = get_graph()
         assets = []
-        
-        for asset_id, asset in graph.assets.items():
+
+        for asset_id, asset in g.assets.items():
             # Apply filters
             if asset_class and asset.asset_class.value != asset_class:
                 continue
             if sector and asset.sector != sector:
                 continue
-            
+
             # Build response
             asset_dict = {
                 "id": asset.id,
@@ -208,17 +232,17 @@ async def get_assets(
                 "currency": asset.currency,
                 "additional_fields": {}
             }
-            
+
             # Add asset-specific fields
             for field in ["pe_ratio", "dividend_yield", "earnings_per_share", "book_value",
-                         "yield_to_maturity", "coupon_rate", "maturity_date", "credit_rating",
-                         "contract_size", "delivery_date", "volatility",
-                         "exchange_rate", "country", "central_bank_rate"]:
+                          "yield_to_maturity", "coupon_rate", "maturity_date", "credit_rating",
+                          "contract_size", "delivery_date", "volatility",
+                          "exchange_rate", "country", "central_bank_rate"]:
                 if hasattr(asset, field):
                     value = getattr(asset, field)
                     if value is not None:
                         asset_dict["additional_fields"][field] = value
-            
+
             assets.append(AssetResponse(**asset_dict))
     except Exception as e:
         logger.exception("Error getting assets:")
@@ -231,23 +255,24 @@ async def get_assets(
 async def get_asset_detail(asset_id: str):
     """
     Retrieve detailed information for the asset identified by `asset_id`.
-    
+
     Parameters:
         asset_id (str): Identifier of the asset whose details are requested.
-    
+
     Returns:
         AssetResponse: Detailed asset information as defined in the AssetResponse model, including core fields and an `additional_fields` map containing any asset-specific attributes that are present and non-null.
-    
+
     Raises:
         HTTPException: 404 if the asset is not found.
         HTTPException: 500 for unexpected errors while retrieving the asset.
     """
     try:
-        if asset_id not in graph.assets:
+        g = get_graph()
+        if asset_id not in g.assets:
             raise_asset_not_found(asset_id)
-        
-        asset = graph.assets[asset_id]
-        
+
+        asset = g.assets[asset_id]
+
         asset_dict = {
             "id": asset.id,
             "symbol": asset.symbol,
@@ -259,17 +284,17 @@ async def get_asset_detail(asset_id: str):
             "currency": asset.currency,
             "additional_fields": {}
         }
-        
+
         # Add all asset-specific fields
         for field in ["pe_ratio", "dividend_yield", "earnings_per_share", "book_value",
-                     "yield_to_maturity", "coupon_rate", "maturity_date", "credit_rating",
-                     "contract_size", "delivery_date", "volatility",
-                     "exchange_rate", "country", "central_bank_rate", "issuer_id"]:
+                      "yield_to_maturity", "coupon_rate", "maturity_date", "credit_rating",
+                      "contract_size", "delivery_date", "volatility",
+                      "exchange_rate", "country", "central_bank_rate", "issuer_id"]:
             if hasattr(asset, field):
                 value = getattr(asset, field)
                 if value is not None:
                     asset_dict["additional_fields"][field] = value
-        
+
         return AssetResponse(**asset_dict)
     except Exception as e:
         if isinstance(e, HTTPException):
@@ -282,25 +307,26 @@ async def get_asset_detail(asset_id: str):
 async def get_asset_relationships(asset_id: str):
     """
     List outgoing relationships for the specified asset.
-    
+
     Parameters:
         asset_id (str): Identifier of the asset whose outgoing relationships are requested.
-    
+
     Returns:
         List[RelationshipResponse]: Outgoing relationship records for the asset (each with source_id, target_id, relationship_type, and strength).
-    
+
     Raises:
         HTTPException: 404 if the asset is not found; 500 for unexpected errors.
     """
     try:
-        if asset_id not in graph.assets:
+        g = get_graph()
+        if asset_id not in g.assets:
             raise_asset_not_found(asset_id)
-        
+
         relationships = []
-        
+
         # Outgoing relationships
-        if asset_id in graph.relationships:
-            for target_id, rel_type, strength in graph.relationships[asset_id]:
+        if asset_id in g.relationships:
+            for target_id, rel_type, strength in g.relationships[asset_id]:
                 relationships.append(RelationshipResponse(
                     source_id=asset_id,
                     target_id=target_id,
@@ -320,14 +346,15 @@ async def get_asset_relationships(asset_id: str):
 async def get_all_relationships():
     """
     List all directed relationships in the initialized asset graph.
-    
+
     Returns:
         List[RelationshipResponse]: List of relationships where each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
     """
     try:
+        g = get_graph()
         relationships = []
-        
-        for source_id, rels in graph.relationships.items():
+
+        for source_id, rels in g.relationships.items():
             for target_id, rel_type, strength in rels:
                 relationships.append(RelationshipResponse(
                     source_id=source_id,
@@ -346,9 +373,9 @@ async def get_all_relationships():
 async def get_metrics():
     """
     Return aggregated network metrics and counts of assets grouped by asset class.
-    
+
     Builds a MetricsResponse containing overall network statistics and a mapping from asset class name to the number of assets in that class.
-    
+
     Returns:
         MetricsResponse: Object with the following fields:
             - total_assets: total number of assets in the graph.
@@ -357,19 +384,20 @@ async def get_metrics():
             - avg_degree: average node degree (float).
             - max_degree: maximum node degree (int).
             - network_density: network density (float).
-    
+
     Raises:
         HTTPException: with status code 500 if metrics cannot be obtained.
     """
     try:
-        metrics = graph.calculate_metrics()
-        
+        g = get_graph()
+        metrics = g.calculate_metrics()
+
         # Count assets by class
         asset_classes = {}
-        for asset in graph.assets.values():
+        for asset in g.assets.values():
             class_name = asset.asset_class.value
             asset_classes[class_name] = asset_classes.get(class_name, 0) + 1
-        
+
         return MetricsResponse(
             total_assets=metrics.get("total_assets", 0),
             total_relationships=metrics.get("total_relationships", 0),
@@ -387,22 +415,23 @@ async def get_metrics():
 async def get_visualization_data():
     """
     Provide nodes and edges prepared for 3D visualization of the asset graph.
-    
+
     Builds a list of node dictionaries (each with id, name, symbol, asset_class, x, y, z, color, size) and a list of edge dictionaries (each with source, target, relationship_type, strength) suitable for the API response.
-    
+
     Returns:
         VisualizationDataResponse: An object with `nodes` (list of node dicts) and `edges` (list of edge dicts).
-    
+
     Raises:
         HTTPException: If visualization data cannot be retrieved or processed; results in a 500 status with the error detail.
     """
     try:
+        g = get_graph()
         # get_3d_visualization_data returns: (positions, asset_ids, asset_colors, asset_text, (edges_x, edges_y, edges_z)), but edge coordinates are not used in this endpoint
-        positions, asset_ids, asset_colors, asset_text = graph.get_3d_visualization_data()[:4]
-        
+        positions, asset_ids, asset_colors, asset_text = g.get_3d_visualization_data()[:4]
+
         nodes = []
         for i, asset_id in enumerate(asset_ids):
-            asset = graph.assets[asset_id]
+            asset = g.assets[asset_id]
             nodes.append({
                 "id": asset_id,
                 "name": asset.name,
@@ -414,15 +443,15 @@ async def get_visualization_data():
                 "color": asset_colors[i],
                 "size": 5
             })
-        
+
         edges = []
         # Build edges directly from graph relationships (O(e) instead of O(e × n²))
         # Only include edges where both source and target are in the asset_ids list
         asset_id_set = set(asset_ids)
-        for source_id in graph.relationships:
+        for source_id in g.relationships:
             if source_id not in asset_id_set:
                 continue
-            for target_id, rel_type, strength in graph.relationships[source_id]:
+            for target_id, rel_type, strength in g.relationships[source_id]:
                 if target_id in asset_id_set:
                     edges.append({
                         "source": source_id,
@@ -430,7 +459,7 @@ async def get_visualization_data():
                         "relationship_type": rel_type,
                         "strength": float(strength)
                     })
-        
+
         return VisualizationDataResponse(nodes=nodes, edges=edges)
     except Exception as e:
         logger.exception("Error getting visualization data:")
@@ -441,7 +470,7 @@ async def get_visualization_data():
 async def get_asset_classes():
     """
     List available asset classes.
-    
+
     Returns:
         Dict[str, List[str]]: A mapping with key "asset_classes" whose value is a list of asset class string values.
     """
@@ -454,16 +483,17 @@ async def get_asset_classes():
 async def get_sectors():
     """
     List unique sector names present in the global asset graph in sorted order.
-    
+
     Returns:
         Dict[str, List[str]]: Mapping with key "sectors" to a sorted list of unique sector names.
-    
+
     Raises:
         HTTPException: Raised with status code 500 if an unexpected error occurs while retrieving sectors.
     """
     try:
+        g = get_graph()
         sectors = set()
-        for asset in graph.assets.values():
+        for asset in g.assets.values():
             if asset.sector:
                 sectors.add(asset.sector)
         return {"sectors": sorted(list(sectors))}
