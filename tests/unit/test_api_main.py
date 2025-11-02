@@ -71,10 +71,10 @@ class TestValidateOrigin:
 
 
 class TestGraphInitialization:
-    """Test the eager graph initialization at module load."""
+    """Test the lazy graph initialization via get_graph()."""
 
     def test_graph_initialization(self):
-        """Test graph is initialized on first access via get_graph()."""
+        """Test graph is initialized via get_graph()."""
         import api.main
         graph = api.main.get_graph()
         assert graph is not None
@@ -86,7 +86,7 @@ class TestGraphInitialization:
         import api.main
         graph1 = api.main.get_graph()
         graph2 = api.main.get_graph()
-        # Multiple accesses should return the same instance
+        # Multiple calls should return the same instance
         assert graph1 is graph2
 
 
