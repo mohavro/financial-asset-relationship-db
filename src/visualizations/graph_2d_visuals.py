@@ -4,6 +4,7 @@ Provides 2D layout algorithms and visualization functions
 """
 
 import math
+import numpy as np
 from typing import Dict, List, Tuple
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
@@ -164,15 +165,15 @@ def _create_grid_layout(asset_ids: List[str]) -> Dict[str, Tuple[float, float]]:
     return positions
 
 
-def _create_spring_layout_2d(positions_3d: Dict[str, Tuple[float, float, float]],
+def _create_spring_layout_2d(positions_3d: np.ndarray,
                              asset_ids: List[str]) -> Dict[str, Tuple[float, float]]:
     """Convert 3D positions to 2D using projection"""
     positions = {}
 
-    for asset_id in asset_ids:
-        x3d, y3d, z3d = positions_3d[asset_id]
+    for idx, asset_id in enumerate(asset_ids):
+        x3d, y3d, z3d = positions_3d[idx]
         # Project to 2D by ignoring z-coordinate and normalizing
-        positions[asset_id] = (x3d, y3d)
+        positions[asset_id] = (float(x3d), float(y3d))
 
     return positions
 

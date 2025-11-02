@@ -82,8 +82,8 @@ class FormulaicVisualizer:
         correlation_matrix = empirical_relationships.get('correlation_matrix', {})
         if correlation_matrix:
             # Convert correlation matrix to heatmap format
-            assets = list({pair.split('-')[0] for pair in correlation_matrix.keys()}
-                          | {pair.split('-')[1] for pair in correlation_matrix.keys()})
+            assets = list({part for pair in correlation_matrix.keys()
+                          for part in pair.split('-')})
 
             # Create correlation matrix
             n_assets = min(len(assets), 8)  # Limit to 8x8 for visibility
