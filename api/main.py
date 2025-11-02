@@ -338,7 +338,7 @@ async def get_all_relationships():
     List all directed relationships in the initialized asset graph.
     
     Returns:
-        relationships (List[RelationshipResponse]): List of relationships where each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
+        List[RelationshipResponse]: List of relationships where each item contains `source_id`, `target_id`, `relationship_type`, and `strength`.
     """
     try:
         g = get_graph()
