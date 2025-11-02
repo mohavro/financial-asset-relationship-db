@@ -135,7 +135,7 @@ jobs:
           key: node-deps-v1-{{ checksum "frontend/package.json" }}
           paths:
             - frontend/node_modules
-- run:
+      - run:
           name: Run ESLint
           command: |
             cd frontend
@@ -162,7 +162,7 @@ jobs:
           key: node-deps-v1-{{ checksum "frontend/package.json" }}
           paths:
             - frontend/node_modules
-- run:
+      - run:
           name: Build Next.js application
           command: |
             cd frontend
