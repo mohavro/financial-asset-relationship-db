@@ -82,8 +82,8 @@ class FormulaicVisualizer:
         correlation_matrix = empirical_relationships.get('correlation_matrix', {})
         if correlation_matrix:
             # Convert correlation matrix to heatmap format
-            assets = list(set([pair.split('-')[0] for pair in correlation_matrix.keys()]
-                              + [pair.split('-')[1] for pair in correlation_matrix.keys()]))
+            assets = list({pair.split('-')[0] for pair in correlation_matrix.keys()}
+                          | {pair.split('-')[1] for pair in correlation_matrix.keys()})
 
             # Create correlation matrix
             n_assets = min(len(assets), 8)  # Limit to 8x8 for visibility
@@ -259,8 +259,8 @@ class FormulaicVisualizer:
             return fig
 
         # Extract unique assets
-        assets = list(set([corr['asset1'] for corr in strongest_correlations]
-                          + [corr['asset2'] for corr in strongest_correlations]))
+        assets = list({corr['asset1'] for corr in strongest_correlations}
+                      | {corr['asset2'] for corr in strongest_correlations})
 
         # Create positions in a circle
         n_assets = len(assets)
