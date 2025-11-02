@@ -532,7 +532,11 @@ class TestEdgeCases:
     def test_empty_graph(self, mock_graph_instance, client):
         """Test handling of empty graph."""
         empty_graph = AssetRelationshipGraph()
-        mock_graph_instance.return_value = empty_graph
+        # Configure empty graph attributes
+        mock_graph_instance.assets = empty_graph.assets
+        mock_graph_instance.relationships = empty_graph.relationships
+        mock_graph_instance.calculate_metrics = empty_graph.calculate_metrics
+        mock_graph_instance.get_3d_visualization_data = empty_graph.get_3d_visualization_data
 
         response = client.get("/api/assets")
         assert response.status_code == 200
@@ -686,16 +690,10 @@ class TestRealDataFetcherFallback:
         # Individual fetch failures result in empty lists, not fallback
         assert len(graph.assets) == 0
 
-    @patch('api.main.RealDataFetcher')
-    @patch('src.data.sample_data.create_sample_database')
     @patch('src.data.real_data_fetcher.RealDataFetcher._fetch_equity_data')
-    def test_fetcher_falls_back_on_unhandled_exception(self, mock_fetch_equity, mock_sample_db):
+    def test_fetcher_falls_back_on_unhandled_exception(self, mock_fetch_equity):
         """Test that unhandled exceptions in create_real_database trigger fallback."""
         from src.data.real_data_fetcher import RealDataFetcher
-
-        # Create a mock sample database
-        sample_graph = AssetRelationshipGraph()
-        mock_sample_db.return_value = sample_graph
 
         # Simulate unhandled exception in fetching
         mock_fetch_equity.side_effect = RuntimeError("Unexpected error")
@@ -703,12 +701,12 @@ class TestRealDataFetcherFallback:
         fetcher = RealDataFetcher()
         graph = fetcher.create_real_database()
 
-        # Should have called the fallback
-        mock_sample_db.assert_called_once()
-        assert graph == sample_graph
+        # Should have created a graph with fallback data
+        assert graph is not None
+        assert isinstance(graph, AssetRelationshipGraph)
+        # After fallback to sample data, should have assets
+        assert len(graph.assets) > 0
 
-    @patch('api.main.graph')
-    @patch('api.main.graph')
     @patch('src.data.real_data_fetcher.yf.Ticker')
     def test_real_data_fetcher_empty_history_graceful_handling(self, mock_ticker):
         """Test RealDataFetcher handles empty ticker history gracefully."""
@@ -727,7 +725,6 @@ class TestRealDataFetcherFallback:
         assert graph is not None
         assert isinstance(graph, AssetRelationshipGraph)
 
-    @patch('api.main.graph')
     @patch('src.data.real_data_fetcher.logger')
     @patch('src.data.real_data_fetcher.RealDataFetcher._fetch_equity_data')
     def test_real_data_fetcher_logs_fallback_on_exception(self, mock_fetch_equity, mock_logger):
@@ -747,7 +744,6 @@ class TestRealDataFetcherFallback:
         warning_calls = [str(call) for call in mock_logger.warning.call_args_list]
         assert any("Falling back" in call for call in warning_calls)
 
-    @patch('api.main.graph')
     @patch('src.data.real_data_fetcher.logger')
     @patch('src.data.real_data_fetcher.yf.Ticker')
     def test_individual_asset_class_fetch_failures_logged(self, mock_ticker, mock_logger):

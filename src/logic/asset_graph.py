@@ -66,9 +66,18 @@ class AssetRelationshipGraph:
         asset_list = list(self.assets.values())
         for i, asset1 in enumerate(asset_list):
             for asset2 in asset_list[i+1:]:
+                # Check relationships in both directions to catch directional ones
+                # First check asset1 -> asset2
                 relationships_found = self._find_relationships(asset1, asset2)
                 for rel_type, strength, bidirectional in relationships_found:
                     self.add_relationship(asset1.id, asset2.id, rel_type, strength, bidirectional=bidirectional)
+                
+                # Also check asset2 -> asset1 for directional relationships
+                relationships_found_reverse = self._find_relationships(asset2, asset1)
+                for rel_type, strength, bidirectional in relationships_found_reverse:
+                    # Only add if not bidirectional (bidirectional ones are already added above)
+                    if not bidirectional:
+                        self.add_relationship(asset2.id, asset1.id, rel_type, strength, bidirectional=False)
 
     def _find_relationships(self, asset1: Asset, asset2: Asset) -> List[Tuple[str, float, bool]]:
         """Find relationships between two assets.

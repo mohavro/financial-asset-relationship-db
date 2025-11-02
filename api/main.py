@@ -32,8 +32,11 @@ ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
+    # Get current environment dynamically
+    current_env = os.getenv("ENV", "development").lower()
+    
     # Allow HTTP localhost only in development
-    if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+    if current_env == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
         return True
     # Allow HTTPS localhost in any environment
     if re.match(r'^https://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
