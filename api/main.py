@@ -32,8 +32,8 @@ ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
-    # Get current environment dynamically
-    current_env = os.getenv("ENV", "development").lower()
+    # Use module-level ENV variable for environment
+    current_env = ENV
     
     # Allow HTTP localhost only in development
     if current_env == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
