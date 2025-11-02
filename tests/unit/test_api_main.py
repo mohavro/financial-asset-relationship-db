@@ -74,18 +74,20 @@ class TestGraphInitialization:
     """Test the eager graph initialization at module load."""
 
     def test_graph_initialization(self):
-        """Test graph is initialized at module load."""
+        """Test graph is initialized on first access via get_graph()."""
         import api.main
-        assert api.main.graph is not None
-        assert hasattr(api.main.graph, 'assets')
-        assert hasattr(api.main.graph, 'relationships')
+        graph = api.main.get_graph()
+        assert graph is not None
+        assert hasattr(graph, 'assets')
+        assert hasattr(graph, 'relationships')
 
     def test_graph_singleton(self):
-        """Test graph is a singleton instance."""
+        """Test graph is a singleton instance via get_graph()."""
         import api.main
-        graph = api.main.graph
+        graph1 = api.main.get_graph()
+        graph2 = api.main.get_graph()
         # Multiple accesses should return the same instance
-        assert api.main.graph is graph
+        assert graph1 is graph2
 
 
 class TestPydanticModels:
