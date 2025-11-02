@@ -35,6 +35,15 @@ def validate_origin(origin: str) -> bool:
     """
     Check whether the provided origin URL is allowed by the application's CORS rules.
     
+    Security Note: HTTP is only allowed in development for local testing.
+    In production, ensure all origins use HTTPS to prevent MITM attacks.
+    """
+    # Allow HTTP localhost only in development (INSECURE - for local testing only)
+    if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+        return True
+    """
+    Check whether the provided origin URL is allowed by the application's CORS rules.
+    
     Accepted origins include:
     - HTTPS origins for any localhost or 127.0.0.1 (with optional port).
     - HTTP localhost origins when ENV is "development" (with optional port).
@@ -95,8 +104,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global graph instance initialized with sample data
-graph: AssetRelationshipGraph = create_sample_database()
+# Global graph instance - initialized during startup event
+graph: Optional[AssetRelationshipGraph] = None
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Initialize the asset relationship graph during application startup.
+    
+    This startup event handler explicitly creates and builds the in-memory asset
+    relationship graph. The initialization includes:
+    - Creating sample assets across multiple asset classes
+    - Adding regulatory events
+    - Building all relationships between assets
+    
+    This approach makes the initialization cost explicit and ensures it happens
+    once during API startup rather than at module import time.
+    """
+    global graph
+    logger.info("Starting asset relationship graph initialization")
+    graph = create_sample_database()
+    logger.info("Asset relationship graph initialized successfully")
 
 
 # Pydantic models for API responses
@@ -183,7 +212,7 @@ async def get_assets(
         sector (Optional[str]): If provided, include only assets whose sector equals this string.
     
     Returns:
-        List[AssetResponse]: A list of AssetResponse objects representing matching assets. Each item includes core fields and an `additional_fields` map of asset-specific attributes when present.
+        List[AssetResponse]: A list of matching assets with optional filters applied.
     
     Raises:
         HTTPException: Raised with status code 500 if an unexpected error occurs while retrieving assets.
