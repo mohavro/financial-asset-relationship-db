@@ -1,6 +1,5 @@
-import json
-from typing import Dict, Any
 from src.logic.asset_graph import AssetRelationshipGraph
+
 
 def generate_schema_report(graph: AssetRelationshipGraph) -> str:
     """Generate schema and rules report"""
@@ -40,7 +39,7 @@ def generate_schema_report(graph: AssetRelationshipGraph) -> str:
     for asset_class, count in sorted(metrics["asset_class_distribution"].items()):
         report += f"- **{asset_class}**: {count} assets\n"
 
-    report += f"""
+    report += """
 
 ## Top Relationships
 """

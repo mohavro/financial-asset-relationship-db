@@ -118,4 +118,3 @@ def _reset_graph():
     api.main.graph = None
     yield
     api.main.graph = None
-

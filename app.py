@@ -19,6 +19,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # ------------- Constants -------------
+
+
 class AppConstants:
     TITLE = "Financial Asset Relationship Database Visualization"
     MARKDOWN_HEADER = """
@@ -45,14 +47,14 @@ class AppConstants:
     APP_START_INFO = "Starting Financial Asset Relationship Database application"
     APP_LAUNCH_INFO = "Launching Gradio interface"
     APP_START_ERROR = "Failed to start application"
-    
+
     # Missing markdown constants
     INTERACTIVE_3D_GRAPH_MD = """
     ## Interactive 3D Network Graph
-    
-    Explore the relationships between financial assets in three dimensions. Each node represents an asset, 
+
+    Explore the relationships between financial assets in three dimensions. Each node represents an asset,
     and edges show the strength and type of relationships between them.
-    
+
     **Asset Colors:**
     - 🔵 Blue: Equities (Stocks)
     - 🟢 Green: Fixed Income (Bonds)
@@ -60,47 +62,47 @@ class AppConstants:
     - 🔴 Red: Currencies
     - 🟣 Purple: Derivatives
     """
-    
+
     NETWORK_METRICS_ANALYSIS_MD = """
     ## Network Metrics & Analytics
-    
+
     Comprehensive analysis of asset relationships, distributions, and regulatory event impacts.
     """
-    
+
     SCHEMA_RULES_GUIDE_MD = """
     ## Database Schema & Business Rules
-    
+
     View the automatically generated schema documentation including relationship types, business rules, and validation constraints.
     """
-    
+
     DETAILED_ASSET_INFO_MD = """
     ## Asset Explorer
-    
+
     Select any asset to view detailed information including financial metrics, relationships, and connected assets.
     """
-    
+
     DOC_MARKDOWN = """
     ## Documentation & Help
-    
+
     ### Quick Start
     1. **3D Visualization**: Explore the interactive network graph
     2. **Metrics**: View quantitative analysis of relationships
     3. **Schema**: Understand the data model and business rules
     4. **Explorer**: Drill down into individual asset details
-    
+
     ### Features
     - **Cross-Asset Analysis**: Automatic relationship discovery
-    - **Regulatory Integration**: Corporate events impact modeling  
+    - **Regulatory Integration**: Corporate events impact modeling
     - **Real-time Metrics**: Network statistics and strength analysis
     - **Deterministic Layout**: Consistent 3D positioning across sessions
-    
+
     ### Asset Classes
     - Equities, Bonds, Commodities, Currencies, Derivatives
     - Relationship types: sector affinity, corporate links, currency exposure, regulatory events
-    
+
     For technical details, see the GitHub repository documentation.
     """
-    
+
     NETWORK_STATISTICS_TEXT = """Network Statistics:
 
 Total Assets: {total_assets}
@@ -114,6 +116,7 @@ Asset Class Distribution:
 
 Top Relationships:
 """
+
 
 class FinancialAssetApp:
     def __init__(self):
@@ -183,7 +186,7 @@ class FinancialAssetApp:
     def refresh_all_outputs(self, graph_state: AssetRelationshipGraph):
         """Refreshes all visualizations and reports in the Gradio interface."""
         try:
-            graph = self.ensure_graph() # Use self.ensure_graph to get the latest graph state
+            graph = self.ensure_graph()  # Use self.ensure_graph to get the latest graph state
             logger.info("Refreshing all visualization outputs")
             viz_3d = visualize_3d_graph(graph)
             f1, f2, f3, metrics_txt = self.update_all_metrics_outputs(graph)
@@ -204,7 +207,7 @@ class FinancialAssetApp:
             )
 
     def refresh_visualization(
-        self, 
+        self,
         graph_state,
         view_mode,
         layout_type,
@@ -215,7 +218,7 @@ class FinancialAssetApp:
         """Refresh visualization with 2D/3D mode support and relationship filtering."""
         try:
             graph = self.ensure_graph()
-            
+
             if view_mode == "2D":
                 graph_viz = visualize_2d_graph(
                     graph,
@@ -242,9 +245,9 @@ class FinancialAssetApp:
                     show_all_relationships=show_all_relationships,
                     toggle_arrows=toggle_arrows
                 )
-            
+
             return graph_viz, gr.update(visible=False)
-        
+
         except Exception as e:
             logger.error(f"Error refreshing visualization: {e}")
             empty_fig = go.Figure()
@@ -256,39 +259,39 @@ class FinancialAssetApp:
         try:
             logger.info("Generating formulaic analysis")
             graph = self.ensure_graph() if graph_state is None else graph_state
-            
+
             # Initialize analyzers
             formulaic_analyzer = FormulaicdAnalyzer()
             formulaic_visualizer = FormulaicVisualizer()
-            
+
             # Perform analysis
             analysis_results = formulaic_analyzer.analyze_graph(graph)
-            
+
             # Generate visualizations
             dashboard_fig = formulaic_visualizer.create_formula_dashboard(analysis_results)
             correlation_network_fig = formulaic_visualizer.create_correlation_network(
                 analysis_results.get('empirical_relationships', {})
             )
             metric_comparison_fig = formulaic_visualizer.create_metric_comparison_chart(analysis_results)
-            
+
             # Generate formula selector options
             formulas = analysis_results.get('formulas', [])
             formula_choices = [f.name for f in formulas]
-            
+
             # Generate summary
             summary = analysis_results.get('summary', {})
             summary_text = self._format_formula_summary(summary, analysis_results)
-            
+
             logger.info(f"Generated formulaic analysis with {len(formulas)} formulas")
             return (
-                dashboard_fig, 
-                correlation_network_fig, 
+                dashboard_fig,
+                correlation_network_fig,
                 metric_comparison_fig,
                 gr.update(choices=formula_choices, value=formula_choices[0] if formula_choices else None),
                 summary_text,
                 gr.update(visible=False)  # Hide error message
             )
-            
+
         except Exception as e:
             logger.error(f"Error generating formulaic analysis: {e}")
             empty_fig = go.Figure()
@@ -299,39 +302,39 @@ class FinancialAssetApp:
                 error_msg,
                 gr.update(value=error_msg, visible=True)
             )
-    
+
     def show_formula_details(self, formula_name: str, graph_state: AssetRelationshipGraph):
         """Show detailed view of a specific formula."""
         try:
             if not formula_name:
                 return go.Figure(), gr.update(visible=False)
-            
+
             graph = self.ensure_graph() if graph_state is None else graph_state
-            
+
             # Generate analysis to get formulas
             formulaic_analyzer = FormulaicdAnalyzer()
             analysis_results = formulaic_analyzer.analyze_graph(graph)
             formulas = analysis_results.get('formulas', [])
-            
+
             # Find the selected formula
             selected_formula = next((f for f in formulas if f.name == formula_name), None)
-            
+
             if selected_formula:
                 formulaic_visualizer = FormulaicVisualizer()
                 detail_fig = formulaic_visualizer.create_formula_detail_view(selected_formula)
                 return detail_fig, gr.update(visible=False)
             else:
                 return go.Figure(), gr.update(value=f"Formula '{formula_name}' not found", visible=True)
-                
+
         except Exception as e:
             logger.error(f"Error showing formula details: {e}")
             return go.Figure(), gr.update(value=f"Error: {str(e)}", visible=True)
-    
+
     def _format_formula_summary(self, summary: Dict, analysis_results: Dict) -> str:
         """Format the formula analysis summary for display."""
         formulas = analysis_results.get('formulas', [])
         empirical = analysis_results.get('empirical_relationships', {})
-        
+
         summary_lines = [
             "🔍 **Formulaic Analysis Summary**",
             "",
@@ -341,20 +344,20 @@ class FinancialAssetApp:
             "",
             "📋 **Formula Categories:**"
         ]
-        
+
         categories = summary.get('formula_categories', {})
         for category, count in categories.items():
             summary_lines.append(f"  • {category}: {count} formulas")
-        
+
         summary_lines.extend([
             "",
             "🎯 **Key Insights:**"
         ])
-        
+
         insights = summary.get('key_insights', [])
         for insight in insights:
             summary_lines.append(f"  • {insight}")
-        
+
         # Add correlation insights
         correlations = empirical.get('strongest_correlations', [])
         if correlations:
@@ -364,7 +367,7 @@ class FinancialAssetApp:
             ])
             for corr in correlations[:3]:
                 summary_lines.append(f"  • {corr['pair']}: {corr['correlation']:.3f} ({corr['strength']})")
-        
+
         return "\n".join(summary_lines)
 
     def create_interface(self):
@@ -377,7 +380,7 @@ class FinancialAssetApp:
             with gr.Tabs():
                 with gr.Tab("🌐 Network Visualization (2D/3D)"):
                     gr.Markdown(AppConstants.INTERACTIVE_3D_GRAPH_MD)
-                    
+
                     # Visualization mode and layout controls
                     with gr.Row():
                         gr.Markdown("### 🎛️ Visualization Controls")
@@ -395,7 +398,7 @@ class FinancialAssetApp:
                                 value="spring",
                                 visible=False
                             )
-                    
+
                     # Relationship visibility controls
                     with gr.Row():
                         gr.Markdown("### 🔗 Relationship Visibility Controls")
@@ -412,7 +415,7 @@ class FinancialAssetApp:
                             show_regulatory = gr.Checkbox(label="Regulatory Impact (→)", value=True)
                             show_all_relationships = gr.Checkbox(label="Show All Relationships", value=True)
                             toggle_arrows = gr.Checkbox(label="Show Direction Arrows", value=True)
-                    
+
                     with gr.Row():
                         visualization_3d = gr.Plot()
                     with gr.Row():
@@ -469,12 +472,12 @@ class FinancialAssetApp:
                 with gr.Tab("📊 Formulaic Analysis"):
                     gr.Markdown("""
                     ## Mathematical Relationships & Formulas
-                    
+
                     This section extracts and visualizes mathematical formulas and relationships between financial variables.
                     It includes fundamental financial ratios, correlation patterns, valuation models, and empirical relationships
                     derived from the asset database.
                     """)
-                    
+
                     with gr.Row():
                         with gr.Column(scale=2):
                             formulaic_dashboard = gr.Plot(label="Formulaic Analysis Dashboard")
@@ -486,13 +489,13 @@ class FinancialAssetApp:
                                 interactive=True
                             )
                             formula_detail_view = gr.Plot(label="Formula Details")
-                    
+
                     with gr.Row():
                         with gr.Column(scale=1):
                             correlation_network = gr.Plot(label="Asset Correlation Network")
                         with gr.Column(scale=1):
                             metric_comparison = gr.Plot(label="Metric Comparison Chart")
-                    
+
                     with gr.Row():
                         with gr.Column(scale=1):
                             refresh_formulas_btn = gr.Button("🔄 Refresh Formulaic Analysis", variant="primary")
@@ -536,7 +539,7 @@ class FinancialAssetApp:
                 inputs=visualization_inputs,
                 outputs=visualization_outputs
             )
-            
+
             # View mode change handler
             view_mode.change(
                 lambda *args: (gr.update(visible=args[1] == "2D"), *self.refresh_visualization(*args)[0:1], gr.update(visible=False)),
@@ -549,13 +552,13 @@ class FinancialAssetApp:
                 formulaic_dashboard, correlation_network, metric_comparison,
                 formula_selector, formula_summary, error_message
             ]
-            
+
             refresh_formulas_btn.click(
                 self.generate_formulaic_analysis,
                 inputs=[graph_state],
                 outputs=formulaic_outputs
             )
-            
+
             formula_selector.change(
                 self.show_formula_details,
                 inputs=[formula_selector, graph_state],
@@ -564,24 +567,24 @@ class FinancialAssetApp:
 
             # Add event handlers for relationship filtering (moved to main visualization handlers above)
             # Legacy handlers removed - now using unified refresh_visualization function
-            
+
             # Wire up each checkbox to refresh the visualization
             for checkbox in [show_same_sector, show_market_cap, show_correlation,
-                           show_corporate_bond, show_commodity_currency, show_income_comparison,
-                           show_regulatory, show_all_relationships, toggle_arrows]:
+                             show_corporate_bond, show_commodity_currency, show_income_comparison,
+                             show_regulatory, show_all_relationships, toggle_arrows]:
                 checkbox.change(
                     self.refresh_visualization,
                     inputs=visualization_inputs,
                     outputs=visualization_outputs
                 )
-            
+
             # Layout type change handler for 2D mode
             layout_type.change(
                 self.refresh_visualization,
                 inputs=visualization_inputs,
                 outputs=visualization_outputs
             )
-            
+
             # Reset view button to show all relationships
             reset_view_btn.click(
                 lambda graph_state, view_mode, layout_type: self.refresh_visualization(
@@ -603,6 +606,7 @@ class FinancialAssetApp:
                 outputs=all_refresh_outputs
             )
         return demo
+
 
 if __name__ == "__main__":
     try:

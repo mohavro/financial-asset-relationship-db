@@ -4,12 +4,15 @@ from typing import List, Optional
 import re
 
 # Asset Class Definitions
+
+
 class AssetClass(Enum):
     EQUITY = "Equity"
     FIXED_INCOME = "Fixed Income"
     COMMODITY = "Commodity"
     CURRENCY = "Currency"
     DERIVATIVE = "Derivative"
+
 
 class RegulatoryActivity(Enum):
     EARNINGS_REPORT = "Earnings Report"
@@ -18,6 +21,7 @@ class RegulatoryActivity(Enum):
     BOND_ISSUANCE = "Bond Issuance"
     ACQUISITION = "Acquisition"
     BANKRUPTCY = "Bankruptcy"
+
 
 @dataclass
 class Asset:
@@ -46,6 +50,7 @@ class Asset:
         if not re.match(r'^[A-Z]{3}$', self.currency.upper()):
             raise ValueError("Currency must be a valid 3-letter ISO code")
 
+
 @dataclass
 class Equity(Asset):
     """Equity asset"""
@@ -53,6 +58,7 @@ class Equity(Asset):
     dividend_yield: Optional[float] = None
     earnings_per_share: Optional[float] = None
     book_value: Optional[float] = None
+
 
 @dataclass
 class Bond(Asset):
@@ -63,6 +69,7 @@ class Bond(Asset):
     credit_rating: Optional[str] = None
     issuer_id: Optional[str] = None  # Link to company if corporate
 
+
 @dataclass
 class Commodity(Asset):
     """Commodity asset"""
@@ -70,12 +77,14 @@ class Commodity(Asset):
     delivery_date: Optional[str] = None
     volatility: Optional[float] = None
 
+
 @dataclass
 class Currency(Asset):
     """Currency asset"""
     exchange_rate: Optional[float] = None
     country: Optional[str] = None
     central_bank_rate: Optional[float] = None
+
 
 @dataclass
 class RegulatoryEvent:

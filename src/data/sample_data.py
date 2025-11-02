@@ -4,6 +4,7 @@ from src.models.financial_models import Equity, Bond, Commodity, Currency, Regul
 
 logger = logging.getLogger(__name__)
 
+
 def create_sample_database() -> AssetRelationshipGraph:
     """Create expanded sample financial database with 15+ assets across all classes"""
     try:
@@ -196,7 +197,7 @@ def create_sample_database() -> AssetRelationshipGraph:
                    f"Fixed Income ({len([a for a in all_assets if a.asset_class == AssetClass.FIXED_INCOME])}), "
                    f"Commodity ({len([a for a in all_assets if a.asset_class == AssetClass.COMMODITY])}), "
                    f"Currency ({len([a for a in all_assets if a.asset_class == AssetClass.CURRENCY])})")
-        
+
         return graph
     except Exception as e:
         logger.error(f"Failed to create sample database: {e}")

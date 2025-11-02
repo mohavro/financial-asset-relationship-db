@@ -2,6 +2,7 @@ import numpy as np
 from typing import Dict, List, Tuple, Any, Optional
 from src.models.financial_models import Asset, Equity, Bond, Commodity, Currency, RegulatoryEvent, AssetClass
 
+
 class AssetRelationshipGraph:
     """Manages relationships between assets across all classes"""
 
@@ -30,27 +31,27 @@ class AssetRelationshipGraph:
             self.relationships[source_id] = []
         if target_id not in self.incoming_relationships:
             self.incoming_relationships[target_id] = []
-        
+
         rel = (target_id, rel_type, strength)
         if rel not in self.relationships[source_id]:
             self.relationships[source_id].append(rel)
-        
+
         # Add to incoming relationships
         incoming_rel = (source_id, rel_type, strength)
         if incoming_rel not in self.incoming_relationships[target_id]:
             self.incoming_relationships[target_id].append(incoming_rel)
-        
+
         if bidirectional:
             # Add reverse direction without recursion loop
             if target_id not in self.relationships:
                 self.relationships[target_id] = []
             if source_id not in self.incoming_relationships:
                 self.incoming_relationships[source_id] = []
-            
+
             rel_rev = (source_id, rel_type, strength)
             if rel_rev not in self.relationships[target_id]:
                 self.relationships[target_id].append(rel_rev)
-            
+
             incoming_rel_rev = (target_id, rel_type, strength)
             if incoming_rel_rev not in self.incoming_relationships[source_id]:
                 self.incoming_relationships[source_id].append(incoming_rel_rev)
@@ -65,13 +66,13 @@ class AssetRelationshipGraph:
         """Automatically build relationships based on asset attributes"""
         asset_list = list(self.assets.values())
         for i, asset1 in enumerate(asset_list):
-            for asset2 in asset_list[i+1:]:
+            for asset2 in asset_list[i + 1:]:
                 # Check relationships in both directions to catch directional ones
                 # First check asset1 -> asset2
                 relationships_found = self._find_relationships(asset1, asset2)
                 for rel_type, strength, bidirectional in relationships_found:
                     self.add_relationship(asset1.id, asset2.id, rel_type, strength, bidirectional=bidirectional)
-                
+
                 # Also check asset2 -> asset1 for directional relationships
                 relationships_found_reverse = self._find_relationships(asset2, asset1)
                 for rel_type, strength, bidirectional in relationships_found_reverse:
@@ -235,7 +236,7 @@ class AssetRelationshipGraph:
 
         color_map = {
             AssetClass.EQUITY.value: "#1f77b4",      # Professional blue
-            AssetClass.FIXED_INCOME.value: "#2ca02c", # Professional green
+            AssetClass.FIXED_INCOME.value: "#2ca02c",  # Professional green
             AssetClass.COMMODITY.value: "#ff7f0e",    # Professional orange
             AssetClass.CURRENCY.value: "#d62728",     # Professional red
             AssetClass.DERIVATIVE.value: "#9467bd",   # Professional purple
@@ -244,16 +245,16 @@ class AssetRelationshipGraph:
         for asset_id in asset_ids:
             asset = self.assets[asset_id]
             asset_colors.append(color_map.get(asset.asset_class.value, "#7f7f7f"))
-            
+
             # Enhanced hover text with more detail
             price_display = asset.price
             if isinstance(asset, Currency) and asset.exchange_rate is not None:
                 price_display = asset.exchange_rate
-                
+
             # Get relationship counts for this asset
             outgoing_count = len(self.relationships.get(asset_id, []))
             incoming_count = len(self.incoming_relationships.get(asset_id, []))
-            
+
             asset_text.append(
                 f"<b>{asset.symbol}</b><br>"
                 f"{asset.name}<br>"
