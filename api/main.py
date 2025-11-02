@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import logging
-# Remove the unused import statement for threading
+# Remove this line entirely:
+# import threading
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.sample_data import create_sample_database
@@ -31,6 +32,15 @@ import re
 ENV = os.getenv("ENV", "development").lower()
 
 def validate_origin(origin: str) -> bool:
+    """
+    Check whether the provided origin URL is allowed by the application's CORS rules.
+    
+    Security Note: HTTP is only allowed in development for local testing.
+    In production, ensure all origins use HTTPS to prevent MITM attacks.
+    """
+    # Allow HTTP localhost only in development (INSECURE - for local testing only)
+    if ENV == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+        return True
     """
     Check whether the provided origin URL is allowed by the application's CORS rules.
     
@@ -202,7 +212,7 @@ async def get_assets(
         sector (Optional[str]): If provided, include only assets whose sector equals this string.
     
     Returns:
-        List[AssetResponse]: A list of AssetResponse objects representing matching assets. Each item includes core fields and an `additional_fields` map of asset-specific attributes when present.
+        List[AssetResponse]: A list of matching assets with optional filters applied.
     
     Raises:
         HTTPException: Raised with status code 500 if an unexpected error occurs while retrieving assets.
