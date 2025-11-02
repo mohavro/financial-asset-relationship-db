@@ -67,7 +67,8 @@ cd frontend
 # Install dependencies
 npm install
 
-# Copy environment file
+# Copy environment file from project root
+# (the .env.example file is located in the project root directory)
 cp ../.env.example .env.local
 
 # Start the development server

@@ -15,12 +15,25 @@ interface NetworkVisualizationProps {
 }
 
 /**
- * Render an interactive 3D network visualization of assets using Plotly.
+ * Renders a 3D asset relationship network using the provided visualization data.
  *
- * @param data - Visualization payload conforming to VisualizationData type, containing nodes and edges for 3D rendering.
- * @returns A JSX element containing a responsive Plotly 3D scene.
- *          - Renders edges as lines and nodes as labeled markers.
- *          - Displays a loading placeholder until plot data is available.
+ * The component builds Plotly traces for nodes (scatter3d markers with labels) and edges (3D lines)
+ * and displays a loading message while traces are being constructed or data is missing.
+ *
+ * @param data - Visualization payload containing `nodes` and `edges`.
+ *   - `nodes`: Array of node objects, each with properties:
+ *       - `id`: string
+ *       - `x`, `y`, `z`: number (3D coordinates)
+ *       - `symbol`: string
+ *       - `name`: string
+ *       - `asset_class`: string
+ *       - `size`: number
+ *       - `color`: string
+ *   - `edges`: Array of edge objects, each with properties:
+ *       - `source`: string (node id)
+ *       - `target`: string (node id)
+ *       - `strength`: number
+ * @returns A JSX element that renders the interactive 3D network plot (or a loading placeholder when data is unavailable).
  */
 export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
   const [plotData, setPlotData] = useState<any[]>([]);
@@ -61,6 +74,10 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
         const sourceNode = nodeMap.get(edge.source);
         const targetNode = nodeMap.get(edge.target);
         
+        // Validate that both nodes exist before accessing their properties
+        if (!sourceNode || !targetNode) return null;
+        // Validate that both nodes exist before accessing their properties
+        if (!sourceNode || !targetNode) return null;
 
         return {
           type: 'scatter3d' as const,
