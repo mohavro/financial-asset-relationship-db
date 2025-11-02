@@ -42,7 +42,7 @@ class TestAssetRelationshipGraph:
         populated_graph.add_relationship("TEST_AAPL", "TEST_BOND", "test_relationship", 0.8)
         assert "TEST_AAPL" in populated_graph.relationships
         assert len(populated_graph.relationships["TEST_AAPL"]) > 0
-        
+
         # Check that the relationship was added
         relationships = populated_graph.relationships["TEST_AAPL"]
         found = any(rel[0] == "TEST_BOND" and rel[1] == "test_relationship" for rel in relationships)
@@ -51,7 +51,7 @@ class TestAssetRelationshipGraph:
     def test_add_bidirectional_relationship(self, populated_graph):
         """Test adding a bidirectional relationship."""
         populated_graph.add_relationship("TEST_AAPL", "TEST_BOND", "bidirectional_test", 0.7, bidirectional=True)
-        
+
         # Check forward direction
         assert "TEST_AAPL" in populated_graph.relationships
         forward_found = any(
@@ -59,7 +59,7 @@ class TestAssetRelationshipGraph:
             for rel in populated_graph.relationships["TEST_AAPL"]
         )
         assert forward_found
-        
+
         # Check reverse direction
         assert "TEST_BOND" in populated_graph.relationships
         reverse_found = any(
@@ -72,12 +72,12 @@ class TestAssetRelationshipGraph:
         """Test that relationship strength is clamped to [0, 1]."""
         empty_graph.add_asset(sample_equity)
         empty_graph.add_asset(sample_bond)
-        
+
         # Test strength > 1.0
         empty_graph.add_relationship(sample_equity.id, sample_bond.id, "test", 2.0)
         strength = [rel[2] for rel in empty_graph.relationships[sample_equity.id] if rel[0] == sample_bond.id][0]
         assert strength == 1.0
-        
+
         # Test strength < 0.0
         empty_graph.add_relationship(sample_bond.id, sample_equity.id, "test", -0.5)
         strength = [rel[2] for rel in empty_graph.relationships[sample_bond.id] if rel[0] == sample_equity.id][0]
@@ -88,7 +88,7 @@ class TestAssetRelationshipGraph:
         populated_graph.add_regulatory_event(sample_regulatory_event)
         assert len(populated_graph.regulatory_events) == 1
         assert populated_graph.regulatory_events[0] == sample_regulatory_event
-        
+
         # Check that relationships were created
         assert sample_regulatory_event.asset_id in populated_graph.relationships
 
@@ -97,7 +97,7 @@ class TestAssetRelationshipGraph:
         initial_count = sum(len(rels) for rels in populated_graph.relationships.values())
         populated_graph.build_relationships()
         final_count = sum(len(rels) for rels in populated_graph.relationships.values())
-        
+
         # Should have found some relationships
         assert final_count >= initial_count
 
@@ -105,7 +105,7 @@ class TestAssetRelationshipGraph:
         """Test calculating graph metrics."""
         populated_graph.build_relationships()
         metrics = populated_graph.calculate_metrics()
-        
+
         assert "total_assets" in metrics
         assert metrics["total_assets"] == 4
         assert "total_relationships" in metrics
@@ -117,7 +117,7 @@ class TestAssetRelationshipGraph:
     def test_same_sector_relationship(self):
         """Test that assets in the same sector are linked."""
         graph = AssetRelationshipGraph()
-        
+
         equity1 = Equity(
             id="TECH1",
             symbol="TECH1",
@@ -134,11 +134,11 @@ class TestAssetRelationshipGraph:
             sector="Technology",
             price=150.0,
         )
-        
+
         graph.add_asset(equity1)
         graph.add_asset(equity2)
         graph.build_relationships()
-        
+
         # Check for same_sector relationship
         relationships = graph.relationships.get("TECH1", [])
         same_sector = any(rel[1] == "same_sector" for rel in relationships if rel[0] == "TECH2")
@@ -147,7 +147,7 @@ class TestAssetRelationshipGraph:
     def test_corporate_bond_relationship(self):
         """Test that corporate bonds are linked to their issuing equity."""
         graph = AssetRelationshipGraph()
-        
+
         equity = Equity(
             id="CORP_EQUITY",
             symbol="CORP",
@@ -165,11 +165,11 @@ class TestAssetRelationshipGraph:
             price=1000.0,
             issuer_id="CORP_EQUITY",
         )
-        
+
         graph.add_asset(equity)
         graph.add_asset(bond)
         graph.build_relationships()
-        
+
         # Check for corporate_bond_to_equity relationship
         relationships = graph.relationships.get("CORP_BOND", [])
         corporate_link = any(rel[1] == "corporate_bond_to_equity" for rel in relationships if rel[0] == "CORP_EQUITY")
@@ -178,7 +178,7 @@ class TestAssetRelationshipGraph:
     def test_get_3d_visualization_data(self, populated_graph):
         """Test generating 3D visualization data."""
         positions, asset_ids, colors, text, edges = populated_graph.get_3d_visualization_data()
-        
+
         assert isinstance(positions, np.ndarray)
         assert positions.shape[0] == len(populated_graph.assets)
         assert positions.shape[1] == 3
@@ -191,7 +191,7 @@ class TestAssetRelationshipGraph:
         # Get positions twice
         positions1, _, _, _, _ = populated_graph.get_3d_visualization_data()
         positions2, _, _, _, _ = populated_graph.get_3d_visualization_data()
-        
+
         # Positions should be identical
         np.testing.assert_array_equal(positions1, positions2)
 
@@ -199,11 +199,11 @@ class TestAssetRelationshipGraph:
         """Test that duplicate relationships are not added."""
         empty_graph.add_asset(sample_equity)
         empty_graph.add_asset(sample_bond)
-        
+
         # Add the same relationship twice
         empty_graph.add_relationship(sample_equity.id, sample_bond.id, "test", 0.5)
         empty_graph.add_relationship(sample_equity.id, sample_bond.id, "test", 0.5)
-        
+
         # Should only have one relationship
         relationships = empty_graph.relationships[sample_equity.id]
         test_rels = [rel for rel in relationships if rel[0] == sample_bond.id and rel[1] == "test"]
