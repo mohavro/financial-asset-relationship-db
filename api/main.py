@@ -397,8 +397,8 @@ async def get_visualization_data():
         HTTPException: If visualization data cannot be retrieved or processed; results in a 500 status with the error detail.
     """
     try:
-        # get_3d_visualization_data returns: (positions, asset_ids, asset_colors, asset_text, (edges_x, edges_y, edges_z))
-        positions, asset_ids, asset_colors, asset_text, edge_coords = graph.get_3d_visualization_data()
+        # get_3d_visualization_data returns: (positions, asset_ids, asset_colors, asset_text, (edges_x, edges_y, edges_z)), but edge coordinates are not used in this endpoint
+        positions, asset_ids, asset_colors, asset_text = graph.get_3d_visualization_data()[:4]
         
         nodes = []
         for i, asset_id in enumerate(asset_ids):
