@@ -208,7 +208,7 @@ async def get_assets(
         assets = []
         
         assets = []  # This line should be inside the try block
-    logger.exception("Error getting assets:")
+    except Exception as e:
     raise HTTPException(status_code=500, detail=str(e)) from e
             # Apply filters
             if asset_class and asset.asset_class.value != asset_class:
