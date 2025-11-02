@@ -173,7 +173,7 @@ def _create_spring_layout_2d(positions_3d: np.ndarray,
     for idx, asset_id in enumerate(asset_ids):
         x3d, y3d, z3d = positions_3d[idx]
         # Project to 2D by ignoring z-coordinate and normalizing
-        positions[asset_id] = (float(x3d), float(y3d))
+        positions[asset_id] = (x3d, y3d)
 
     return positions
 
