@@ -93,3 +93,6 @@ dmypy.json
 # Docker
 .dockerignore
 docker-compose.override.yml
+
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md
