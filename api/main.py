@@ -141,38 +141,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global graph instance and lock for thread-safe lazy initialization
-graph: Optional[AssetRelationshipGraph] = None
-graph_lock = threading.Lock()
-
-
-def get_graph() -> AssetRelationshipGraph:
-    """
-    Get or create the global graph instance with thread-safe initialization.
-
-    Uses double-check locking pattern for efficiency. If the graph has not been
-    initialized, this function will create it using real data.
-
-    Returns:
-        AssetRelationshipGraph: The initialized graph instance.
-
-    Raises:
-        Exception: If graph initialization fails.
-    """
-    global graph
-    if graph is None:
-        with graph_lock:
-            # Double-check inside lock
-            if graph is None:
-                try:
-                    fetcher = RealDataFetcher()
-                    graph = fetcher.create_real_database()
-                    logger.info("Graph initialized successfully")
-                except Exception:
-                    logger.exception("Failed to initialize graph")
-                    raise
-    return graph
-
 
 def raise_asset_not_found(asset_id: str, resource_type: str = "Asset") -> None:
     """

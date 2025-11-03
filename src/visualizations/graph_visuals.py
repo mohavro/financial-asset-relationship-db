@@ -256,6 +256,8 @@ def _create_directional_arrows(
             showlegend=False,
         )
         return [arrow_trace]
+    
+    return []
 
 
 def visualize_3d_graph_with_filters(
