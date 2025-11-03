@@ -1,15 +1,16 @@
 # Comprehensive test coverage available in tests/unit/test_api_main.py
 """FastAPI backend for Financial Asset Relationship Database"""
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Dict, List, Optional, Any
 from contextlib import asynccontextmanager
+from typing import Dict, List, Optional, Any
 import logging
 import os
 import re
 import threading
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import RealDataFetcher
