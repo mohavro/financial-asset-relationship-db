@@ -119,19 +119,6 @@ def get_graph() -> AssetRelationshipGraph:
     return graph
 
 
-def get_graph() -> AssetRelationshipGraph:
-    """
-    Return the global graph instance with safety check.
-    
-    Returns:
-        AssetRelationshipGraph: The initialized graph instance.
-    
-    Raises:
-        HTTPException: If graph is not initialized (status 500).
-    """
-    return graph
-
-
 def raise_asset_not_found(asset_id: str, resource_type: str = "Asset") -> None:
     """
     Raise HTTPException for missing resources.
