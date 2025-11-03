@@ -29,7 +29,7 @@ def get_graph() -> AssetRelationshipGraph:
     """
     Get or create the global graph instance with thread-safe initialization.
 
-    Uses a simple locking pattern to ensure thread-safe initialization.
+    Uses double-check locking pattern for efficiency in concurrent environments.
     The graph is lazily initialized on first access or during application startup.
 
     Returns:
