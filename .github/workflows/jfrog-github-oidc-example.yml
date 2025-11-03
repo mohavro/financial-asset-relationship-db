@@ -1,5 +1,9 @@
 name: "Setup JFrog CLI OIDC Example"
-on: push
+on:
+  workflow_dispatch:  # Manual trigger for configuration workflows
+  push:
+    branches: [ main ]
+    paths: [ '.github/workflows/jfrog-github-oidc-example.yml' ]  # Only run on workflow changes
 
 permissions:
   # This is required for requesting the OIDC token
