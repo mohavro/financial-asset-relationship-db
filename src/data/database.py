@@ -17,7 +17,7 @@ load_dotenv()
 class DatabaseConnection:
     """Database connection handler that supports both Supabase and PostgreSQL"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the database connection"""
         self.supabase_client = None
         self.pg_conn = None
@@ -44,7 +44,7 @@ class DatabaseConnection:
             logger.warning("Supabase client not installed. Run 'pip install supabase'.")
             return False
         except Exception as e:
-            logger.error(f"Failed to connect to Supabase: {str(e)}")
+            logger.exception("Failed to connect to Supabase")
             return False
     
     def connect_postgres(self) -> bool:
@@ -67,7 +67,7 @@ class DatabaseConnection:
             logger.warning("psycopg2 not installed. Run 'pip install psycopg2-binary'.")
             return False
         except Exception as e:
-            logger.error(f"Failed to connect to PostgreSQL database: {str(e)}")
+            logger.exception("Failed to connect to PostgreSQL database")
             return False
     
     def connect(self) -> bool:

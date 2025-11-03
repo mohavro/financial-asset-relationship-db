@@ -35,7 +35,7 @@ def test_database_connection():
             return True
             
         except Exception as e:
-            logger.error(f"Query failed: {str(e)}")
+            logger.exception("Query failed")
             return False
     else:
         logger.error("Failed to connect to database.")

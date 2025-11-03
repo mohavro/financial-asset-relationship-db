@@ -12,7 +12,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from auth import Token, User, authenticate_user, create_access_token, get_current_active_user
+from .auth import Token, User, authenticate_user, create_access_token, get_current_active_user
 from datetime import timedelta
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -90,19 +90,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS for Next.js frontend
 # Note: Update allowed origins for production deployment
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[origin for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",") if origin],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
-)
+
 
 # Determine environment (default to 'development' if not set)
 ENV = os.getenv("ENV", "development").lower()
 
-# Authentication constants
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 
 @app.post("/token", response_model=Token)
 @limiter.limit("5/minute")

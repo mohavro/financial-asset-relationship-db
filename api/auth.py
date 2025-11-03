@@ -11,7 +11,11 @@ from pydantic import BaseModel
 import os
 
 # Security configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "CHANGE_THIS_TO_A_RANDOM_SECRET_IN_PRODUCTION")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    if os.getenv("ENV", "development").lower() == "production":
+        raise ValueError("SECRET_KEY environment variable must be set in production")
+    SECRET_KEY = "CHANGE_THIS_TO_A_RANDOM_SECRET_IN_PRODUCTION"  # Development only
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -42,7 +46,7 @@ fake_users_db = {
         "username": "admin",
         "full_name": "Administrator",
         "email": "admin@example.com",
-        "hashed_password": pwd_context.hash("changeme"),
+        "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5NU7OcYFKqYvW",  # "changeme"
         "disabled": False,
     }
 }
