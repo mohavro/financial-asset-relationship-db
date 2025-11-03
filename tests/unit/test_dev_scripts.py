@@ -92,15 +92,18 @@ class TestGitIgnore:
 class TestDocumentationFiles:
     """Test that documentation files exist and are properly structured."""
 
-    @pytest.mark.parametrize("doc_file", [
-        "README.md",
-        "DEPLOYMENT.md",
-        "INTEGRATION_SUMMARY.md",
-        "ARCHITECTURE.md",
-        "QUICK_START.md",
-        "UI_COMPARISON.md",
-        "VERCEL_DEPLOYMENT_CHECKLIST.md"
-    ])
+    @pytest.mark.parametrize(
+        "doc_file",
+        [
+            "README.md",
+            "DEPLOYMENT.md",
+            "INTEGRATION_SUMMARY.md",
+            "ARCHITECTURE.md",
+            "QUICK_START.md",
+            "UI_COMPARISON.md",
+            "VERCEL_DEPLOYMENT_CHECKLIST.md",
+        ],
+    )
     def test_documentation_exists(self, doc_file):
         """Test that key documentation files exist."""
         assert os.path.exists(doc_file), f"Missing documentation: {doc_file}"
