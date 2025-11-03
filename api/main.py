@@ -8,9 +8,15 @@ import os
 import re
 import threading
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
+from auth import Token, User, authenticate_user, create_access_token, get_current_active_user
+from datetime import timedelta
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import RealDataFetcher
@@ -67,6 +73,9 @@ async def lifespan(app: FastAPI):
     logger.info("Application shutdown")
 
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Initialize FastAPI app with lifespan handler
 app = FastAPI(
     title="Financial Asset Relationship API",
@@ -75,18 +84,58 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Add rate limiting exception handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # Configure CORS for Next.js frontend
 # Note: Update allowed origins for production deployment
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",") if origin],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
 
 # Determine environment (default to 'development' if not set)
 ENV = os.getenv("ENV", "development").lower()
+
+# Authentication constants
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+@app.post("/token", response_model=Token)
+@limiter.limit("5/minute")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """Generate JWT token for authenticated users"""
+    from .auth import fake_users_db  # Import here to avoid circular imports
+    
+    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
     # Use module-level ENV variable for environment
     current_env = ENV
-
+    
+    # Get allowed origins from environment variable or use default
+    allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+    
+    # If origin is in explicitly allowed list, return True
+    if origin in allowed_origins and origin:
+        return True
+        
     # Allow HTTP localhost only in development
     if current_env == "development" and re.match(r"^http://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
         return True
