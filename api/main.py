@@ -103,7 +103,7 @@ def get_graph() -> AssetRelationshipGraph:
                     graph = fetcher.create_real_database()
                     logger.info("Graph initialized successfully")
                 except Exception as e:
-                    logger.error(f"Failed to initialize graph: {str(e)}")
+                    logger.exception("Failed to initialize graph")
                     raise
     return graph
 
