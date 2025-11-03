@@ -1,8 +1,11 @@
+import logging
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Dict, Any
 from src.analysis.formulaic_analysis import Formula
 import math
+
+logger = logging.getLogger(__name__)
 
 
 class FormulaicVisualizer:
@@ -84,10 +87,20 @@ class FormulaicVisualizer:
             # Convert correlation matrix to heatmap format
             # Only process keys that are strings and contain exactly one dash (asset1-asset2 format)
             # This prevents unexpected behavior from malformed keys.
+            valid_keys = []
+            skipped_keys = []
+            for pair in correlation_matrix.keys():
+                if isinstance(pair, str) and pair.count('-') == 1:
+                    valid_keys.append(pair)
+                else:
+                    skipped_keys.append(pair)
+
+            if skipped_keys:
+                logger.warning(f"Skipped {len(skipped_keys)} malformed correlation_matrix keys that don't follow 'asset1-asset2' format: {skipped_keys[:5]}{'...' if len(skipped_keys) > 5 else ''}")
+
             assets = list({
                 part
-                for pair in correlation_matrix.keys()
-                if isinstance(pair, str) and pair.count('-') == 1
+                for pair in valid_keys
                 for part in pair.split('-') if part
             })
 
@@ -264,9 +277,20 @@ class FormulaicVisualizer:
             )
             return fig
 
-        # Extract unique assets
-        assets = list({corr['asset1'] for corr in strongest_correlations}
-                      | {corr['asset2'] for corr in strongest_correlations})
+        # Extract unique assets with error handling for missing keys
+        assets_set = set()
+        for corr in strongest_correlations:
+            if 'asset1' in corr:
+                assets_set.add(corr['asset1'])
+            else:
+                logger.warning(f"Correlation entry missing 'asset1' key: {corr}")
+
+            if 'asset2' in corr:
+                assets_set.add(corr['asset2'])
+            else:
+                logger.warning(f"Correlation entry missing 'asset2' key: {corr}")
+
+        assets = list(assets_set)
 
         # Create positions in a circle
         n_assets = len(assets)
