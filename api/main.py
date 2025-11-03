@@ -87,23 +87,38 @@ app.add_middleware(
 # Global graph instance with thread-safe initialization
 graph: Optional[AssetRelationshipGraph] = None
 graph_lock = threading.Lock()
+graph_init_failed: bool = False
+graph_init_error: Optional[Exception] = None
 
 def get_graph() -> AssetRelationshipGraph:
     """Get or create the global graph instance with thread-safe initialization.
     
     Uses double-check locking pattern for efficiency in serverless environments.
+    If initialization fails, subsequent calls will fail fast without retrying.
     """
-    global graph
+    global graph, graph_init_failed, graph_init_error
+    
+    # Fail fast if initialization previously failed
+    if graph_init_failed:
+        logger.error("Graph initialization previously failed, not retrying")
+        raise graph_init_error
+    
+    # Fast path: return if already initialized
     if graph is not None:
         return graph
+    
+    # Slow path: acquire lock and initialize
     with graph_lock:
-        if graph is None:
+        # Double-check after acquiring lock
+        if graph is None and not graph_init_failed:
             try:
                 fetcher = RealDataFetcher()
                 graph = fetcher.create_real_database()
                 logger.info("Graph initialized successfully")
-            except Exception:
+            except Exception as e:
                 logger.exception("Failed to initialize graph")
+                graph_init_failed = True
+                graph_init_error = e
                 raise
     return graph
 
