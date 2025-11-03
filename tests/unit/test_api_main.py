@@ -71,7 +71,7 @@ class TestValidateOrigin:
 
 
 class TestGraphInitialization:
-    """Test the eager graph initialization at module load."""
+    """Test the lazy graph initialization with thread-safe locking."""
 
     def test_graph_initialization(self):
         """Test graph is initialized lazily via get_graph()."""
