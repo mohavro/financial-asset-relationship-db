@@ -88,7 +88,7 @@ class FormulaicVisualizer:
                 part
                 for pair in correlation_matrix.keys()
                 if isinstance(pair, str) and pair.count('-') == 1
-                for part in pair.split('-')
+                for part in pair.split('-') if part
             })
 
             # Create correlation matrix
