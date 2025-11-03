@@ -492,7 +492,7 @@ async def get_visualization_data():
             )
 
         edges = []
-        # Build edges directly from graph relationships (O(e) instead of O(e × n²))
+        # Build edges directly from graph.relationships to avoid rebuilding from intermediate data structures
         # Only include edges where both source and target are in the asset_ids list
         asset_id_set = set(asset_ids)
         for source_id in g.relationships:
