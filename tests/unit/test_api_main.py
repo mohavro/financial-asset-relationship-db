@@ -386,7 +386,9 @@ class TestErrorHandling:
     def test_get_assets_server_error(self, mock_graph_instance, client):
         """Test that server errors are handled gracefully."""
         # Make graph.assets raise exception
-        type(mock_graph_instance).assets = property(lambda self: (_ for _ in ()).throw(Exception("Database error")))
+        def raise_database_error(self):
+            raise Exception("Database error")
+        type(mock_graph_instance).assets = property(raise_database_error)
 
         response = client.get("/api/assets")
         assert response.status_code == 500
