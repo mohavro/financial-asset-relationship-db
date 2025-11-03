@@ -35,11 +35,12 @@ def get_graph() -> AssetRelationshipGraph:
         AssetRelationshipGraph: The initialized graph instance.
     """
     global graph
-    with graph_lock:
-        if graph is None:
-            fetcher = RealDataFetcher()
-            graph = fetcher.create_real_database()
-            logger.info("Graph initialized successfully")
+    if graph is None:
+        with graph_lock:
+            if graph is None:
+                fetcher = RealDataFetcher()
+                graph = fetcher.create_real_database()
+                logger.info("Graph initialized successfully")
     return graph
 
 
