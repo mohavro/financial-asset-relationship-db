@@ -38,7 +38,7 @@ class TestCompleteAPIFlow:
         detail_response = client.get(f"/api/assets/{first_asset['id']}")
         assert detail_response.status_code == 200
         detail = detail_response.json()
-        assert detail['id'] == first_asset['id']
+        assert detail["id"] == first_asset["id"]
 
         # Step 4: Get relationships for asset
         rel_response = client.get(f"/api/assets/{first_asset['id']}/relationships")
@@ -58,35 +58,35 @@ class TestCompleteAPIFlow:
         assets = assets_response.json()
 
         # Verify metrics match actual counts
-        assert metrics['total_assets'] == len(assets)
+        assert metrics["total_assets"] == len(assets)
 
         # Verify asset class counts
         asset_class_counts = {}
         for asset in assets:
-            ac = asset['asset_class']
+            ac = asset["asset_class"]
             asset_class_counts[ac] = asset_class_counts.get(ac, 0) + 1
 
-        assert metrics['asset_classes'] == asset_class_counts
+        assert metrics["asset_classes"] == asset_class_counts
 
     def test_visualization_data_consistency(self, client):
         """Test visualization data consistency with assets."""
         # Get assets
         assets_response = client.get("/api/assets")
         assets = assets_response.json()
-        asset_ids = {asset['id'] for asset in assets}
+        asset_ids = {asset["id"] for asset in assets}
 
         # Get visualization data
         viz_response = client.get("/api/visualization")
         viz_data = viz_response.json()
 
         # All nodes should correspond to existing assets
-        node_ids = {node['id'] for node in viz_data['nodes']}
+        node_ids = {node["id"] for node in viz_data["nodes"]}
         assert node_ids == asset_ids
 
         # All edges should reference existing nodes
-        for edge in viz_data['edges']:
-            assert edge['source'] in node_ids
-            assert edge['target'] in node_ids
+        for edge in viz_data["edges"]:
+            assert edge["source"] in node_ids
+            assert edge["target"] in node_ids
 
     def test_filter_combinations(self, client):
         """Test various filter combinations return consistent results."""
@@ -94,19 +94,19 @@ class TestCompleteAPIFlow:
         all_assets = client.get("/api/assets").json()
 
         # Get unique asset classes and sectors
-        asset_classes = set(a['asset_class'] for a in all_assets)
-        sectors = set(a['sector'] for a in all_assets)
+        asset_classes = set(a["asset_class"] for a in all_assets)
+        sectors = set(a["sector"] for a in all_assets)
 
         # Test each asset class filter
         for ac in asset_classes:
             filtered = client.get(f"/api/assets?asset_class={ac}").json()
-            assert all(a['asset_class'] == ac for a in filtered)
+            assert all(a["asset_class"] == ac for a in filtered)
             assert len(filtered) <= len(all_assets)
 
         # Test each sector filter
         for sector in sectors:
             filtered = client.get(f"/api/assets?sector={sector}").json()
-            assert all(a['sector'] == sector for a in filtered)
+            assert all(a["sector"] == sector for a in filtered)
             assert len(filtered) <= len(all_assets)
 
 
@@ -121,11 +121,11 @@ class TestDataIntegrity:
             detail = client.get(f"/api/assets/{asset['id']}").json()
 
             # Core fields should match
-            assert detail['id'] == asset['id']
-            assert detail['symbol'] == asset['symbol']
-            assert detail['name'] == asset['name']
-            assert detail['asset_class'] == asset['asset_class']
-            assert detail['price'] == asset['price']
+            assert detail["id"] == asset["id"]
+            assert detail["symbol"] == asset["symbol"]
+            assert detail["name"] == asset["name"]
+            assert detail["asset_class"] == asset["asset_class"]
+            assert detail["price"] == asset["price"]
 
     def test_relationship_bidirectionality(self, client):
         """Test that relationships are properly represented."""
@@ -134,8 +134,8 @@ class TestDataIntegrity:
         # Build relationship graph
         graph = {}
         for rel in relationships:
-            source = rel['source_id']
-            target = rel['target_id']
+            source = rel["source_id"]
+            target = rel["target_id"]
             if source not in graph:
                 graph[source] = []
             graph[source].append(target)

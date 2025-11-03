@@ -15,7 +15,7 @@ from api.main import (
     AssetResponse,
     RelationshipResponse,
     MetricsResponse,
-    VisualizationDataResponse
+    VisualizationDataResponse,
 )
 from src.models.financial_models import AssetClass
 
@@ -25,70 +25,72 @@ class TestValidateOrigin:
 
     def test_validate_origin_http_localhost_development(self):
         """Test HTTP localhost is allowed in development."""
-        with patch.dict(os.environ, {'ENV': 'development'}):
+        with patch.dict(os.environ, {"ENV": "development"}):
             from api.main import validate_origin as vo
-            assert vo('http://localhost:3000')
-            assert vo('http://127.0.0.1:8000')
-            assert vo('http://localhost')
+
+            assert vo("http://localhost:3000")
+            assert vo("http://127.0.0.1:8000")
+            assert vo("http://localhost")
 
     def test_validate_origin_http_localhost_production(self):
         """Test HTTP localhost is rejected in production."""
-        with patch.dict(os.environ, {'ENV': 'production'}):
+        with patch.dict(os.environ, {"ENV": "production"}):
             from api.main import validate_origin as vo
-            assert not vo('http://localhost:3000')
-            assert not vo('http://127.0.0.1:8000')
+
+            assert not vo("http://localhost:3000")
+            assert not vo("http://127.0.0.1:8000")
 
     def test_validate_origin_https_localhost(self):
         """Test HTTPS localhost is always allowed."""
-        assert validate_origin('https://localhost:3000')
-        assert validate_origin('https://127.0.0.1:8000')
+        assert validate_origin("https://localhost:3000")
+        assert validate_origin("https://127.0.0.1:8000")
 
     def test_validate_origin_vercel_urls(self):
         """Test Vercel deployment URLs are validated correctly."""
-        assert validate_origin('https://my-app.vercel.app')
-        assert validate_origin('https://my-app-git-main-user.vercel.app')
-        assert validate_origin('https://subdomain.vercel.app')
-        assert not validate_origin('http://my-app.vercel.app')  # HTTP rejected
+        assert validate_origin("https://my-app.vercel.app")
+        assert validate_origin("https://my-app-git-main-user.vercel.app")
+        assert validate_origin("https://subdomain.vercel.app")
+        assert not validate_origin("http://my-app.vercel.app")  # HTTP rejected
 
     def test_validate_origin_https_valid_domains(self):
         """Test valid HTTPS URLs with proper domains."""
-        assert validate_origin('https://example.com')
-        assert validate_origin('https://subdomain.example.com')
-        assert validate_origin('https://api.example.co.uk')
+        assert validate_origin("https://example.com")
+        assert validate_origin("https://subdomain.example.com")
+        assert validate_origin("https://api.example.co.uk")
 
     def test_validate_origin_invalid_schemes(self):
         """Test invalid URL schemes are rejected."""
-        assert not validate_origin('ftp://example.com')
-        assert not validate_origin('ws://example.com')
-        assert not validate_origin('file://localhost')
+        assert not validate_origin("ftp://example.com")
+        assert not validate_origin("ws://example.com")
+        assert not validate_origin("file://localhost")
 
     def test_validate_origin_malformed_urls(self):
         """Test malformed URLs are rejected."""
-        assert not validate_origin('not-a-url')
-        assert not validate_origin('https://')
-        assert not validate_origin('https://invalid domain')
-        assert not validate_origin('https://.com')
+        assert not validate_origin("not-a-url")
+        assert not validate_origin("https://")
+        assert not validate_origin("https://invalid domain")
+        assert not validate_origin("https://.com")
 
 
 class TestGraphInitialization:
-    """Test the lazy graph initialization with thread-safe locking."""
+    """Test the lazy graph initialization via get_graph()."""
 
     def test_graph_initialization(self):
-        """Test graph is initialized lazily via get_graph()."""
+        """Test graph is initialized via get_graph()."""
         import api.main
-        # Graph should be None initially (lazy initialization)
-        with patch('api.main.graph', None):
-            graph = api.main.get_graph()
-            assert graph is not None
-            assert hasattr(graph, 'assets')
-            assert hasattr(graph, 'relationships')
+
+        graph = api.main.get_graph()
+        assert graph is not None
+        assert hasattr(graph, "assets")
+        assert hasattr(graph, "relationships")
 
     def test_graph_singleton(self):
-        """Test graph is a singleton instance."""
+        """Test graph is a singleton instance via get_graph()."""
         import api.main
-        # Multiple calls to get_graph() should return the same instance
+
         graph1 = api.main.get_graph()
         graph2 = api.main.get_graph()
+        # Multiple calls should return the same instance
         assert graph1 is graph2
 
 
@@ -106,7 +108,7 @@ class TestPydanticModels:
             price=150.00,
             market_cap=2.4e12,
             currency="USD",
-            additional_fields={"pe_ratio": 25.5}
+            additional_fields={"pe_ratio": 25.5},
         )
         assert asset.id == "AAPL"
         assert asset.price == 150.00
@@ -115,12 +117,7 @@ class TestPydanticModels:
     def test_asset_response_model_optional_fields(self):
         """Test AssetResponse with optional fields omitted."""
         asset = AssetResponse(
-            id="AAPL",
-            symbol="AAPL",
-            name="Apple Inc.",
-            asset_class="EQUITY",
-            sector="Technology",
-            price=150.00
+            id="AAPL", symbol="AAPL", name="Apple Inc.", asset_class="EQUITY", sector="Technology", price=150.00
         )
         assert asset.market_cap is None
         assert asset.currency == "USD"  # Default value
@@ -128,12 +125,7 @@ class TestPydanticModels:
 
     def test_relationship_response_model(self):
         """Test RelationshipResponse model."""
-        rel = RelationshipResponse(
-            source_id="AAPL",
-            target_id="MSFT",
-            relationship_type="same_sector",
-            strength=0.8
-        )
+        rel = RelationshipResponse(source_id="AAPL", target_id="MSFT", relationship_type="same_sector", strength=0.8)
         assert rel.source_id == "AAPL"
         assert rel.strength == 0.8
 
@@ -145,7 +137,7 @@ class TestPydanticModels:
             asset_classes={"EQUITY": 5, "BOND": 5},
             avg_degree=2.0,
             max_degree=5,
-            network_density=0.4
+            network_density=0.4,
         )
         assert metrics.total_assets == 10
         assert metrics.asset_classes["EQUITY"] == 5
@@ -153,8 +145,7 @@ class TestPydanticModels:
     def test_visualization_data_response_model(self):
         """Test VisualizationDataResponse model."""
         viz = VisualizationDataResponse(
-            nodes=[{"id": "AAPL", "x": 1.0, "y": 2.0, "z": 3.0}],
-            edges=[{"source": "AAPL", "target": "MSFT"}]
+            nodes=[{"id": "AAPL", "x": 1.0, "y": 2.0, "z": 3.0}], edges=[{"source": "AAPL", "target": "MSFT"}]
         )
         assert len(viz.nodes) == 1
         assert len(viz.edges) == 1
@@ -391,17 +382,19 @@ class TestErrorHandling:
         """Create a test client."""
         return TestClient(app)
 
-    @patch('api.main.graph')
+    @patch("api.main.graph")
     def test_get_assets_server_error(self, mock_graph_instance, client):
         """Test that server errors are handled gracefully."""
         # Make graph.assets raise exception
-        type(mock_graph_instance).assets = property(lambda self: (_ for _ in ()).throw(Exception("Database error")))
+        def raise_database_error(self):
+            raise Exception("Database error")
+        type(mock_graph_instance).assets = property(raise_database_error)
 
         response = client.get("/api/assets")
         assert response.status_code == 500
         assert "Database error" in response.json()["detail"]
 
-    @patch('api.main.graph')
+    @patch("api.main.graph")
     def test_get_metrics_server_error(self, mock_graph_instance, client):
         """Test metrics endpoint error handling."""
         mock_graph = Mock()
@@ -438,22 +431,16 @@ class TestCORSConfiguration:
     def test_cors_headers_present(self, client):
         """Test that CORS headers are present in responses."""
         # Test with a GET request and valid origin header
-        response = client.get(
-            "/api/health",
-            headers={"Origin": "http://localhost:3000"}
-        )
+        response = client.get("/api/health", headers={"Origin": "http://localhost:3000"})
         assert response.status_code == 200
         # CORS middleware should add these headers when origin is allowed
         # Note: In test environment, CORS headers might not be added by TestClient
         # This is more of an integration test - the middleware is configured above
 
-    @patch.dict(os.environ, {'ENV': 'development', 'ALLOWED_ORIGINS': ''})
+    @patch.dict(os.environ, {"ENV": "development", "ALLOWED_ORIGINS": ""})
     def test_cors_allows_development_origins(self, client):
         """Test CORS allows development origins."""
-        response = client.get(
-            "/api/health",
-            headers={"Origin": "http://localhost:3000"}
-        )
+        response = client.get("/api/health", headers={"Origin": "http://localhost:3000"})
         assert response.status_code == 200
 
 
