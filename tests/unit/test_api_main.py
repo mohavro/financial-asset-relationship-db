@@ -389,26 +389,26 @@ class TestErrorHandling:
         """Create a test client."""
         return TestClient(app)
 
-    @patch('api.main.graph')
-    def test_get_assets_server_error(self, mock_graph_instance, client):
+    @patch('api.main.get_graph')
+    def test_get_assets_server_error(self, mock_get_graph, client):
         """Test that server errors are handled gracefully."""
         # Make graph.assets raise exception
-        type(mock_graph_instance).assets = property(lambda self: (_ for _ in ()).throw(Exception("Database error")))
+        mock_graph = Mock()
+        type(mock_graph).assets = property(lambda self: (_ for _ in ()).throw(Exception("Database error")))
+        mock_get_graph.return_value = mock_graph
 
         response = client.get("/api/assets")
         assert response.status_code == 500
         assert "Database error" in response.json()["detail"]
 
-    @patch('api.main.graph')
-    def test_get_metrics_server_error(self, mock_graph_instance, client):
+    @patch('api.main.get_graph')
+    def test_get_metrics_server_error(self, mock_get_graph, client):
         """Test metrics endpoint error handling."""
         mock_graph = Mock()
         mock_graph.calculate_metrics.side_effect = Exception("Calculation error")
-        # Configure patched graph with mock_graph attributes
-        mock_graph_instance.assets = mock_graph.assets
-        mock_graph_instance.relationships = mock_graph.relationships
-        mock_graph_instance.calculate_metrics = mock_graph.calculate_metrics
-        mock_graph_instance.get_3d_visualization_data = mock_graph.get_3d_visualization_data
+        mock_graph.assets = {}
+        mock_graph.relationships = {}
+        mock_get_graph.return_value = mock_graph
 
         response = client.get("/api/metrics")
         assert response.status_code == 500

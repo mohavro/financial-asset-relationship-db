@@ -95,8 +95,8 @@ def get_graph() -> AssetRelationshipGraph:
     """
     Get or create the global graph instance with thread-safe initialization.
 
-    Uses double-check locking pattern for efficiency. If the graph has not been
-    initialized, this function will create it using real data.
+    Uses a lock to ensure thread-safe singleton initialization. If the graph
+    has not been initialized, this function will create it using real data.
 
     Returns:
         AssetRelationshipGraph: The initialized graph instance.
@@ -105,17 +105,15 @@ def get_graph() -> AssetRelationshipGraph:
         Exception: If graph initialization fails.
     """
     global graph
-    if graph is None:
-        with graph_lock:
-            # Double-check inside lock
-            if graph is None:
-                try:
-                    fetcher = RealDataFetcher()
-                    graph = fetcher.create_real_database()
-                    logger.info("Graph initialized successfully")
-                except Exception:
-                    logger.exception("Failed to initialize graph")
-                    raise
+    with graph_lock:
+        if graph is None:
+            try:
+                fetcher = RealDataFetcher()
+                graph = fetcher.create_real_database()
+                logger.info("Graph initialized successfully")
+            except Exception:
+                logger.exception("Failed to initialize graph")
+                raise
     return graph
 
 
