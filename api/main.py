@@ -129,9 +129,6 @@ def get_graph() -> AssetRelationshipGraph:
     Raises:
         HTTPException: If graph is not initialized (status 500).
     """
-    if graph is None:
-        logger.error("Graph is not initialized")
-        raise HTTPException(status_code=500, detail="Graph not initialized")
     return graph
 
 
