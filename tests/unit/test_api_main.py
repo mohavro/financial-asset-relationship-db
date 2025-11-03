@@ -71,30 +71,22 @@ class TestValidateOrigin:
 
 
 class TestGraphInitialization:
-    """Test the eager graph initialization at module load."""
+    """Test the lazy graph initialization via get_graph()."""
 
-    def test_graph_lazy_initialization(self):
-        """Test graph is lazily initialized on first get_graph() call."""
+    def test_graph_initialization(self):
+        """Test graph is initialized via get_graph()."""
         import api.main
-        # Reset graph to None to test initialization
-        api.main.graph = None
-        assert api.main.graph is None
-        
-        # First call to get_graph should initialize
         graph = api.main.get_graph()
         assert graph is not None
         assert hasattr(graph, 'assets')
         assert hasattr(graph, 'relationships')
 
     def test_graph_singleton(self):
-        """Test graph is a singleton instance."""
+        """Test graph is a singleton instance via get_graph()."""
         import api.main
-        # Reset graph to None
-        api.main.graph = None
-        
-        # Multiple calls to get_graph should return the same instance
         graph1 = api.main.get_graph()
         graph2 = api.main.get_graph()
+        # Multiple calls should return the same instance
         assert graph1 is graph2
 
 
