@@ -3,6 +3,7 @@ from enum import Enum
 from typing import List, Optional
 import re
 
+
 # Asset Class Definitions
 class AssetClass(Enum):
     EQUITY = "Equity"
@@ -10,6 +11,7 @@ class AssetClass(Enum):
     COMMODITY = "Commodity"
     CURRENCY = "Currency"
     DERIVATIVE = "Derivative"
+
 
 class RegulatoryActivity(Enum):
     EARNINGS_REPORT = "Earnings Report"
@@ -19,9 +21,11 @@ class RegulatoryActivity(Enum):
     ACQUISITION = "Acquisition"
     BANKRUPTCY = "Bankruptcy"
 
+
 @dataclass
 class Asset:
     """Base asset class"""
+
     id: str
     symbol: str
     name: str
@@ -43,43 +47,53 @@ class Asset:
             raise ValueError("Asset price must be a non-negative number")
         if self.market_cap is not None and (not isinstance(self.market_cap, (int, float)) or self.market_cap < 0):
             raise ValueError("Market cap must be a non-negative number or None")
-        if not re.match(r'^[A-Z]{3}$', self.currency.upper()):
+        if not re.match(r"^[A-Z]{3}$", self.currency.upper()):
             raise ValueError("Currency must be a valid 3-letter ISO code")
+
 
 @dataclass
 class Equity(Asset):
     """Equity asset"""
+
     pe_ratio: Optional[float] = None
     dividend_yield: Optional[float] = None
     earnings_per_share: Optional[float] = None
     book_value: Optional[float] = None
 
+
 @dataclass
 class Bond(Asset):
     """Fixed income asset"""
+
     yield_to_maturity: Optional[float] = None
     coupon_rate: Optional[float] = None
     maturity_date: Optional[str] = None
     credit_rating: Optional[str] = None
     issuer_id: Optional[str] = None  # Link to company if corporate
 
+
 @dataclass
 class Commodity(Asset):
     """Commodity asset"""
+
     contract_size: Optional[float] = None
     delivery_date: Optional[str] = None
     volatility: Optional[float] = None
 
+
 @dataclass
 class Currency(Asset):
     """Currency asset"""
+
     exchange_rate: Optional[float] = None
     country: Optional[str] = None
     central_bank_rate: Optional[float] = None
 
+
 @dataclass
 class RegulatoryEvent:
     """Regulatory and corporate events"""
+
     id: str
     asset_id: str
     event_type: RegulatoryActivity
@@ -97,7 +111,7 @@ class RegulatoryEvent:
         if not isinstance(self.impact_score, (int, float)) or not (-1 <= self.impact_score <= 1):
             raise ValueError("Impact score must be a float between -1 and 1")
         # Basic ISO 8601 date validation
-        if not re.match(r'^\d{4}-\d{2}-\d{2}', self.date):
+        if not re.match(r"^\d{4}-\d{2}-\d{2}", self.date):
             raise ValueError("Date must be in ISO 8601 format (YYYY-MM-DD...)")
         if not self.description or not isinstance(self.description, str):
             raise ValueError("Description must be a non-empty string")

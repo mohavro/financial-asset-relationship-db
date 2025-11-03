@@ -115,7 +115,7 @@ def populated_graph(sample_equity, sample_bond, sample_commodity, sample_currenc
 def _reset_graph():
     """Reset the graph singleton between tests."""
     import api.main
+
     api.main.graph = None
     yield
     api.main.graph = None
-
