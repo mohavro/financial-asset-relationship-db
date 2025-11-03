@@ -190,9 +190,10 @@ class TestPackageJson:
         """
         version = package_json["version"]
         # Semantic versioning pattern: major.minor.patch with optional pre-release suffix
-        semver_pattern = r'^\d+\.\d+\.\d+(-[\w.]+)?$'
-        assert re.match(semver_pattern, version), \
-            f"Version should follow semantic versioning (x.y.z or x.y.z-prerelease): {version}"
+        semver_pattern = r"^\d+\.\d+\.\d+(-[\w.]+)?$"
+        assert re.match(
+            semver_pattern, version
+        ), f"Version should follow semantic versioning (x.y.z or x.y.z-prerelease): {version}"
 
 
 class TestTSConfig:
@@ -307,13 +308,12 @@ class TestEnvExample:
         # Check for common secret patterns
         suspicious_patterns = [
             "sk_live",  # Stripe live keys
-            "prod_",    # Production keys
+            "prod_",  # Production keys
             "pk_live",  # Public live keys
         ]
 
         for pattern in suspicious_patterns:
-            assert pattern not in env_example_content.lower(), \
-                f"Potential real secret found: {pattern}"
+            assert pattern not in env_example_content.lower(), f"Potential real secret found: {pattern}"
 
 
 class TestGitignore:
@@ -395,8 +395,9 @@ class TestRequirementsTxt:
 
         for req in requirements:
             if not req.startswith("-"):
-                assert any(op in req for op in [">=", "==", "~=", "<="]), \
-                    f"Package should have version constraint: {req}"
+                assert any(
+                    op in req for op in [">=", "==", "~=", "<="]
+                ), f"Package should have version constraint: {req}"
 
 
 class TestPostCSSConfig:
