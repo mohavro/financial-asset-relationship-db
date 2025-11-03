@@ -21,7 +21,7 @@ class TestVercelConfig:
         """Load vercel.json configuration."""
         config_path = Path("vercel.json")
         assert config_path.exists(), "vercel.json not found"
-        
+
         with open(config_path) as f:
             return json.load(f)
 
@@ -48,7 +48,7 @@ class TestVercelConfig:
         """Test that Python backend build is configured correctly."""
         builds = vercel_config["builds"]
         python_build = next((b for b in builds if "api/main.py" in b["src"]), None)
-        
+
         assert python_build is not None, "Python backend build not found"
         assert python_build["use"] == "@vercel/python"
         assert "config" in python_build
@@ -58,7 +58,7 @@ class TestVercelConfig:
         """Test that Next.js frontend build is configured correctly."""
         builds = vercel_config["builds"]
         nextjs_build = next((b for b in builds if "package.json" in b["src"]), None)
-        
+
         assert nextjs_build is not None, "Next.js frontend build not found"
         assert nextjs_build["use"] == "@vercel/next"
 
@@ -66,7 +66,7 @@ class TestVercelConfig:
         """Test that API routes are configured correctly."""
         routes = vercel_config["routes"]
         api_route = next((r for r in routes if "/api/" in r["src"]), None)
-        
+
         assert api_route is not None, "API route not found"
         assert api_route["dest"] == "api/main.py"
 
@@ -74,7 +74,7 @@ class TestVercelConfig:
         """Test that frontend routes are configured correctly."""
         routes = vercel_config["routes"]
         frontend_route = next((r for r in routes if r["src"] == "/(.*)"), None)
-        
+
         assert frontend_route is not None, "Frontend route not found"
         assert "frontend" in frontend_route["dest"]
 
@@ -82,7 +82,7 @@ class TestVercelConfig:
         """Test that Lambda size limit is reasonable."""
         builds = vercel_config["builds"]
         python_build = next((b for b in builds if "api/main.py" in b["src"]), None)
-        
+
         if python_build and "config" in python_build:
             max_size = python_build["config"].get("maxLambdaSize", "50mb")
             # Parse size (e.g., "50mb")
@@ -98,7 +98,7 @@ class TestNextConfig:
         """Load Next.js configuration file content."""
         config_path = Path("frontend/next.config.js")
         assert config_path.exists(), "next.config.js not found"
-        
+
         with open(config_path) as f:
             return f.read()
 
@@ -128,7 +128,7 @@ class TestPackageJson:
         """Load package.json configuration."""
         config_path = Path("frontend/package.json")
         assert config_path.exists(), "package.json not found"
-        
+
         with open(config_path) as f:
             return json.load(f)
 
@@ -149,7 +149,7 @@ class TestPackageJson:
         """Test that package.json has necessary build scripts."""
         scripts = package_json["scripts"]
         required_scripts = ["dev", "build", "start"]
-        
+
         for script in required_scripts:
             assert script in scripts, f"Missing script: {script}"
 
@@ -157,7 +157,7 @@ class TestPackageJson:
         """Test that React dependencies are present."""
         deps = package_json["dependencies"]
         required_deps = ["react", "react-dom", "next"]
-        
+
         for dep in required_deps:
             assert dep in deps, f"Missing dependency: {dep}"
 
@@ -165,7 +165,7 @@ class TestPackageJson:
         """Test that visualization dependencies are present."""
         deps = package_json["dependencies"]
         viz_deps = ["plotly.js", "react-plotly.js"]
-        
+
         for dep in viz_deps:
             assert dep in deps, f"Missing visualization dependency: {dep}"
 
@@ -178,21 +178,22 @@ class TestPackageJson:
         """Test that TypeScript dependencies are present."""
         dev_deps = package_json.get("devDependencies", {})
         ts_deps = ["typescript", "@types/react", "@types/node"]
-        
+
         for dep in ts_deps:
             assert dep in dev_deps, f"Missing TypeScript dependency: {dep}"
 
     def test_package_json_version_format(self, package_json):
         """Test that version follows semantic versioning.
-        
+
         Supports standard semantic versions (e.g., 1.0.0) and pre-release versions
         (e.g., 1.0.0-beta, 1.0.0-rc.1, 1.0.0-alpha.1).
         """
         version = package_json["version"]
         # Semantic versioning pattern: major.minor.patch with optional pre-release suffix
-        semver_pattern = r'^\d+\.\d+\.\d+(-[\w.]+)?$'
-        assert re.match(semver_pattern, version), \
-            f"Version should follow semantic versioning (x.y.z or x.y.z-prerelease): {version}"
+        semver_pattern = r"^\d+\.\d+\.\d+(-[\w.]+)?$"
+        assert re.match(
+            semver_pattern, version
+        ), f"Version should follow semantic versioning (x.y.z or x.y.z-prerelease): {version}"
 
 
 class TestTSConfig:
@@ -203,7 +204,7 @@ class TestTSConfig:
         """Load tsconfig.json."""
         config_path = Path("frontend/tsconfig.json")
         assert config_path.exists(), "tsconfig.json not found"
-        
+
         with open(config_path) as f:
             return json.load(f)
 
@@ -251,7 +252,7 @@ class TestTailwindConfig:
         """Load Tailwind configuration content."""
         config_path = Path("frontend/tailwind.config.js")
         assert config_path.exists(), "tailwind.config.js not found"
-        
+
         with open(config_path) as f:
             return f.read()
 
@@ -281,7 +282,7 @@ class TestEnvExample:
         """Load .env.example content."""
         config_path = Path(".env.example")
         assert config_path.exists(), ".env.example not found"
-        
+
         with open(config_path) as f:
             return f.read()
 
@@ -307,13 +308,12 @@ class TestEnvExample:
         # Check for common secret patterns
         suspicious_patterns = [
             "sk_live",  # Stripe live keys
-            "prod_",    # Production keys
+            "prod_",  # Production keys
             "pk_live",  # Public live keys
         ]
-        
+
         for pattern in suspicious_patterns:
-            assert pattern not in env_example_content.lower(), \
-                f"Potential real secret found: {pattern}"
+            assert pattern not in env_example_content.lower(), f"Potential real secret found: {pattern}"
 
 
 class TestGitignore:
@@ -324,7 +324,7 @@ class TestGitignore:
         """Load .gitignore content."""
         config_path = Path(".gitignore")
         assert config_path.exists(), ".gitignore not found"
-        
+
         with open(config_path) as f:
             return f.read()
 
@@ -352,12 +352,13 @@ class TestGitignore:
     def test_gitignore_excludes_python_artifacts(self, gitignore_content):
         """Test that Python artifacts are excluded."""
         assert "__pycache__" in gitignore_content
-        assert "*.pyc" in gitignore_content or ".pyc" in gitignore_content
+        # Check for *.pyc explicitly or the pattern *.py[cod] (which matches files ending in .pyc, .pyo, or .pyd; [cod] means any single character from the set {c, o, d})
+        assert "*.pyc" in gitignore_content or "*.py[cod]" in gitignore_content
 
 
 class TestRequirementsTxt:
     """Test cases for requirements.txt."""
-    
+
     require_version_pinning = True  # When True, enforces version constraints for all dependencies in requirements.txt
 
     @pytest.fixture
@@ -365,7 +366,7 @@ class TestRequirementsTxt:
         """Load requirements.txt content."""
         config_path = Path("requirements.txt")
         assert config_path.exists(), "requirements.txt not found"
-        
+
         with open(config_path) as f:
             return [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
@@ -391,11 +392,12 @@ class TestRequirementsTxt:
         # Skip this test if project doesn't require version pinning
         if not self.require_version_pinning:
             pytest.skip("Version pinning not required for this project")
-        
+
         for req in requirements:
             if not req.startswith("-"):
-                assert any(op in req for op in [">=", "==", "~=", "<="]), \
-                    f"Package should have version constraint: {req}"
+                assert any(
+                    op in req for op in [">=", "==", "~=", "<="]
+                ), f"Package should have version constraint: {req}"
 
 
 class TestPostCSSConfig:
@@ -407,7 +409,7 @@ class TestPostCSSConfig:
         config_path = Path("frontend/postcss.config.js")
         if not config_path.exists():
             pytest.skip("postcss.config.js not found")
-        
+
         with open(config_path) as f:
             return f.read()
 
@@ -428,11 +430,11 @@ class TestConfigurationConsistency:
         # Check .env.example
         with open(".env.example") as f:
             env_content = f.read()
-        
+
         # Check next.config.js
         with open("frontend/next.config.js") as f:
             next_config = f.read()
-        
+
         # Both should mention NEXT_PUBLIC_API_URL
         assert "NEXT_PUBLIC_API_URL" in env_content
         assert "NEXT_PUBLIC_API_URL" in next_config
@@ -441,10 +443,10 @@ class TestConfigurationConsistency:
         """Test that package.json and tsconfig are consistent."""
         with open("frontend/package.json") as f:
             package = json.load(f)
-        
+
         with open("frontend/tsconfig.json") as f:
             tsconfig = json.load(f)
-        
+
         # If TypeScript is in devDependencies, tsconfig should exist
         if "typescript" in package.get("devDependencies", {}):
             assert "compilerOptions" in tsconfig
@@ -454,9 +456,9 @@ class TestConfigurationConsistency:
         # Verify package.json scripts match expected Next.js commands
         with open("frontend/package.json") as f:
             package = json.load(f)
-        
+
         scripts = package["scripts"]
-        
+
         # Next.js standard scripts
         assert "next dev" in scripts.get("dev", "") or "next" in scripts.get("dev", "")
         assert "next build" in scripts.get("build", "") or "next" in scripts.get("build", "")
