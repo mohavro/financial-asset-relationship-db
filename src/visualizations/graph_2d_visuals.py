@@ -167,7 +167,11 @@ def _create_grid_layout(asset_ids: List[str]) -> Dict[str, Tuple[float, float]]:
 
 def _create_spring_layout_2d(positions_3d: np.ndarray,
                              asset_ids: List[str]) -> Dict[str, Tuple[float, float]]:
-    """Convert 3D positions to 2D using projection"""
+    """Convert 3D positions to 2D using projection
+    Note: positions_3d must be generated deterministically upstream (e.g., with np.random.seed(42)).
+    """
+    if not isinstance(positions_3d, np.ndarray):
+        raise TypeError("positions_3d must be a numpy.ndarray")
     positions = {}
 
     for idx, asset_id in enumerate(asset_ids):
