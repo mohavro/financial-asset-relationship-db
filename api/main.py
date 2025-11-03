@@ -94,17 +94,15 @@ def get_graph() -> AssetRelationshipGraph:
     Uses double-check locking pattern for efficiency in serverless environments.
     """
     global graph
-    if graph is None:
-        with graph_lock:
-            # Double-check inside lock
-            if graph is None:
-                try:
-                    fetcher = RealDataFetcher()
-                    graph = fetcher.create_real_database()
-                    logger.info("Graph initialized successfully")
-                except Exception:
-                    logger.exception("Failed to initialize graph")
-                    raise
+    with graph_lock:
+        if graph is None:
+            try:
+                fetcher = RealDataFetcher()
+                graph = fetcher.create_real_database()
+                logger.info("Graph initialized successfully")
+            except Exception:
+                logger.exception("Failed to initialize graph")
+                raise
     return graph
 
 
