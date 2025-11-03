@@ -183,10 +183,13 @@ class FinancialAssetApp:
         }
         return asset_dict, {"outgoing": outgoing, "incoming": incoming}
 
-    def refresh_all_outputs(self, graph_state: AssetRelationshipGraph):
-        """Refreshes all visualizations and reports in the Gradio interface."""
+    def refresh_all_outputs(self):
+        """Refreshes all visualizations and reports in the Gradio interface.
+
+        Always uses self.ensure_graph() to get the latest graph state rather than
+        relying on potentially stale state passed from Gradio.
+        """
         try:
-            # Always use self.ensure_graph() to ensure the graph is initialized and up-to-date, rather than relying on the passed graph_state.
             graph = self.ensure_graph()
             logger.info("Refreshing all visualization outputs")
             viz_3d = visualize_3d_graph(graph)
@@ -521,7 +524,7 @@ class FinancialAssetApp:
             for btn in refresh_buttons:
                 btn.click(
                     self.refresh_all_outputs,
-                    inputs=[graph_state],
+                    inputs=None,
                     outputs=all_refresh_outputs
                 )
 
@@ -603,7 +606,7 @@ class FinancialAssetApp:
 
             demo.load(
                 self.refresh_all_outputs,
-                inputs=[graph_state],
+                inputs=None,
                 outputs=all_refresh_outputs
             )
         return demo
