@@ -352,7 +352,7 @@ class TestGitignore:
     def test_gitignore_excludes_python_artifacts(self, gitignore_content):
         """Test that Python artifacts are excluded."""
         assert "__pycache__" in gitignore_content
-        # Check for *.pyc explicitly or the pattern *.py[cod] which includes .pyc, .pyo, .pyd
+        # Check for *.pyc explicitly or the pattern *.py[cod] (which matches files ending in .pyc, .pyo, or .pyd; [cod] means any single character from the set {c, o, d})
         assert "*.pyc" in gitignore_content or "*.py[cod]" in gitignore_content
 
 
