@@ -94,6 +94,8 @@ def get_graph() -> AssetRelationshipGraph:
     Uses double-check locking pattern for efficiency in serverless environments.
     """
     global graph
+    if graph is not None:
+        return graph
     with graph_lock:
         if graph is None:
             try:
