@@ -77,11 +77,11 @@ class TestGraphInitialization:
         """Test graph is initialized lazily via get_graph()."""
         import api.main
         # Graph should be None initially (lazy initialization)
-        # Call get_graph() to initialize it
-        graph = api.main.get_graph()
-        assert graph is not None
-        assert hasattr(graph, 'assets')
-        assert hasattr(graph, 'relationships')
+        with patch('api.main.graph', None):
+            graph = api.main.get_graph()
+            assert graph is not None
+            assert hasattr(graph, 'assets')
+            assert hasattr(graph, 'relationships')
 
     def test_graph_singleton(self):
         """Test graph is a singleton instance."""
