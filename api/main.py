@@ -1,14 +1,16 @@
 # Comprehensive test coverage available in tests/unit/test_api_main.py
 """FastAPI backend for Financial Asset Relationship Database"""
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from contextlib import asynccontextmanager
 from typing import Dict, List, Optional, Any
 import logging
 import os
 import re
 import threading
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import RealDataFetcher
@@ -18,11 +20,59 @@ from src.models.financial_models import AssetClass
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
+# Global graph instance with thread-safe initialization
+graph: Optional[AssetRelationshipGraph] = None
+graph_lock = threading.Lock()
+
+
+def get_graph() -> AssetRelationshipGraph:
+    """
+    Get or create the global graph instance with thread-safe initialization.
+
+    Uses double-check locking pattern for efficiency in concurrent environments.
+    The graph is lazily initialized on first access or during application startup.
+
+    Returns:
+        AssetRelationshipGraph: The initialized graph instance.
+    """
+    global graph
+    if graph is None:
+        with graph_lock:
+            if graph is None:
+                fetcher = RealDataFetcher()
+                graph = fetcher.create_real_database()
+                logger.info("Graph initialized successfully")
+    return graph
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan event handler.
+
+    Initializes the graph during startup and handles cleanup on shutdown.
+    This ensures the database is ready before handling any requests.
+    """
+    # Startup
+    try:
+        get_graph()
+        logger.info("Application startup complete - graph initialized")
+    except Exception:
+        logger.exception("Failed to initialize graph during startup")
+        raise
+
+    yield
+
+    # Shutdown (cleanup if needed)
+    logger.info("Application shutdown")
+
+
+# Initialize FastAPI app with lifespan handler
 app = FastAPI(
     title="Financial Asset Relationship API",
     description="REST API for Financial Asset Relationship Database",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Configure CORS for Next.js frontend
@@ -38,16 +88,19 @@ def validate_origin(origin: str) -> bool:
     current_env = ENV
 
     # Allow HTTP localhost only in development
-    if current_env == "development" and re.match(r'^http://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+    if current_env == "development" and re.match(r"^http://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
         return True
     # Allow HTTPS localhost in any environment
-    if re.match(r'^https://(localhost|127\.0\.0\.1)(:\d+)?$', origin):
+    if re.match(r"^https://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
         return True
     # Allow Vercel preview deployment URLs (e.g., https://project-git-branch-user.vercel.app)
-    if re.match(r'^https://[a-zA-Z0-9\-\.]+\.vercel\.app$', origin):
+    if re.match(r"^https://[a-zA-Z0-9\-\.]+\.vercel\.app$", origin):
         return True
     # Allow valid HTTPS URLs with proper domains
-    if re.match(r'^https://[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$', origin):
+    if re.match(
+        r"^https://[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$",
+        origin,
+    ):
         return True
     return False
 
@@ -55,18 +108,22 @@ def validate_origin(origin: str) -> bool:
 # Set allowed_origins based on environment
 allowed_origins = []
 if ENV == "development":
-    allowed_origins.extend([
-        "http://localhost:3000",
-        "http://localhost:7860",
-        "https://localhost:3000",
-        "https://localhost:7860",
-    ])
+    allowed_origins.extend(
+        [
+            "http://localhost:3000",
+            "http://localhost:7860",
+            "https://localhost:3000",
+            "https://localhost:7860",
+        ]
+    )
 else:
     # In production, only allow HTTPS localhost (if needed for testing)
-    allowed_origins.extend([
-        "https://localhost:3000",
-        "https://localhost:7860",
-    ])
+    allowed_origins.extend(
+        [
+            "https://localhost:3000",
+            "https://localhost:7860",
+        ]
+    )
 
 # Add production origins from environment variable if set
 if os.getenv("ALLOWED_ORIGINS"):
@@ -85,38 +142,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Global graph instance and lock for thread-safe lazy initialization
-graph: Optional[AssetRelationshipGraph] = None
-graph_lock = threading.Lock()
-
-
-def get_graph() -> AssetRelationshipGraph:
-    """
-    Get or create the global graph instance with thread-safe initialization.
-
-    Uses double-check locking pattern for efficiency. If the graph has not been
-    initialized, this function will create it using real data.
-
-    Returns:
-        AssetRelationshipGraph: The initialized graph instance.
-
-    Raises:
-        Exception: If graph initialization fails.
-    """
-    global graph
-    if graph is None:
-        with graph_lock:
-            # Double-check inside lock
-            if graph is None:
-                try:
-                    fetcher = RealDataFetcher()
-                    graph = fetcher.create_real_database()
-                    logger.info("Graph initialized successfully")
-                except Exception:
-                    logger.exception("Failed to initialize graph")
-                    raise
-    return graph
 
 
 def raise_asset_not_found(asset_id: str, resource_type: str = "Asset") -> None:
@@ -183,8 +208,8 @@ async def root():
             "asset_detail": "/api/assets/{asset_id}",
             "relationships": "/api/relationships",
             "metrics": "/api/metrics",
-            "visualization": "/api/visualization"
-        }
+            "visualization": "/api/visualization",
+        },
     }
 
 
@@ -195,10 +220,7 @@ async def health_check():
 
 
 @app.get("/api/assets", response_model=List[AssetResponse])
-async def get_assets(
-    asset_class: Optional[str] = None,
-    sector: Optional[str] = None
-):
+async def get_assets(asset_class: Optional[str] = None, sector: Optional[str] = None):
     """
     List assets, optionally filtered by asset class and sector.
 
@@ -230,14 +252,26 @@ async def get_assets(
                 "price": asset.price,
                 "market_cap": asset.market_cap,
                 "currency": asset.currency,
-                "additional_fields": {}
+                "additional_fields": {},
             }
 
             # Add asset-specific fields
-            for field in ["pe_ratio", "dividend_yield", "earnings_per_share", "book_value",
-                          "yield_to_maturity", "coupon_rate", "maturity_date", "credit_rating",
-                          "contract_size", "delivery_date", "volatility",
-                          "exchange_rate", "country", "central_bank_rate"]:
+            for field in [
+                "pe_ratio",
+                "dividend_yield",
+                "earnings_per_share",
+                "book_value",
+                "yield_to_maturity",
+                "coupon_rate",
+                "maturity_date",
+                "credit_rating",
+                "contract_size",
+                "delivery_date",
+                "volatility",
+                "exchange_rate",
+                "country",
+                "central_bank_rate",
+            ]:
                 if hasattr(asset, field):
                     value = getattr(asset, field)
                     if value is not None:
@@ -282,14 +316,27 @@ async def get_asset_detail(asset_id: str):
             "price": asset.price,
             "market_cap": asset.market_cap,
             "currency": asset.currency,
-            "additional_fields": {}
+            "additional_fields": {},
         }
 
         # Add all asset-specific fields
-        for field in ["pe_ratio", "dividend_yield", "earnings_per_share", "book_value",
-                      "yield_to_maturity", "coupon_rate", "maturity_date", "credit_rating",
-                      "contract_size", "delivery_date", "volatility",
-                      "exchange_rate", "country", "central_bank_rate", "issuer_id"]:
+        for field in [
+            "pe_ratio",
+            "dividend_yield",
+            "earnings_per_share",
+            "book_value",
+            "yield_to_maturity",
+            "coupon_rate",
+            "maturity_date",
+            "credit_rating",
+            "contract_size",
+            "delivery_date",
+            "volatility",
+            "exchange_rate",
+            "country",
+            "central_bank_rate",
+            "issuer_id",
+        ]:
             if hasattr(asset, field):
                 value = getattr(asset, field)
                 if value is not None:
@@ -327,12 +374,11 @@ async def get_asset_relationships(asset_id: str):
         # Outgoing relationships
         if asset_id in g.relationships:
             for target_id, rel_type, strength in g.relationships[asset_id]:
-                relationships.append(RelationshipResponse(
-                    source_id=asset_id,
-                    target_id=target_id,
-                    relationship_type=rel_type,
-                    strength=strength
-                ))
+                relationships.append(
+                    RelationshipResponse(
+                        source_id=asset_id, target_id=target_id, relationship_type=rel_type, strength=strength
+                    )
+                )
     except Exception as e:
         if isinstance(e, HTTPException):
             raise
@@ -356,12 +402,11 @@ async def get_all_relationships():
 
         for source_id, rels in g.relationships.items():
             for target_id, rel_type, strength in rels:
-                relationships.append(RelationshipResponse(
-                    source_id=source_id,
-                    target_id=target_id,
-                    relationship_type=rel_type,
-                    strength=strength
-                ))
+                relationships.append(
+                    RelationshipResponse(
+                        source_id=source_id, target_id=target_id, relationship_type=rel_type, strength=strength
+                    )
+                )
     except Exception as e:
         logger.exception("Error getting relationships:")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -404,7 +449,7 @@ async def get_metrics():
             asset_classes=asset_classes,
             avg_degree=metrics.get("avg_degree", 0.0),
             max_degree=metrics.get("max_degree", 0),
-            network_density=metrics.get("network_density", 0.0)
+            network_density=metrics.get("network_density", 0.0),
         )
     except Exception as e:
         logger.exception("Error getting metrics:")
@@ -432,17 +477,19 @@ async def get_visualization_data():
         nodes = []
         for i, asset_id in enumerate(asset_ids):
             asset = g.assets[asset_id]
-            nodes.append({
-                "id": asset_id,
-                "name": asset.name,
-                "symbol": asset.symbol,
-                "asset_class": asset.asset_class.value,
-                "x": float(positions[i, 0]),
-                "y": float(positions[i, 1]),
-                "z": float(positions[i, 2]),
-                "color": asset_colors[i],
-                "size": 5
-            })
+            nodes.append(
+                {
+                    "id": asset_id,
+                    "name": asset.name,
+                    "symbol": asset.symbol,
+                    "asset_class": asset.asset_class.value,
+                    "x": float(positions[i, 0]),
+                    "y": float(positions[i, 1]),
+                    "z": float(positions[i, 2]),
+                    "color": asset_colors[i],
+                    "size": 5,
+                }
+            )
 
         edges = []
         # Build edges directly from graph relationships (O(e) instead of O(e × n²))
@@ -453,12 +500,14 @@ async def get_visualization_data():
                 continue
             for target_id, rel_type, strength in g.relationships[source_id]:
                 if target_id in asset_id_set:
-                    edges.append({
-                        "source": source_id,
-                        "target": target_id,
-                        "relationship_type": rel_type,
-                        "strength": float(strength)
-                    })
+                    edges.append(
+                        {
+                            "source": source_id,
+                            "target": target_id,
+                            "relationship_type": rel_type,
+                            "strength": float(strength),
+                        }
+                    )
 
         return VisualizationDataResponse(nodes=nodes, edges=edges)
     except Exception as e:
@@ -474,9 +523,7 @@ async def get_asset_classes():
     Returns:
         Dict[str, List[str]]: A mapping with key "asset_classes" whose value is a list of asset class string values.
     """
-    return {
-        "asset_classes": [ac.value for ac in AssetClass]
-    }
+    return {"asset_classes": [ac.value for ac in AssetClass]}
 
 
 @app.get("/api/sectors")
@@ -504,4 +551,5 @@ async def get_sectors():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="127.0.0.1", port=8000)

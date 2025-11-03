@@ -2,13 +2,18 @@ import numpy as np
 from typing import Dict, List, Tuple, Any, Optional
 from src.models.financial_models import Asset, Equity, Bond, Commodity, Currency, RegulatoryEvent, AssetClass
 
+
 class AssetRelationshipGraph:
     """Manages relationships between assets across all classes"""
 
     def __init__(self):
         self.assets: Dict[str, Asset] = {}
-        self.relationships: Dict[str, List[Tuple[str, str, float]]] = {}  # asset_id -> [(target_id, rel_type, strength)]
-        self.incoming_relationships: Dict[str, List[Tuple[str, str, float]]] = {}  # asset_id -> [(source_id, rel_type, strength)]
+        self.relationships: Dict[str, List[Tuple[str, str, float]]] = (
+            {}
+        )  # asset_id -> [(target_id, rel_type, strength)]
+        self.incoming_relationships: Dict[str, List[Tuple[str, str, float]]] = (
+            {}
+        )  # asset_id -> [(source_id, rel_type, strength)]
         self.regulatory_events: List[RegulatoryEvent] = []
         self.relationship_metrics: Dict[str, float] = {}
         self._positions: Optional[np.ndarray] = None  # persist 3D positions
@@ -23,34 +28,36 @@ class AssetRelationshipGraph:
         # Invalidate positions if asset count changes
         self._positions = None
 
-    def add_relationship(self, source_id: str, target_id: str, rel_type: str, strength: float = 0.5, bidirectional: bool = False):
+    def add_relationship(
+        self, source_id: str, target_id: str, rel_type: str, strength: float = 0.5, bidirectional: bool = False
+    ):
         """Add relationship between assets, with optional bidirectionality and deduplication"""
         strength = float(max(0.0, min(1.0, strength)))
         if source_id not in self.relationships:
             self.relationships[source_id] = []
         if target_id not in self.incoming_relationships:
             self.incoming_relationships[target_id] = []
-        
+
         rel = (target_id, rel_type, strength)
         if rel not in self.relationships[source_id]:
             self.relationships[source_id].append(rel)
-        
+
         # Add to incoming relationships
         incoming_rel = (source_id, rel_type, strength)
         if incoming_rel not in self.incoming_relationships[target_id]:
             self.incoming_relationships[target_id].append(incoming_rel)
-        
+
         if bidirectional:
             # Add reverse direction without recursion loop
             if target_id not in self.relationships:
                 self.relationships[target_id] = []
             if source_id not in self.incoming_relationships:
                 self.incoming_relationships[source_id] = []
-            
+
             rel_rev = (source_id, rel_type, strength)
             if rel_rev not in self.relationships[target_id]:
                 self.relationships[target_id].append(rel_rev)
-            
+
             incoming_rel_rev = (target_id, rel_type, strength)
             if incoming_rel_rev not in self.incoming_relationships[source_id]:
                 self.incoming_relationships[source_id].append(incoming_rel_rev)
@@ -59,19 +66,25 @@ class AssetRelationshipGraph:
         """Add regulatory event and link to related assets"""
         self.regulatory_events.append(event)
         for related_id in event.related_assets:
-            self.add_relationship(event.asset_id, related_id, f"event_{event.event_type.value}", abs(event.impact_score), bidirectional=False)
+            self.add_relationship(
+                event.asset_id,
+                related_id,
+                f"event_{event.event_type.value}",
+                abs(event.impact_score),
+                bidirectional=False,
+            )
 
     def build_relationships(self):
         """Automatically build relationships based on asset attributes"""
         asset_list = list(self.assets.values())
         for i, asset1 in enumerate(asset_list):
-            for asset2 in asset_list[i+1:]:
+            for asset2 in asset_list[i + 1 :]:
                 # Check relationships in both directions to catch directional ones
                 # First check asset1 -> asset2
                 relationships_found = self._find_relationships(asset1, asset2)
                 for rel_type, strength, bidirectional in relationships_found:
                     self.add_relationship(asset1.id, asset2.id, rel_type, strength, bidirectional=bidirectional)
-                
+
                 # Also check asset2 -> asset1 for directional relationships
                 relationships_found_reverse = self._find_relationships(asset2, asset1)
                 for rel_type, strength, bidirectional in relationships_found_reverse:
@@ -157,7 +170,9 @@ class AssetRelationshipGraph:
             for target_id, rel_type, strength in rels:
                 all_strengths.append(strength)
                 all_relationships.append((source_id, target_id, rel_type, strength))
-                metrics["relationship_distribution"][rel_type] = metrics["relationship_distribution"].get(rel_type, 0) + 1
+                metrics["relationship_distribution"][rel_type] = (
+                    metrics["relationship_distribution"].get(rel_type, 0) + 1
+                )
 
         if all_strengths:
             metrics["average_relationship_strength"] = float(np.mean(all_strengths))
@@ -168,7 +183,9 @@ class AssetRelationshipGraph:
         metrics["relationship_density"] = (metrics["total_relationships"] / (n * n)) * 100.0
         return metrics
 
-    def get_3d_visualization_data(self) -> Tuple[np.ndarray, List[str], List[str], List[str], Tuple[List[float], List[float], List[float]]]:
+    def get_3d_visualization_data(
+        self,
+    ) -> Tuple[np.ndarray, List[str], List[str], List[str], Tuple[List[float], List[float], List[float]]]:
         """Generate 3D coordinates for visualization; positions persist across refreshes"""
         n_assets = len(self.assets)
         asset_ids = list(self.assets.keys())
@@ -234,26 +251,26 @@ class AssetRelationshipGraph:
         asset_text: List[str] = []
 
         color_map = {
-            AssetClass.EQUITY.value: "#1f77b4",      # Professional blue
-            AssetClass.FIXED_INCOME.value: "#2ca02c", # Professional green
-            AssetClass.COMMODITY.value: "#ff7f0e",    # Professional orange
-            AssetClass.CURRENCY.value: "#d62728",     # Professional red
-            AssetClass.DERIVATIVE.value: "#9467bd",   # Professional purple
+            AssetClass.EQUITY.value: "#1f77b4",  # Professional blue
+            AssetClass.FIXED_INCOME.value: "#2ca02c",  # Professional green
+            AssetClass.COMMODITY.value: "#ff7f0e",  # Professional orange
+            AssetClass.CURRENCY.value: "#d62728",  # Professional red
+            AssetClass.DERIVATIVE.value: "#9467bd",  # Professional purple
         }
 
         for asset_id in asset_ids:
             asset = self.assets[asset_id]
             asset_colors.append(color_map.get(asset.asset_class.value, "#7f7f7f"))
-            
+
             # Enhanced hover text with more detail
             price_display = asset.price
             if isinstance(asset, Currency) and asset.exchange_rate is not None:
                 price_display = asset.exchange_rate
-                
+
             # Get relationship counts for this asset
             outgoing_count = len(self.relationships.get(asset_id, []))
             incoming_count = len(self.incoming_relationships.get(asset_id, []))
-            
+
             asset_text.append(
                 f"<b>{asset.symbol}</b><br>"
                 f"{asset.name}<br>"
