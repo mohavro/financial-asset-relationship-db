@@ -23,7 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@<full-length-commit-SHA>
+        uses: jfrog/setup-jfrog-cli@<actual-full-length-commit-SHA>
         env:
           JF_URL: ${{ vars.JF_URL }}
         with:
