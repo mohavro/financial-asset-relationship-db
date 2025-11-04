@@ -6,10 +6,16 @@ on:
     paths: [ '.github/workflows/jfrog-github-oidc-example.yml' ]  # Only run on workflow changes
 
 permissions:
-  # This is required for requesting the OIDC token
-  id-token: write
-  # This is required for actions/checkout
   contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Restrict to job level
+      contents: read
+    steps:
+      # ... steps that need OIDC
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,7 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@<full-length-commit-SHA>
+        uses: jfrog/setup-jfrog-cli@<actual-full-length-commit-SHA>
         env:
           JF_URL: ${{ vars.JF_URL }}
         with:
