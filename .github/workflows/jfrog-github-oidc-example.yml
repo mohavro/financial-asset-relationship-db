@@ -1,0 +1,35 @@
+name: "Setup JFrog CLI OIDC Example"
+on:
+  workflow_dispatch:  # Manual trigger for configuration workflows
+  push:
+    branches: [ main ]
+    paths: [ '.github/workflows/jfrog-github-oidc-example.yml' ]  # Only run on workflow changes
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Restrict to job level
+      contents: read
+    steps:
+      # ... steps that need OIDC
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@abc123def4567890abcdef1234567890abcdef1234
+        env:
+          JF_URL: ${{ vars.JF_URL }}
+        with:
+          oidc-provider-name: mohavro/financial-asset-relationship-db@github
+
+      - name: Run JFrog CLI
+        run: |
+          # Ping the server
+          jf rt ping
