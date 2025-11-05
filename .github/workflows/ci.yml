@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test Python ${{ matrix.python-version }}
@@ -19,47 +23,26 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Run CI common for Python ${{ matrix.python-version }}
+      uses: ./.github/actions/ci-common
       with:
+        language: python
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
-
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # check for other issues
-        flake8 . --count --statistics
-
-    - name: Check code formatting with black
-      run: |
-        black --check --diff .
-
-    - name: Check import sorting with isort
-      run: |
-        isort --check-only --diff .
-
-    - name: Type check with mypy
-      run: |
-        mypy src/ --ignore-missing-imports
-
-    - name: Lint with pylint
-      run: |
-        pylint src/ --fail-under=7.0
-
-    - name: Test with pytest
-      run: |
-        pytest --cov=src --cov-report=xml --cov-report=term-missing -v
+        dependency-paths: |
+          requirements.txt
+          requirements-dev.txt
+        install: |
+          python -m pip install --upgrade pip && \
+          pip install -r requirements.txt && \
+          pip install -r requirements-dev.txt
+        test: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics && \
+          flake8 . --count --statistics && \
+          black --check --diff . && \
+          isort --check-only --diff . && \
+          mypy src/ --ignore-missing-imports && \
+          pylint src/ --fail-under=7.0 && \
+          pytest --cov=src --cov-report=xml --cov-report=term-missing -v
 
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.11'
@@ -76,25 +59,17 @@ jobs:
     needs: test
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Run CI common for security checks (Python 3.11)
+      uses: ./.github/actions/ci-common
       with:
-        python-version: "3.11"
-        cache: 'pip'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install safety bandit
-
-    - name: Check for security vulnerabilities with safety
-      run: |
-        safety check --json || true
-
-    - name: Check code security with bandit
-      run: |
-        bandit -r src/ -ll || true
+        language: python
+        python-version: '3.11'
+        dependency-paths: |
+          requirements.txt
+        install: |
+          python -m pip install --upgrade pip && \
+          pip install -r requirements.txt && \
+          pip install safety bandit
+        test: |
+          safety check --json || true && \
+          bandit -r src/ -ll || true

@@ -16,11 +16,27 @@ name: Snyk Container
 on:
   push:
     branches: [ "main", "Default" ]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '**/*.Dockerfile'
+      - '.docker/**'
+      - '.github/workflows/snyk-container.yml'
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main" ]
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '**/*.Dockerfile'
+      - '.docker/**'
+      - '.github/workflows/snyk-container.yml'
   schedule:
     - cron: '16 19 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

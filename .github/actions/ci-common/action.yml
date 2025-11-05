@@ -1,0 +1,77 @@
+name: "CI Common"
+description: "Shared steps for setting up Python/Node, caching, and running install/build/test"
+inputs:
+  language:
+    description: "Runtime language: python or node"
+    required: true
+  python-version:
+    description: "Python version to set up"
+    required: false
+  node-version:
+    description: "Node.js version to set up"
+    required: false
+  working-directory:
+    description: "Directory to run commands in"
+    required: false
+    default: "."
+  install:
+    description: "Install command"
+    required: false
+    default: ""
+  build:
+    description: "Build command"
+    required: false
+    default: ""
+  test:
+    description: "Test command"
+    required: false
+    default: ""
+  dependency-paths:
+    description: "Cache dependency paths (newline or comma-separated)"
+    required: false
+    default: ""
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      if: ${{ inputs.language == 'python' }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'pip'
+        cache-dependency-path: ${{ inputs.dependency-paths }}
+
+    - name: Setup Node.js
+      if: ${{ inputs.language == 'node' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: ${{ inputs.dependency-paths }}
+
+    - name: Install dependencies
+      if: ${{ inputs.install != '' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        eval "${{ inputs.install }}"
+
+    - name: Build
+      if: ${{ inputs.build != '' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        eval "${{ inputs.build }}"
+
+    - name: Test
+      if: ${{ inputs.test != '' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        eval "${{ inputs.test }}"
