@@ -16,9 +16,47 @@ name: Codacy Security Scan
 on:
   push:
     branches: [ "main", "Default" ]
+    paths:
+      - '**/*.py'
+      - '**/*.js'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.jsx'
+      - '**/*.java'
+      - '**/*.go'
+      - '**/*.rb'
+      - '**/*.php'
+      - '**/*.swift'
+      - '**/*.cs'
+      - '**/*.c'
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - '.github/workflows/codacy.yml'
+      - '!**/*.md'
+      - '!docs/**'
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main" ]
+    paths:
+      - '**/*.py'
+      - '**/*.js'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.jsx'
+      - '**/*.java'
+      - '**/*.go'
+      - '**/*.rb'
+      - '**/*.php'
+      - '**/*.swift'
+      - '**/*.cs'
+      - '**/*.c'
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - '.github/workflows/codacy.yml'
+      - '!**/*.md'
+      - '!docs/**'
   schedule:
     - cron: '26 15 * * 3'
 
@@ -27,6 +65,9 @@ permissions:
 
 jobs:
   codacy-security-scan:
+    concurrency:
+      group: codacy-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
