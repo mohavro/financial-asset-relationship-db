@@ -11,14 +11,60 @@ name: OSSAR
 on:
   push:
     branches: [ "main", "Default" ]
+    paths:
+      - '**/*.cs'
+      - '**/*.fs'
+      - '**/*.vb'
+      - '**/*.py'
+      - '**/*.js'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.jsx'
+      - '**/*.java'
+      - '**/*.go'
+      - '**/*.rb'
+      - '**/*.php'
+      - '**/*.swift'
+      - '**/*.c'
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - '.github/workflows/ossar.yml'
+      - '!**/*.md'
+      - '!docs/**'
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main" ]
+    paths:
+      - '**/*.cs'
+      - '**/*.fs'
+      - '**/*.vb'
+      - '**/*.py'
+      - '**/*.js'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.jsx'
+      - '**/*.java'
+      - '**/*.go'
+      - '**/*.rb'
+      - '**/*.php'
+      - '**/*.swift'
+      - '**/*.c'
+      - '**/*.cpp'
+      - '**/*.h'
+      - '**/*.hpp'
+      - '.github/workflows/ossar.yml'
+      - '!**/*.md'
+      - '!docs/**'
   schedule:
     - cron: '29 3 * * 3'
 
 permissions:
   contents: read
+
+concurrency:
+  group: ossar-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   OSSAR-Scan:
