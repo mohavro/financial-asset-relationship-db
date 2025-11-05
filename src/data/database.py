@@ -66,7 +66,7 @@ class DatabaseConnection:
         except ImportError:
             logger.warning("psycopg2 not installed. Run 'pip install psycopg2-binary'.")
             return False
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to connect to PostgreSQL database")
             return False
     
