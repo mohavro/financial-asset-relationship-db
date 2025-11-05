@@ -34,7 +34,7 @@ def test_database_connection():
             db.close()
             return True
             
-        except Exception as e:
+        except Exception:
             logger.exception("Query failed")
             return False
     else:
