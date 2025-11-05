@@ -29,12 +29,44 @@ name: SonarQube analysis
 on:
   push:
     branches: [ "main", "Default" ]
+    paths:
+      - '**/*.py'
+      - '**/*.js'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.jsx'
+      - '**/*.java'
+      - 'frontend/**'
+      - '.github/workflows/sonarqube.yml'
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - '**/*.py'
+      - '**/*.js'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.jsx'
+      - '**/*.java'
+      - 'frontend/**'
+      - '.github/workflows/sonarqube.yml'
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '**/*.png'
+      - '**/*.jpg'
   workflow_dispatch:
 
 permissions:
   pull-requests: read # allows SonarQube to decorate PRs with analysis results
+
+concurrency:
+  group: sonarqube-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   Analysis:

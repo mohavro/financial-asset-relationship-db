@@ -14,12 +14,64 @@ name: OSV-Scanner
 on:
   pull_request:
     branches: [ "main", "Default" ]
+    paths:
+      - 'requirements*.txt'
+      - 'Pipfile'
+      - 'Pipfile.lock'
+      - 'poetry.lock'
+      - 'pyproject.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
+      - 'yarn.lock'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'pom.xml'
+      - 'build.gradle'
+      - 'build.gradle.kts'
+      - 'composer.json'
+      - 'composer.lock'
+      - '.github/workflows/osv-scanner.yml'
+      - '!**/*.md'
+      - '!docs/**'
   merge_group:
     branches: [ "main", "Default" ]
   schedule:
     - cron: '35 0 * * 1'
   push:
     branches: [ "main", "Default" ]
+    paths:
+      - 'requirements*.txt'
+      - 'Pipfile'
+      - 'Pipfile.lock'
+      - 'poetry.lock'
+      - 'pyproject.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
+      - 'yarn.lock'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'pom.xml'
+      - 'build.gradle'
+      - 'build.gradle.kts'
+      - 'composer.json'
+      - 'composer.lock'
+      - '.github/workflows/osv-scanner.yml'
+      - '!**/*.md'
+      - '!docs/**'
+
+concurrency:
+  group: osv-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   # Require writing security events to upload SARIF file to security tab

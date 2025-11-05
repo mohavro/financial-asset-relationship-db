@@ -11,9 +11,37 @@ name: Hadolint
 on:
   push:
     branches: [ "main", "Default" ]
+    paths:
+      - 'Dockerfile'
+      - '**/Dockerfile'
+      - '**/Dockerfile.*'
+      - '**/*.dockerfile'
+      - '.dockerignore'
+      - 'docker-compose.yml'
+      - '**/docker-compose*.yml'
+      - 'compose.yml'
+      - 'compose.yaml'
+      - 'docker/**'
+      - '.github/workflows/hadolint.yml'
+      - '!**/*.md'
+      - '!docs/**'
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main" ]
+    paths:
+      - 'Dockerfile'
+      - '**/Dockerfile'
+      - '**/Dockerfile.*'
+      - '**/*.dockerfile'
+      - '.dockerignore'
+      - 'docker-compose.yml'
+      - '**/docker-compose*.yml'
+      - 'compose.yml'
+      - 'compose.yaml'
+      - 'docker/**'
+      - '.github/workflows/hadolint.yml'
+      - '!**/*.md'
+      - '!docs/**'
   schedule:
     - cron: '17 15 * * 1'
 
@@ -22,6 +50,9 @@ permissions:
 
 jobs:
   hadolint:
+    concurrency:
+      group: hadolint-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     name: Run hadolint scanning
     runs-on: ubuntu-latest
     permissions:

@@ -11,6 +11,30 @@ name: 'Dependency review'
 on:
   pull_request:
     branches: [ "main", "Default" ]
+    paths:
+      - 'requirements*.txt'
+      - 'Pipfile'
+      - 'Pipfile.lock'
+      - 'poetry.lock'
+      - 'pyproject.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
+      - 'yarn.lock'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Gemfile'
+      - 'Gemfile.lock'
+      - 'pom.xml'
+      - 'build.gradle'
+      - 'build.gradle.kts'
+      - 'composer.json'
+      - 'composer.lock'
+      - '.github/workflows/dependency-review.yml'
+      - '!**/*.md'
+      - '!docs/**'
 
 # If using a dependency submission action in this workflow this permission will need to be set to:
 #
@@ -22,6 +46,10 @@ permissions:
   contents: read
   # Write permissions for pull-requests are required for using the `comment-summary-in-pr` option, comment out if you aren't using this option
   pull-requests: write
+
+concurrency:
+  group: dependency-review-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   dependency-review:

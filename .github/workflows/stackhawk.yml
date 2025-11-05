@@ -32,10 +32,28 @@ name: "StackHawk"
 on:
   push:
     branches: [ "main", "Default" ]
+    paths:
+      - 'stackhawk.yml'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - 'api/**'
+      - 'main.py'
+      - '.github/workflows/stackhawk.yml'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'stackhawk.yml'
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - 'api/**'
+      - 'main.py'
+      - '.github/workflows/stackhawk.yml'
   schedule:
     - cron: '30 23 * * 5'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

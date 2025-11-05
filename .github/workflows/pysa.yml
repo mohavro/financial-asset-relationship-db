@@ -18,13 +18,31 @@ on:
   workflow_dispatch:
   push:
     branches: [ "main", "Default" ]
+    paths:
+      - '**/*.py'
+      - 'requirements*.txt'
+      - '.github/workflows/pysa.yml'
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - '**/*.py'
+      - 'requirements*.txt'
+      - '.github/workflows/pysa.yml'
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   schedule:
     - cron: '22 11 * * 6'
 
 permissions:
     contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   pysa:
