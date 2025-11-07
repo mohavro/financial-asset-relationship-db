@@ -407,21 +407,16 @@ def _serialize_dataclass(obj: Any) -> Dict[str, Any]:
 def _serialize_graph(graph: AssetRelationshipGraph) -> Dict[str, Any]:
     """
     Serialize an AssetRelationshipGraph into a JSON-serialisable dictionary.
-    Parameters:
-    	graph (AssetRelationshipGraph): Graph to serialize.
-    Returns:
-    	payload (Dict[str, Any]): Dictionary containing:
-    		- "assets": list of serialized asset objects
-    		- "regulatory_events": list of serialized regulatory event objects
-    		- "relationships": mapping from source id to a list of outgoing relationships, each with `target`, `relationship_type` and `strength`
-    		- "incoming_relationships": mapping from target id to a list of incoming relationships, each with `source`, `relationship_type` and `strength`
-    Serialize an AssetRelationshipGraph into a JSON-friendly dictionary structure.
 
     Parameters:
-        graph (AssetRelationshipGraph): The graph to serialize.
+        graph (AssetRelationshipGraph): Graph to serialize.
 
     Returns:
-        Dict[str, Any]: A dictionary containing serialized assets, regulatory events, relationships and incoming relationships.
+        Dict[str, Any]: Dictionary containing:
+            - "assets": list of serialized asset objects
+            - "regulatory_events": list of serialized regulatory event objects
+            - "relationships": mapping from source id to a list of outgoing relationships, each with `target`, `relationship_type` and `strength`
+            - "incoming_relationships": mapping from target id to a list of incoming relationships, each with `source`, `relationship_type` and `strength`
     """
     return {
         "assets": [_serialize_dataclass(asset) for asset in graph.assets.values()],
@@ -443,17 +438,6 @@ def _serialize_graph(graph: AssetRelationshipGraph) -> Dict[str, Any]:
     }
 
 
-def _deserialize_asset(data: Dict[str, Any]):
-    """
-    Reconstructs an Asset (or appropriate Asset subclass) instance from a serialized dictionary.
-    The input dictionary is expected to be produced by the module's serializer and may include a "__type__" key
-    naming the concrete asset class. If an "asset_class" value is present it is converted to the AssetClass enum
-    before constructing the object.
-    Parameters:
-        data (Dict[str, Any]): Serialized asset data; may include "__type__" and fields required by the target dataclass.
-    Returns:
-        An instance of Asset, Equity, Bond, Commodity or Currency built from the provided data.
-    """
 def _deserialize_asset(data: Dict[str, Any]) -> Asset:
     """
     Deserialize a dictionary representation of an asset back into an Asset instance.
@@ -568,16 +552,13 @@ def _load_from_cache(path: Path) -> AssetRelationshipGraph:
 def _save_to_cache(graph: AssetRelationshipGraph, path: Path) -> None:
     """
     Persist an AssetRelationshipGraph to a JSON file at the given filesystem path.
+
     The function serialises the provided graph to JSON (UTF-8, pretty-printed with two-space indentation),
     creates parent directories if necessary, and overwrites any existing file at the path.
-    Parameters:
-    	graph (AssetRelationshipGraph): The graph to persist.
-    	path (Path): Filesystem path where the JSON representation will be written.
-    Persist an AssetRelationshipGraph to a JSON cache file.
 
     Parameters:
-        graph (AssetRelationshipGraph): The graph to serialize and save.
-        path (Path): Path where the JSON cache file should be written.
+        graph (AssetRelationshipGraph): The graph to persist.
+        path (Path): Filesystem path where the JSON representation will be written.
     """
     payload = _serialize_graph(graph)
     path.parent.mkdir(parents=True, exist_ok=True)
