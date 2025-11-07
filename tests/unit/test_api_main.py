@@ -222,6 +222,49 @@ class TestAPIEndpoints:
         assert data["max_degree"] >= data["avg_degree"]
         assert data["network_density"] > 0
 
+    def test_get_metrics_no_assets(self, client):
+        """Metrics endpoint should handle empty graph (no assets)."""
+        # Clear the graph
+        with api_main.graph_lock:
+            api_main.graph.clear()
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_assets"] == 0
+        assert data["total_relationships"] == 0
+        assert data["avg_degree"] == 0
+        assert data["max_degree"] == 0
+        assert data["network_density"] == 0
+
+    def test_get_metrics_one_asset_no_relationships(self, client):
+        """Metrics endpoint should handle graph with one asset and no relationships."""
+        with api_main.graph_lock:
+            api_main.graph.clear()
+            api_main.graph.add_node("AAPL", asset_class="EQUITY")
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_assets"] == 1
+        assert data["total_relationships"] == 0
+        assert data["avg_degree"] == 0
+        assert data["max_degree"] == 0
+        assert data["network_density"] == 0
+
+    def test_get_metrics_multiple_assets_no_relationships(self, client):
+        """Metrics endpoint should handle graph with multiple assets and no relationships."""
+        with api_main.graph_lock:
+            api_main.graph.clear()
+            api_main.graph.add_node("AAPL", asset_class="EQUITY")
+            api_main.graph.add_node("GOOG", asset_class="EQUITY")
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_assets"] == 2
+        assert data["total_relationships"] == 0
+        assert data["avg_degree"] == 0
+        assert data["max_degree"] == 0
+        assert data["network_density"] == 0
+
     def test_get_assets_filter_by_sector(self, client):
         """Test filtering assets by sector."""
         response = client.get("/api/assets?sector=Technology")
