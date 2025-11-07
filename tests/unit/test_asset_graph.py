@@ -11,8 +11,9 @@ This module contains comprehensive unit tests for the asset relationship graph i
 """
 
 import numpy as np
+
 from src.logic.asset_graph import AssetRelationshipGraph
-from src.models.financial_models import AssetClass, Equity, Bond
+from src.models.financial_models import AssetClass, Bond, Equity
 
 
 class TestAssetRelationshipGraph:

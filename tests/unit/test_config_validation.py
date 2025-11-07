@@ -7,10 +7,11 @@ This module tests JSON and other configuration files to ensure:
 - Configuration is internally consistent
 """
 
-import pytest
 import json
 import re
 from pathlib import Path
+
+import pytest
 
 
 class TestVercelConfig:

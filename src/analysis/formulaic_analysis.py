@@ -1,8 +1,9 @@
-from typing import Dict, List, Any
-from dataclasses import dataclass
-from src.logic.asset_graph import AssetRelationshipGraph
-from src.models.financial_models import Equity, Bond, Commodity, Currency
 import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
+from src.logic.asset_graph import AssetRelationshipGraph
+from src.models.financial_models import Bond, Commodity, Currency, Equity
 
 logger = logging.getLogger(__name__)
 

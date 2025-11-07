@@ -1,5 +1,6 @@
 import json
-from typing import Dict, Any
+from typing import Any, Dict
+
 from src.logic.asset_graph import AssetRelationshipGraph
 
 

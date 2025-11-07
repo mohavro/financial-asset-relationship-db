@@ -1,6 +1,8 @@
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
-from typing import Dict, List, Tuple, Any, Optional
-from src.models.financial_models import Asset, Equity, Bond, Commodity, Currency, RegulatoryEvent, AssetClass
+
+from src.models.financial_models import Asset, AssetClass, Bond, Commodity, Currency, Equity, RegulatoryEvent
 
 
 class AssetRelationshipGraph:

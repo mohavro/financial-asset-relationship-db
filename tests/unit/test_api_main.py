@@ -4,18 +4,19 @@ This module tests all API endpoints, error handling, CORS configuration,
 lazy graph initialization with thread-safe double-check locking, and response models.
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from fastapi.testclient import TestClient
 import os
+from unittest.mock import Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 from api.main import (
+    AssetResponse,
+    MetricsResponse,
+    RelationshipResponse,
+    VisualizationDataResponse,
     app,
     validate_origin,
-    AssetResponse,
-    RelationshipResponse,
-    MetricsResponse,
-    VisualizationDataResponse,
 )
 from src.models.financial_models import AssetClass
 
@@ -385,9 +386,11 @@ class TestErrorHandling:
     @patch("api.main.graph")
     def test_get_assets_server_error(self, mock_graph_instance, client):
         """Test that server errors are handled gracefully."""
+
         # Make graph.assets raise exception
         def raise_database_error(self):
             raise Exception("Database error")
+
         type(mock_graph_instance).assets = property(raise_database_error)
 
         response = client.get("/api/assets")

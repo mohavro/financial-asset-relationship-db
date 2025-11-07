@@ -1,18 +1,20 @@
-import yfinance as yf
-import pandas as pd
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
+
+import pandas as pd
+import yfinance as yf
+
+from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import (
-    Equity,
+    AssetClass,
     Bond,
     Commodity,
     Currency,
-    RegulatoryEvent,
-    AssetClass,
+    Equity,
     RegulatoryActivity,
+    RegulatoryEvent,
 )
-from src.logic.asset_graph import AssetRelationshipGraph
 
 logger = logging.getLogger(__name__)
 

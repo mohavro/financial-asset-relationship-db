@@ -5,7 +5,9 @@ Provides 2D layout algorithms and visualization functions
 
 import math
 from typing import Dict, List, Tuple
+
 import plotly.graph_objects as go
+
 from src.logic.asset_graph import AssetRelationshipGraph
 
 

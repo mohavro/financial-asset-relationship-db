@@ -1,18 +1,20 @@
-import gradio as gr
 import json
 import logging
-import plotly.graph_objects as go
-from typing import Optional, Tuple, Dict
 from dataclasses import asdict
-from src.logic.asset_graph import AssetRelationshipGraph
-from src.data.real_data_fetcher import create_real_database
-from src.visualizations.graph_visuals import visualize_3d_graph, visualize_3d_graph_with_filters
-from src.visualizations.graph_2d_visuals import visualize_2d_graph
-from src.visualizations.metric_visuals import visualize_metrics
-from src.reports.schema_report import generate_schema_report
+from typing import Dict, Optional, Tuple
+
+import gradio as gr
+import plotly.graph_objects as go
+
 from src.analysis.formulaic_analysis import FormulaicdAnalyzer
-from src.visualizations.formulaic_visuals import FormulaicVisualizer
+from src.data.real_data_fetcher import create_real_database
+from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import Asset
+from src.reports.schema_report import generate_schema_report
+from src.visualizations.formulaic_visuals import FormulaicVisualizer
+from src.visualizations.graph_2d_visuals import visualize_2d_graph
+from src.visualizations.graph_visuals import visualize_3d_graph, visualize_3d_graph_with_filters
+from src.visualizations.metric_visuals import visualize_metrics
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")

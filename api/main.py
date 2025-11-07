@@ -1,26 +1,27 @@
 # Comprehensive test coverage available in tests/unit/test_api_main.py
 """FastAPI backend for Financial Asset Relationship Database"""
 
-from contextlib import asynccontextmanager
-from typing import Dict, List, Optional, Any
 import logging
 import os
 import re
 import threading
+from contextlib import asynccontextmanager
+from datetime import timedelta
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from .auth import Token, authenticate_user, create_access_token
-from datetime import timedelta
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
-from src.logic.asset_graph import AssetRelationshipGraph
 from src.data.real_data_fetcher import RealDataFetcher
+from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import AssetClass
+
+from .auth import Token, authenticate_user, create_access_token
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -99,13 +100,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 ENV = os.getenv("ENV", "development").lower()
 
 
-
 @app.post("/token", response_model=Token)
 @limiter.limit("5/minute")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     """Generate JWT token for authenticated users"""
     from .auth import fake_users_db  # Import here to avoid circular imports
-    
+
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -114,24 +114,22 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
+    access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
-    # Use module-level ENV variable for environment
-    current_env = ENV
-    
+    # Get current environment (check env var each time for testing)
+    current_env = os.getenv("ENV", "development").lower()
+
     # Get allowed origins from environment variable or use default
     allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
-    
+
     # If origin is in explicitly allowed list, return True
     if origin in allowed_origins and origin:
         return True
-        
+
     # Allow HTTP localhost only in development
     if current_env == "development" and re.match(r"^http://(localhost|127\.0\.0\.1)(:\d+)?$", origin):
         return True

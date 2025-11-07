@@ -1,15 +1,15 @@
 """Authentication module for the Financial Asset Relationship Database API"""
 
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-import jwt
 from jwt import InvalidTokenError
 from passlib.context import CryptContext
 from pydantic import BaseModel
-import os
 
 # Security configuration
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -24,13 +24,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
 # Models
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     username: Optional[str] = None
+
 
 class User(BaseModel):
     username: str
@@ -38,8 +41,10 @@ class User(BaseModel):
     full_name: Optional[str] = None
     disabled: Optional[bool] = None
 
+
 class UserInDB(User):
     hashed_password: str
+
 
 # For demo purposes - replace with database in production
 fake_users_db = {
@@ -52,19 +57,23 @@ fake_users_db = {
     }
 }
 
+
 def verify_password(plain_password, hashed_password):
     """Verify password against hash"""
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password):
     """Generate password hash"""
     return pwd_context.hash(password)
+
 
 def get_user(db, username: str):
     """Get user from database"""
     if username in db:
         user_dict = db[username]
         return UserInDB(**user_dict)
+
 
 def authenticate_user(fake_db, username: str, password: str):
     """Authenticate user"""
@@ -74,6 +83,7 @@ def authenticate_user(fake_db, username: str, password: str):
     if not verify_password(password, user.hashed_password):
         return False
     return user
+
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create JWT access token"""
@@ -85,6 +95,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Get current user from token"""
@@ -105,6 +116,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     if user is None:
         raise credentials_exception
     return user
+
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     """Get current active user"""
