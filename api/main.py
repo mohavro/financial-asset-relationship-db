@@ -2,7 +2,7 @@
 """FastAPI backend for Financial Asset Relationship Database"""
 
 from contextlib import asynccontextmanager
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 import logging
 import os
 import re
@@ -29,8 +29,9 @@ logger = logging.getLogger(__name__)
 # Authentication settings
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Global graph instance with thread-safe initialization
+# Global graph instance with thread-safe initialization and configurable factory
 graph: Optional[AssetRelationshipGraph] = None
+graph_factory: Optional[Callable[[], AssetRelationshipGraph]] = None
 graph_lock = threading.Lock()
 
 
@@ -48,10 +49,58 @@ def get_graph() -> AssetRelationshipGraph:
     if graph is None:
         with graph_lock:
             if graph is None:
-                fetcher = RealDataFetcher()
-                graph = fetcher.create_real_database()
+                graph = _initialize_graph()
                 logger.info("Graph initialized successfully")
     return graph
+
+
+def set_graph(graph_instance: AssetRelationshipGraph) -> None:
+    """Explicitly set the global graph instance."""
+    global graph, graph_factory
+    with graph_lock:
+        graph = graph_instance
+        graph_factory = None
+
+
+def set_graph_factory(factory: Optional[Callable[[], AssetRelationshipGraph]]) -> None:
+    """Configure a custom factory used to build the graph on demand."""
+    global graph, graph_factory
+    with graph_lock:
+        graph_factory = factory
+        graph = None
+
+
+def reset_graph() -> None:
+    """Reset the graph and any configured factory."""
+    set_graph_factory(None)
+
+
+def _initialize_graph() -> AssetRelationshipGraph:
+    """Resolve and build the graph using the configured strategy."""
+    if graph_factory is not None:
+        return graph_factory()
+
+    cache_path = os.getenv("GRAPH_CACHE_PATH")
+    use_real_data = _should_use_real_data_fetcher()
+
+    if cache_path:
+        fetcher = RealDataFetcher(cache_path=cache_path, enable_network=use_real_data)
+        return fetcher.create_real_database()
+
+    if use_real_data:
+        cache_path_env = os.getenv("REAL_DATA_CACHE_PATH")
+        fetcher = RealDataFetcher(cache_path=cache_path_env, enable_network=True)
+        return fetcher.create_real_database()
+
+    from src.data.sample_data import create_sample_database
+
+    return create_sample_database()
+
+
+def _should_use_real_data_fetcher() -> bool:
+    """Check environment flag to determine if real data should be used."""
+    flag = os.getenv("USE_REAL_DATA_FETCHER", "false")
+    return flag.strip().lower() in {"1", "true", "yes", "on"}
 
 
 @asynccontextmanager
@@ -125,8 +174,8 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
 
 def validate_origin(origin: str) -> bool:
     """Validate that an origin matches expected patterns"""
-    # Use module-level ENV variable for environment
-    current_env = ENV
+    # Read environment dynamically to support runtime overrides (e.g., during tests)
+    current_env = os.getenv("ENV", "development").lower()
     
     # Get allowed origins from environment variable or use default
     allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
@@ -230,6 +279,7 @@ class MetricsResponse(BaseModel):
     avg_degree: float
     max_degree: int
     network_density: float
+    relationship_density: float = 0.0
 
 
 class VisualizationDataResponse(BaseModel):
@@ -498,6 +548,7 @@ async def get_metrics():
             avg_degree=metrics.get("avg_degree", 0.0),
             max_degree=metrics.get("max_degree", 0),
             network_density=metrics.get("network_density", 0.0),
+            relationship_density=metrics.get("relationship_density", 0.0),
         )
     except Exception as e:
         logger.exception("Error getting metrics:")

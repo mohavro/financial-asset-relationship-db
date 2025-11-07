@@ -1,9 +1,13 @@
-import yfinance as yf
-import pandas as pd
+import json
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from dataclasses import asdict
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import pandas as pd
+import yfinance as yf
 from src.models.financial_models import (
+    Asset,
     Equity,
     Bond,
     Commodity,
@@ -20,11 +24,31 @@ logger = logging.getLogger(__name__)
 class RealDataFetcher:
     """Fetches real financial data from Yahoo Finance and other sources"""
 
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        cache_path: Optional[str] = None,
+        fallback_factory: Optional[Callable[[], AssetRelationshipGraph]] = None,
+        enable_network: bool = True,
+    ):
         self.session = None
+        self.cache_path = Path(cache_path) if cache_path else None
+        self.fallback_factory = fallback_factory
+        self.enable_network = enable_network
 
     def create_real_database(self) -> AssetRelationshipGraph:
         """Create a database with real financial data from Yahoo Finance"""
+        if self.cache_path and self.cache_path.exists():
+            try:
+                logger.info("Loading asset graph from cache at %s", self.cache_path)
+                return _load_from_cache(self.cache_path)
+            except Exception:
+                logger.exception("Failed to load cached dataset; proceeding with standard fetch")
+
+        if not self.enable_network:
+            logger.info("Network fetching disabled. Using fallback dataset if available.")
+            return self._fallback()
+
         logger.info("Creating database with real financial data from Yahoo Finance")
         graph = AssetRelationshipGraph()
 
@@ -48,8 +72,16 @@ class RealDataFetcher:
             # Build relationships
             graph.build_relationships()
 
+            if self.cache_path:
+                try:
+                    _save_to_cache(graph, self.cache_path)
+                except Exception:
+                    logger.exception("Failed to persist dataset cache to %s", self.cache_path)
+
             logger.info(
-                f"Real database created with {len(graph.assets)} assets and {sum(len(rels) for rels in graph.relationships.values())} relationships"
+                "Real database created with %s assets and %s relationships",
+                len(graph.assets),
+                sum(len(rels) for rels in graph.relationships.values()),
             )
             return graph
 
@@ -57,9 +89,14 @@ class RealDataFetcher:
             logger.error(f"Failed to create real database: {e}")
             # Fallback to sample data if real data fails
             logger.warning("Falling back to sample data due to real data fetch failure")
-            from src.data.sample_data import create_sample_database
+            return self._fallback()
 
-            return create_sample_database()
+    def _fallback(self) -> AssetRelationshipGraph:
+        if self.fallback_factory is not None:
+            return self.fallback_factory()
+        from src.data.sample_data import create_sample_database
+
+        return create_sample_database()
 
     def _fetch_equity_data(self) -> List[Equity]:
         """Fetch real equity data for major stocks"""
@@ -281,3 +318,100 @@ def create_real_database() -> AssetRelationshipGraph:
     """Main function to create database with real data - fallback to sample data if needed"""
     fetcher = RealDataFetcher()
     return fetcher.create_real_database()
+
+
+def _enum_to_value(value: Any) -> Any:
+    from enum import Enum
+
+    if isinstance(value, Enum):
+        return value.value
+    return value
+
+
+def _serialize_dataclass(obj: Any) -> Dict[str, Any]:
+    data = asdict(obj)
+    serialized = {key: _enum_to_value(val) for key, val in data.items()}
+    serialized["__type__"] = obj.__class__.__name__
+    return serialized
+
+
+def _serialize_graph(graph: AssetRelationshipGraph) -> Dict[str, Any]:
+    return {
+        "assets": [_serialize_dataclass(asset) for asset in graph.assets.values()],
+        "regulatory_events": [_serialize_dataclass(event) for event in graph.regulatory_events],
+        "relationships": {
+            source: [
+                {"target": target, "relationship_type": rel_type, "strength": strength}
+                for target, rel_type, strength in rels
+            ]
+            for source, rels in graph.relationships.items()
+        },
+        "incoming_relationships": {
+            target: [
+                {"source": source, "relationship_type": rel_type, "strength": strength}
+                for source, rel_type, strength in rels
+            ]
+            for target, rels in graph.incoming_relationships.items()
+        },
+    }
+
+
+def _deserialize_asset(data: Dict[str, Any]):
+    type_name = data.pop("__type__", "Asset")
+    asset_class_value = data.get("asset_class")
+    if asset_class_value:
+        data["asset_class"] = AssetClass(asset_class_value)
+
+    cls_map = {
+        "Asset": Asset,
+        "Equity": Equity,
+        "Bond": Bond,
+        "Commodity": Commodity,
+        "Currency": Currency,
+    }
+
+    cls = cls_map.get(type_name, Asset)
+    return cls(**data)
+
+
+def _deserialize_event(data: Dict[str, Any]) -> RegulatoryEvent:
+    data = dict(data)
+    data["event_type"] = RegulatoryActivity(data["event_type"])
+    return RegulatoryEvent(**data)
+
+
+def _deserialize_graph(payload: Dict[str, Any]) -> AssetRelationshipGraph:
+    graph = AssetRelationshipGraph()
+    for asset_data in payload.get("assets", []):
+        asset = _deserialize_asset(dict(asset_data))
+        graph.add_asset(asset)
+
+    graph.regulatory_events = [_deserialize_event(event) for event in payload.get("regulatory_events", [])]
+
+    relationships_payload = payload.get("relationships", {})
+    incoming_payload = payload.get("incoming_relationships", {})
+
+    graph.relationships = {
+        source: [(item["target"], item["relationship_type"], float(item["strength"])) for item in rels]
+        for source, rels in relationships_payload.items()
+    }
+
+    graph.incoming_relationships = {
+        target: [(item["source"], item["relationship_type"], float(item["strength"])) for item in rels]
+        for target, rels in incoming_payload.items()
+    }
+
+    return graph
+
+
+def _load_from_cache(path: Path) -> AssetRelationshipGraph:
+    with path.open("r", encoding="utf-8") as fp:
+        payload = json.load(fp)
+    return _deserialize_graph(payload)
+
+
+def _save_to_cache(graph: AssetRelationshipGraph, path: Path) -> None:
+    payload = _serialize_graph(graph)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fp:
+        json.dump(payload, fp, indent=2)

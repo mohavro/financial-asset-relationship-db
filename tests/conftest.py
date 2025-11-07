@@ -114,8 +114,8 @@ def populated_graph(sample_equity, sample_bond, sample_commodity, sample_currenc
 @pytest.fixture
 def _reset_graph():
     """Reset the graph singleton between tests."""
-    import api.main
+    from api.main import reset_graph
 
-    api.main.graph = None
+    reset_graph()
     yield
-    api.main.graph = None
+    reset_graph()
