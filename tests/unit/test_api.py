@@ -759,3 +759,18 @@ class TestRealDataFetcherFallback:
 
         # Should log errors for each failed fetch
         assert mock_logger.error.call_count > 0  # Multiple fetch attempts failed
+
+    def test_real_data_fetcher_loads_from_cache(self, tmp_path):
+        """RealDataFetcher should return cached dataset when available."""
+        from src.data.real_data_fetcher import RealDataFetcher, _save_to_cache
+        from src.data.sample_data import create_sample_database
+
+        cache_path = tmp_path / "cached_dataset.json"
+        reference_graph = create_sample_database()
+        _save_to_cache(reference_graph, cache_path)
+
+        fetcher = RealDataFetcher(cache_path=str(cache_path), enable_network=False)
+        graph = fetcher.create_real_database()
+
+        assert len(graph.assets) == len(reference_graph.assets)
+        assert set(graph.relationships.keys()) == set(reference_graph.relationships.keys())
