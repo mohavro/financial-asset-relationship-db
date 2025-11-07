@@ -206,7 +206,14 @@ metrics = MetricsResponse(
         relationship_density=0.5,
     )
     def client(self):
-        """Create a test client."""
+        """
+        Provide a TestClient configured with a sample graph for use in tests.
+        
+        Yields a TestClient instance for the FastAPI app after setting the application's graph to a sample database, and ensures the application's graph is reset when the fixture is torn down.
+        
+        Returns:
+            TestClient: A TestClient instance connected to the FastAPI app.
+        """
         api_main.set_graph(create_sample_database())
         client = TestClient(app)
         try:
