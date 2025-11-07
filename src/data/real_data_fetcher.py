@@ -368,7 +368,18 @@ def _serialize_graph(graph: AssetRelationshipGraph) -> Dict[str, Any]:
     }
 
 
-def _deserialize_asset(data: Dict[str, Any]):
+            if self.cache_path:
+                import os
+                import tempfile
+
+                try:
+                    cache_dir = os.path.dirname(self.cache_path)
+                    with tempfile.NamedTemporaryFile("wb", dir=cache_dir, delete=False) as tmp_file:
+                        tmp_path = tmp_file.name
+                        _save_to_cache(graph, tmp_path)
+                    os.replace(tmp_path, self.cache_path)
+                except Exception:
+                    logger.exception("Failed to persist dataset cache to %s", self.cache_path)
     type_name = data.pop("__type__", "Asset")
     if asset_class_value := data.get("asset_class"):
         data["asset_class"] = AssetClass(asset_class_value)
