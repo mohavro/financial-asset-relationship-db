@@ -1,6 +1,0 @@
-﻿2025-11-07T06:54:28.4274404Z Post job cleanup.
-2025-11-07T06:54:28.4305640Z Post job cleanup.
-2025-11-07T06:54:28.6029080Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db --files-from manifest.txt --use-compress-program zstdmt
-2025-11-07T06:54:30.1227620Z Sent 0 of 187461945 (0.0%), 0.0 MBs/sec
-2025-11-07T06:54:30.7209740Z Sent 187461945 of 187461945 (100.0%), 111.9 MBs/sec
-2025-11-07T06:54:30.8547572Z Cache saved with the key: setup-python-Linux-x64-24.04-Ubuntu-python-3.11.14-pip-2dbad9a09919b5ad6540e3f1a0eb36a31a24915ece20733f1f752ee8ee463861
