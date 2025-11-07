@@ -1,0 +1,30 @@
+﻿2025-11-07T06:51:04.9512031Z Current runner version: '2.329.0'
+2025-11-07T06:51:04.9544365Z ##[group]Runner Image Provisioner
+2025-11-07T06:51:04.9545495Z Hosted Compute Agent
+2025-11-07T06:51:04.9546392Z Version: 20251016.436
+2025-11-07T06:51:04.9547438Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-07T06:51:04.9548515Z Build Date: 2025-10-15T20:44:12Z
+2025-11-07T06:51:04.9549637Z ##[endgroup]
+2025-11-07T06:51:04.9550570Z ##[group]Operating System
+2025-11-07T06:51:04.9551444Z Ubuntu
+2025-11-07T06:51:04.9552175Z 24.04.3
+2025-11-07T06:51:04.9553029Z LTS
+2025-11-07T06:51:04.9553927Z ##[endgroup]
+2025-11-07T06:51:04.9554684Z ##[group]Runner Image
+2025-11-07T06:51:04.9555691Z Image: ubuntu-24.04
+2025-11-07T06:51:04.9556491Z Version: 20251102.99.1
+2025-11-07T06:51:04.9558159Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251102.99/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-07T06:51:04.9560824Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251102.99
+2025-11-07T06:51:04.9562521Z ##[endgroup]
+2025-11-07T06:51:04.9564844Z ##[group]GITHUB_TOKEN Permissions
+2025-11-07T06:51:04.9567270Z Contents: read
+2025-11-07T06:51:04.9568252Z Metadata: read
+2025-11-07T06:51:04.9569091Z ##[endgroup]
+2025-11-07T06:51:04.9571768Z Secret source: Actions
+2025-11-07T06:51:04.9572908Z Prepare workflow directory
+2025-11-07T06:51:05.0034455Z Prepare all required actions
+2025-11-07T06:51:05.0090804Z Getting action download info
+2025-11-07T06:51:05.3361892Z Download action repository 'codecov/codecov-action@v4' (SHA:b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238)
+2025-11-07T06:51:06.1210922Z Complete job name: Test Python 3.8
+2025-11-07T06:51:06.1748343Z ##[error]Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '/home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/.github/actions/ci-common'. Did you forget to run actions/checkout before running your local action?
+2025-11-07T06:51:06.1848372Z Cleaning up orphan processes

@@ -1,0 +1,28 @@
+﻿2025-11-07T06:51:06.3529914Z Current runner version: '2.329.0'
+2025-11-07T06:51:06.3562528Z ##[group]Runner Image Provisioner
+2025-11-07T06:51:06.3563913Z Hosted Compute Agent
+2025-11-07T06:51:06.3564795Z Version: 20251016.436
+2025-11-07T06:51:06.3565775Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-07T06:51:06.3567029Z Build Date: 2025-10-15T20:44:12Z
+2025-11-07T06:51:06.3567918Z ##[endgroup]
+2025-11-07T06:51:06.3568802Z ##[group]Operating System
+2025-11-07T06:51:06.3569638Z Ubuntu
+2025-11-07T06:51:06.3570367Z 24.04.3
+2025-11-07T06:51:06.3571215Z LTS
+2025-11-07T06:51:06.3572022Z ##[endgroup]
+2025-11-07T06:51:06.3572740Z ##[group]Runner Image
+2025-11-07T06:51:06.3573921Z Image: ubuntu-24.04
+2025-11-07T06:51:06.3574791Z Version: 20251102.99.1
+2025-11-07T06:51:06.3576419Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251102.99/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-07T06:51:06.3578845Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251102.99
+2025-11-07T06:51:06.3580735Z ##[endgroup]
+2025-11-07T06:51:06.3582391Z ##[group]GITHUB_TOKEN Permissions
+2025-11-07T06:51:06.3585217Z Contents: read
+2025-11-07T06:51:06.3586083Z Metadata: read
+2025-11-07T06:51:06.3586935Z ##[endgroup]
+2025-11-07T06:51:06.3589751Z Secret source: Actions
+2025-11-07T06:51:06.3590966Z Prepare workflow directory
+2025-11-07T06:51:06.4044580Z Prepare all required actions
+2025-11-07T06:51:06.4099480Z Getting action download info
+2025-11-07T06:51:06.6700297Z Download action repository 'codecov/codecov-action@v4' (SHA:b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238)
+2025-11-07T06:51:07.1308319Z Complete job name: Test Python 3.10

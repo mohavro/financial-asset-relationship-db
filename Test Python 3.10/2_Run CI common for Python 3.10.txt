@@ -1,0 +1,1 @@
+﻿2025-11-07T06:51:07.1812333Z ##[error]Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '/home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/.github/actions/ci-common'. Did you forget to run actions/checkout before running your local action?
