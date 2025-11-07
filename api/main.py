@@ -106,6 +106,9 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     """Generate JWT token for authenticated users"""
     from .auth import fake_users_db  # Import here to avoid circular imports
 
+    # The `request` parameter is required by slowapi's limiter for dependency injection.
+    _ = request
+
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
