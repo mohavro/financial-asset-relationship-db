@@ -156,6 +156,17 @@ class AssetRelationshipGraph:
             "asset_class_distribution": {},
             "regulatory_event_count": len(self.regulatory_events),
             "top_relationships": [],
+            "total_in_degree": 0,
+            "total_out_degree": 0,
+            "average_in_degree": 0.0,
+            "average_out_degree": 0.0,
+            "average_degree": 0.0,
+            "avg_degree": 0.0,
+            "max_in_degree": 0,
+            "max_out_degree": 0,
+            "max_degree": 0,
+            "network_density": 0.0,
+            "relationship_density": 0.0,
         }
 
         # Asset class distribution
@@ -178,9 +189,45 @@ class AssetRelationshipGraph:
             metrics["average_relationship_strength"] = float(np.mean(all_strengths))
             metrics["top_relationships"] = sorted(all_relationships, key=lambda x: x[3], reverse=True)[:5]
 
-        # Relationship density (% of possible directed pairs)
-        n = max(1, metrics["total_assets"])
-        metrics["relationship_density"] = (metrics["total_relationships"] / (n * n)) * 100.0
+        # Degree calculations
+        node_ids = set(self.assets.keys()) | set(self.relationships.keys()) | set(self.incoming_relationships.keys())
+        node_count = len(node_ids)
+
+        total_in_degree = 0
+        total_out_degree = 0
+        max_in_degree = 0
+        max_out_degree = 0
+        max_total_degree = 0
+
+        for node_id in node_ids:
+            out_degree = len(self.relationships.get(node_id, []))
+            in_degree = len(self.incoming_relationships.get(node_id, []))
+            total_degree = in_degree + out_degree
+
+            total_out_degree += out_degree
+            total_in_degree += in_degree
+            max_out_degree = max(max_out_degree, out_degree)
+            max_in_degree = max(max_in_degree, in_degree)
+            max_total_degree = max(max_total_degree, total_degree)
+
+        if node_count > 0:
+            metrics["total_in_degree"] = total_in_degree
+            metrics["total_out_degree"] = total_out_degree
+            metrics["total_relationships"] = total_out_degree
+            metrics["average_in_degree"] = total_in_degree / node_count
+            metrics["average_out_degree"] = total_out_degree / node_count
+            metrics["avg_degree"] = (total_in_degree + total_out_degree) / node_count
+
+            metrics["max_in_degree"] = max_in_degree
+            metrics["max_out_degree"] = max_out_degree
+            metrics["max_degree"] = max_total_degree
+
+            # Relationship density (% of possible directed pairs without self-loops)
+            possible_edges = node_count * (node_count - 1) if node_count > 1 else 0
+            density = (total_out_degree / possible_edges) * 100.0 if possible_edges else 0.0
+            metrics["network_density"] = density
+
+
         return metrics
 
     def get_3d_visualization_data(
