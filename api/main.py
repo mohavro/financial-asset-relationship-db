@@ -8,11 +8,11 @@ import os
 import re
 import threading
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from .auth import Token, User, authenticate_user, create_access_token, get_current_active_user
+from .auth import Token, authenticate_user, create_access_token
 from datetime import timedelta
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -25,6 +25,9 @@ from src.models.financial_models import AssetClass
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Authentication settings
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Global graph instance with thread-safe initialization
 graph: Optional[AssetRelationshipGraph] = None
