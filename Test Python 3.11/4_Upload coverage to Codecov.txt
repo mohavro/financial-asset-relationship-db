@@ -1,0 +1,252 @@
+﻿2025-11-07T06:54:25.4284659Z ##[group]Run codecov/codecov-action@v4
+2025-11-07T06:54:25.4284944Z with:
+2025-11-07T06:54:25.4285111Z   file: ./coverage.xml
+2025-11-07T06:54:25.4285310Z   fail_ci_if_error: false
+2025-11-07T06:54:25.4285502Z   verbose: true
+2025-11-07T06:54:25.4285675Z env:
+2025-11-07T06:54:25.4285896Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-07T06:54:25.4286293Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-07T06:54:25.4286686Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-07T06:54:25.4287033Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-07T06:54:25.4287377Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-07T06:54:25.4287712Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-07T06:54:25.4287998Z ##[endgroup]
+2025-11-07T06:54:25.5134397Z eventName: pull_request
+2025-11-07T06:54:25.5135642Z baseRef: mohavro:main | headRef: mohavro:security/fix-ecdsa-vulnerability
+2025-11-07T06:54:25.5143442Z ==> linux OS detected
+2025-11-07T06:54:25.7023317Z https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+2025-11-07T06:54:25.7364553Z Received SHA256SUM 3e4d282fe243aa7283b17016ff65ab2806c262f16abb41125f0caeea380dfe77  codecov
+2025-11-07T06:54:25.7542068Z Received SHA256SUM signature -----BEGIN PGP SIGNATURE-----
+2025-11-07T06:54:25.7542922Z 
+2025-11-07T06:54:25.7543457Z iQIzBAABCgAdFiEEJwNOf9uFDgu8LGL/gGuyiu13mGkFAmj6RG0ACgkQgGuyiu13
+2025-11-07T06:54:25.7547154Z mGkEdw//W9izxSAWKpNjz5mFwHc6ZJ1H2f5wwDyD9rOriRJxBaNGcbD2RR8rxo2J
+2025-11-07T06:54:25.7548129Z 4j6CeqwRMvsPhEnXanPKtpFfW7mAF/ajsLl4qfe4ofn8isqia0OSQni1oAN5WxLm
+2025-11-07T06:54:25.7549351Z h2S3NMLCMexKFr8682YgwPXdEBhg/Ae0/6ASk+RDO62QqzYx3K9ALQkd8nyHz+Nf
+2025-11-07T06:54:25.7550308Z nf9FPQGjxINNnTlOgbHZpJ2AQMSbNRIcJY9xzhrWXcQLO4rx5wY9rEWWLyHl4zkI
+2025-11-07T06:54:25.7551177Z my/pDvfumHOHMz/kqhXOKfLDn0cEtmXVr0WbaD9HtBuBPo3K3tBPVCU60ua95AHp
+2025-11-07T06:54:25.7551986Z UHrgE+4HFIo90sHi60laI1RBngB8OplfJqkb/GxrB17qZ/hDlnawVwO/Nn/tp7AD
+2025-11-07T06:54:25.7552779Z 5ou9A8ZXxeb118f7N32I8inIXzl5GIZWlFP2Kom/idb8Wq/RSMv+/4ugqjZI1KT1
+2025-11-07T06:54:25.7553610Z 9zc3RvwVYFvIbFU3tLllh6eZD9w8DYgkyWocFUa2JN3RprkoY7748VIpNTUP/H+9
+2025-11-07T06:54:25.7554467Z ItWu8Uhcxs26h4kMTaCsY+ZaTglzTIRJpZfzA4Lo+hEhkhYEJcNgC94bgT3nE+td
+2025-11-07T06:54:25.7555333Z TwrfJzIENST7qbvL+JDnrm5qACs1uih99kG3wHEgtubu/R8Iqp21r7sa/C1xKjbn
+2025-11-07T06:54:25.7556109Z PWS1uwicnQTadUPSMPYOAaM4adcMWez46ZWUbnfTk+lJXFYGJnE=
+2025-11-07T06:54:25.7556642Z =gsJ2
+2025-11-07T06:54:25.7556973Z -----END PGP SIGNATURE-----
+2025-11-07T06:54:25.7557242Z 
+2025-11-07T06:54:25.7647048Z gpg: directory '/home/runner/.gnupg' created
+2025-11-07T06:54:25.7650970Z gpg: keybox '/home/runner/.gnupg/pubring.kbx' created
+2025-11-07T06:54:25.7672736Z gpg: /home/runner/.gnupg/trustdb.gpg: trustdb created
+2025-11-07T06:54:25.7673666Z gpg: key 806BB28AED779869: public key "Codecov Uploader (Codecov Uploader Verification Key) <security@codecov.io>" imported
+2025-11-07T06:54:25.7849996Z gpg: Total number processed: 1
+2025-11-07T06:54:25.7850522Z gpg:               imported: 1
+2025-11-07T06:54:25.7918067Z gpg: Signature made Thu Oct 23 15:06:21 2025 UTC
+2025-11-07T06:54:25.7918816Z gpg:                using RSA key 27034E7FDB850E0BBC2C62FF806BB28AED779869
+2025-11-07T06:54:25.7922153Z gpg: Good signature from "Codecov Uploader (Codecov Uploader Verification Key) <security@codecov.io>" [unknown]
+2025-11-07T06:54:25.7923083Z gpg: WARNING: This key is not certified with a trusted signature!
+2025-11-07T06:54:25.7923752Z gpg:          There is no indication that the signature belongs to the owner.
+2025-11-07T06:54:25.7924484Z Primary key fingerprint: 2703 4E7F DB85 0E0B BC2C  62FF 806B B28A ED77 9869
+2025-11-07T06:54:25.8196956Z ==> Uploader SHASUM verified (3e4d282fe243aa7283b17016ff65ab2806c262f16abb41125f0caeea380dfe77  codecov)
+2025-11-07T06:54:25.8197827Z ==> Running version latest
+2025-11-07T06:54:25.8939412Z Could not pull latest version information: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+2025-11-07T06:54:25.8941317Z ==> Running git config --global --add safe.directory /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db
+2025-11-07T06:54:25.8980729Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db
+2025-11-07T06:54:25.9032192Z ==> Running command '/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov -v create-commit'
+2025-11-07T06:54:25.9034293Z [command]/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov -v create-commit --git-service github -C a3fac3fb060a1e01138d9d2f7cf5a974ea3df945
+2025-11-07T06:54:26.2757113Z info - 2025-11-07 06:54:26,275 -- ci service found: github-actions
+2025-11-07T06:54:26.2804608Z debug - 2025-11-07 06:54:26,279 -- versioning system found: <class 'codecov_cli.helpers.versioning_systems.GitVersioningSystem'>
+2025-11-07T06:54:26.2842194Z debug - 2025-11-07 06:54:26,283 -- versioning system found: <class 'codecov_cli.helpers.versioning_systems.GitVersioningSystem'>
+2025-11-07T06:54:26.2880286Z warning - 2025-11-07 06:54:26,287 -- No config file could be found. Ignoring config.
+2025-11-07T06:54:26.2881358Z debug - 2025-11-07 06:54:26,287 -- No codecov_yaml found
+2025-11-07T06:54:26.3202614Z debug - 2025-11-07 06:54:26,319 -- Starting create commit process --- {"verbose": true, "auto_load_params_from": null, "codecov_yml_path": null, "enterprise_url": null, "disable_telem": false, "version": "cli-11.2.4", "command": "create-commit", "git_service": "github", "commit_sha": "a3fac3fb060a1e01138d9d2f7cf5a974ea3df945", "parent_sha": null, "pull_request_number": "96", "branch": "security/fix-ecdsa-vulnerability", "fail_on_error": false, "slug": "mohavro/financial-asset-relationship-db"}
+2025-11-07T06:54:26.3204421Z warning - 2025-11-07 06:54:26,319 -- Branch `security/fix-ecdsa-vulnerability` is protected but no token was provided
+2025-11-07T06:54:26.3205137Z warning - 2025-11-07 06:54:26,319 -- For information on Codecov upload tokens, see https://docs.codecov.com/docs/codecov-tokens
+2025-11-07T06:54:26.5114196Z info - 2025-11-07 06:54:26,510 -- Process Commit creating complete
+2025-11-07T06:54:26.5116583Z debug - 2025-11-07 06:54:26,511 -- Commit creating result --- {"result": "RequestResult(error=RequestError(code='HTTP Error 400', params={}, description='{\"message\":\"Token required - not valid tokenless upload\"}\\n'), warnings=[], status_code=400, text='{\"message\":\"Token required - not valid tokenless upload\"}\\n')"}
+2025-11-07T06:54:26.5119438Z error - 2025-11-07 06:54:26,511 -- Commit creating failed: {"message":"Token required - not valid tokenless upload"}
+2025-11-07T06:54:26.6172619Z Sentry is attempting to send 2 pending events
+2025-11-07T06:54:26.6173096Z Waiting up to 2 seconds
+2025-11-07T06:54:26.6173379Z Press Ctrl-C to quit
+2025-11-07T06:54:26.6912176Z ==> Running command '/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov -v create-report'
+2025-11-07T06:54:26.6913892Z [command]/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov -v create-report --git-service github -C a3fac3fb060a1e01138d9d2f7cf5a974ea3df945
+2025-11-07T06:54:27.0480754Z info - 2025-11-07 06:54:27,047 -- ci service found: github-actions
+2025-11-07T06:54:27.0517590Z debug - 2025-11-07 06:54:27,051 -- versioning system found: <class 'codecov_cli.helpers.versioning_systems.GitVersioningSystem'>
+2025-11-07T06:54:27.0548744Z debug - 2025-11-07 06:54:27,054 -- versioning system found: <class 'codecov_cli.helpers.versioning_systems.GitVersioningSystem'>
+2025-11-07T06:54:27.0581017Z warning - 2025-11-07 06:54:27,057 -- No config file could be found. Ignoring config.
+2025-11-07T06:54:27.0581806Z debug - 2025-11-07 06:54:27,057 -- No codecov_yaml found
+2025-11-07T06:54:27.0894918Z debug - 2025-11-07 06:54:27,088 -- Starting create report process --- {"verbose": true, "auto_load_params_from": null, "codecov_yml_path": null, "enterprise_url": null, "disable_telem": false, "version": "cli-11.2.4", "command": "create-report", "git_service": "github", "commit_sha": "a3fac3fb060a1e01138d9d2f7cf5a974ea3df945", "code": "default", "pull_request_number": "96", "fail_on_error": false, "slug": "mohavro/financial-asset-relationship-db"}
+2025-11-07T06:54:27.2473462Z info - 2025-11-07 06:54:27,246 -- Process Report creating complete
+2025-11-07T06:54:27.2480729Z debug - 2025-11-07 06:54:27,247 -- Report creating result --- {"result": "RequestResult(error=RequestError(code='HTTP Error 400', params={}, description='{\"message\":\"Token required - not valid tokenless upload\"}\\n'), warnings=[], status_code=400, text='{\"message\":\"Token required - not valid tokenless upload\"}\\n')"}
+2025-11-07T06:54:27.2482671Z error - 2025-11-07 06:54:27,247 -- Report creating failed: {"message":"Token required - not valid tokenless upload"}
+2025-11-07T06:54:27.3540780Z Sentry is attempting to send 2 pending events
+2025-11-07T06:54:27.3541337Z Waiting up to 2 seconds
+2025-11-07T06:54:27.3541904Z Press Ctrl-C to quit
+2025-11-07T06:54:27.4216315Z ==> Running command '/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov -v do-upload'
+2025-11-07T06:54:27.4218019Z [command]/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov -v do-upload -f ./coverage.xml --git-service github -C a3fac3fb060a1e01138d9d2f7cf5a974ea3df945
+2025-11-07T06:54:27.7745483Z info - 2025-11-07 06:54:27,774 -- ci service found: github-actions
+2025-11-07T06:54:27.7781134Z debug - 2025-11-07 06:54:27,777 -- versioning system found: <class 'codecov_cli.helpers.versioning_systems.GitVersioningSystem'>
+2025-11-07T06:54:27.7813083Z debug - 2025-11-07 06:54:27,780 -- versioning system found: <class 'codecov_cli.helpers.versioning_systems.GitVersioningSystem'>
+2025-11-07T06:54:27.7853721Z warning - 2025-11-07 06:54:27,784 -- No config file could be found. Ignoring config.
+2025-11-07T06:54:27.7854505Z debug - 2025-11-07 06:54:27,785 -- No codecov_yaml found
+2025-11-07T06:54:27.8175258Z debug - 2025-11-07 06:54:27,816 -- Starting upload processing --- {"verbose": true, "auto_load_params_from": null, "codecov_yml_path": null, "enterprise_url": null, "disable_telem": false, "version": "cli-11.2.4", "command": "do-upload", "git_service": "github", "commit_sha": "a3fac3fb060a1e01138d9d2f7cf5a974ea3df945", "report_code": "default", "network_root_folder": "/home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db", "files_search_root_folder": "/home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db", "files_search_exclude_folders": [], "recurse_submodules": false, "disable_search": false, "disable_file_fixes": false, "build_code": "19160672365", "build_url": "https://github.com/mohavro/financial-asset-relationship-db/actions/runs/19160672365", "job_code": "Python CI", "name": "19160672365", "branch": "security/fix-ecdsa-vulnerability", "pull_request_number": "96", "env_vars": {}, "flags": [], "plugin_names": ["xcode", "gcov", "pycoverage"], "dry_run": false, "use_legacy_uploader": false, "handle_no_reports_found": false, "report_type_str": "coverage", "network_filter": null, "network_prefix": null, "gcov_args": null, "gcov_ignore": null, "gcov_include": null, "gcov_executable": null, "swift_project": null, "fail_on_error": false, "slug": "mohavro/financial-asset-relationship-db"}
+2025-11-07T06:54:27.8184280Z debug - 2025-11-07 06:54:27,816 -- Selected preparation plugins --- {"selected_plugins": ["<class 'codecov_cli.plugins.xcode.XcodePlugin'>", "<class 'codecov_cli.plugins.gcov.GcovPlugin'>", "<class 'codecov_cli.plugins.pycoverage.Pycoverage'>"], "cli_config": {}}
+2025-11-07T06:54:27.8186271Z debug - 2025-11-07 06:54:27,816 -- Running preparation plugin: <class 'codecov_cli.plugins.xcode.XcodePlugin'>
+2025-11-07T06:54:27.8187157Z debug - 2025-11-07 06:54:27,817 -- Running xcode plugin...
+2025-11-07T06:54:27.8187808Z warning - 2025-11-07 06:54:27,817 -- xcrun is not installed or can't be found.
+2025-11-07T06:54:27.8188729Z debug - 2025-11-07 06:54:27,817 -- Running preparation plugin: <class 'codecov_cli.plugins.gcov.GcovPlugin'>
+2025-11-07T06:54:27.8189873Z debug - 2025-11-07 06:54:27,818 -- Running gcov plugin...
+2025-11-07T06:54:27.8190978Z debug - 2025-11-07 06:54:27,818 -- Translating `*.gcno` into `(?s:[^/]*\.gcno)\Z`
+2025-11-07T06:54:27.8234785Z warning - 2025-11-07 06:54:27,823 -- No gcov data found.
+2025-11-07T06:54:27.8236035Z debug - 2025-11-07 06:54:27,823 -- Running preparation plugin: <class 'codecov_cli.plugins.pycoverage.Pycoverage'>
+2025-11-07T06:54:27.8244745Z info - 2025-11-07 06:54:27,824 -- Generating coverage.xml report in /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db
+2025-11-07T06:54:27.9962144Z info - 2025-11-07 06:54:27,995 -- Wrote XML report to coverage.xml
+2025-11-07T06:54:27.9962988Z debug - 2025-11-07 06:54:27,996 -- Collecting relevant files
+2025-11-07T06:54:28.0049278Z debug - 2025-11-07 06:54:28,004 -- Translating `*.*js` into `(?s:[^/]*\.[^/]*js)\Z`
+2025-11-07T06:54:28.0050211Z debug - 2025-11-07 06:54:28,004 -- Translating `*.SHA256SUM` into `(?s:[^/]*\.SHA256SUM)\Z`
+2025-11-07T06:54:28.0051522Z debug - 2025-11-07 06:54:28,004 -- Translating `*.am` into `(?s:[^/]*\.am)\Z`
+2025-11-07T06:54:28.0052299Z debug - 2025-11-07 06:54:28,004 -- Translating `*.bash` into `(?s:[^/]*\.bash)\Z`
+2025-11-07T06:54:28.0053091Z debug - 2025-11-07 06:54:28,004 -- Translating `*.bat` into `(?s:[^/]*\.bat)\Z`
+2025-11-07T06:54:28.0054036Z debug - 2025-11-07 06:54:28,005 -- Translating `*.bw` into `(?s:[^/]*\.bw)\Z`
+2025-11-07T06:54:28.0054812Z debug - 2025-11-07 06:54:28,005 -- Translating `*.cfg` into `(?s:[^/]*\.cfg)\Z`
+2025-11-07T06:54:28.0055597Z debug - 2025-11-07 06:54:28,005 -- Translating `*.class` into `(?s:[^/]*\.class)\Z`
+2025-11-07T06:54:28.0056369Z debug - 2025-11-07 06:54:28,005 -- Translating `*.cmake` into `(?s:[^/]*\.cmake)\Z`
+2025-11-07T06:54:28.0057116Z debug - 2025-11-07 06:54:28,005 -- Translating `*.conf` into `(?s:[^/]*\.conf)\Z`
+2025-11-07T06:54:28.0057901Z debug - 2025-11-07 06:54:28,005 -- Translating `*.coverage` into `(?s:[^/]*\.coverage)\Z`
+2025-11-07T06:54:28.0058588Z debug - 2025-11-07 06:54:28,005 -- Translating `*.cp` into `(?s:[^/]*\.cp)\Z`
+2025-11-07T06:54:28.0059431Z debug - 2025-11-07 06:54:28,005 -- Translating `*.cpp` into `(?s:[^/]*\.cpp)\Z`
+2025-11-07T06:54:28.0060095Z debug - 2025-11-07 06:54:28,005 -- Translating `*.crt` into `(?s:[^/]*\.crt)\Z`
+2025-11-07T06:54:28.0060770Z debug - 2025-11-07 06:54:28,005 -- Translating `*.csg` into `(?s:[^/]*\.csg)\Z`
+2025-11-07T06:54:28.0061505Z debug - 2025-11-07 06:54:28,005 -- Translating `*.css` into `(?s:[^/]*\.css)\Z`
+2025-11-07T06:54:28.0062123Z debug - 2025-11-07 06:54:28,006 -- Translating `*.csv` into `(?s:[^/]*\.csv)\Z`
+2025-11-07T06:54:28.0063029Z debug - 2025-11-07 06:54:28,006 -- Translating `*.dart` into `(?s:[^/]*\.dart)\Z`
+2025-11-07T06:54:28.0064098Z debug - 2025-11-07 06:54:28,006 -- Translating `*.data` into `(?s:[^/]*\.data)\Z`
+2025-11-07T06:54:28.0064986Z debug - 2025-11-07 06:54:28,006 -- Translating `*.db` into `(?s:[^/]*\.db)\Z`
+2025-11-07T06:54:28.0067430Z debug - 2025-11-07 06:54:28,006 -- Translating `*.dox` into `(?s:[^/]*\.dox)\Z`
+2025-11-07T06:54:28.0068221Z debug - 2025-11-07 06:54:28,006 -- Translating `*.ec` into `(?s:[^/]*\.ec)\Z`
+2025-11-07T06:54:28.0069171Z debug - 2025-11-07 06:54:28,006 -- Translating `*.egg` into `(?s:[^/]*\.egg)\Z`
+2025-11-07T06:54:28.0070130Z debug - 2025-11-07 06:54:28,006 -- Translating `*.egg-info` into `(?s:[^/]*\.egg\-info)\Z`
+2025-11-07T06:54:28.0071071Z debug - 2025-11-07 06:54:28,006 -- Translating `*.el` into `(?s:[^/]*\.el)\Z`
+2025-11-07T06:54:28.0071944Z debug - 2025-11-07 06:54:28,006 -- Translating `*.env` into `(?s:[^/]*\.env)\Z`
+2025-11-07T06:54:28.0072688Z debug - 2025-11-07 06:54:28,006 -- Translating `*.erb` into `(?s:[^/]*\.erb)\Z`
+2025-11-07T06:54:28.0073414Z debug - 2025-11-07 06:54:28,007 -- Translating `*.err` into `(?s:[^/]*\.err)\Z`
+2025-11-07T06:54:28.0074155Z debug - 2025-11-07 06:54:28,007 -- Translating `*.exe` into `(?s:[^/]*\.exe)\Z`
+2025-11-07T06:54:28.0074921Z debug - 2025-11-07 06:54:28,007 -- Translating `*.feature` into `(?s:[^/]*\.feature)\Z`
+2025-11-07T06:54:28.0076005Z debug - 2025-11-07 06:54:28,007 -- Translating `*.ftl` into `(?s:[^/]*\.ftl)\Z`
+2025-11-07T06:54:28.0080485Z debug - 2025-11-07 06:54:28,007 -- Translating `*.gif` into `(?s:[^/]*\.gif)\Z`
+2025-11-07T06:54:28.0081210Z debug - 2025-11-07 06:54:28,007 -- Translating `*.go` into `(?s:[^/]*\.go)\Z`
+2025-11-07T06:54:28.0081919Z debug - 2025-11-07 06:54:28,007 -- Translating `*.gradle` into `(?s:[^/]*\.gradle)\Z`
+2025-11-07T06:54:28.0082616Z debug - 2025-11-07 06:54:28,007 -- Translating `*.gz` into `(?s:[^/]*\.gz)\Z`
+2025-11-07T06:54:28.0083275Z debug - 2025-11-07 06:54:28,007 -- Translating `*.h` into `(?s:[^/]*\.h)\Z`
+2025-11-07T06:54:28.0083923Z debug - 2025-11-07 06:54:28,007 -- Translating `*.html` into `(?s:[^/]*\.html)\Z`
+2025-11-07T06:54:28.0084591Z debug - 2025-11-07 06:54:28,007 -- Translating `*.in` into `(?s:[^/]*\.in)\Z`
+2025-11-07T06:54:28.0085250Z debug - 2025-11-07 06:54:28,007 -- Translating `*.jade` into `(?s:[^/]*\.jade)\Z`
+2025-11-07T06:54:28.0086210Z debug - 2025-11-07 06:54:28,007 -- Translating `*.jar*` into `(?s:[^/]*\.jar[^/]*)\Z`
+2025-11-07T06:54:28.0086936Z debug - 2025-11-07 06:54:28,008 -- Translating `*.jpeg` into `(?s:[^/]*\.jpeg)\Z`
+2025-11-07T06:54:28.0087607Z debug - 2025-11-07 06:54:28,008 -- Translating `*.jpg` into `(?s:[^/]*\.jpg)\Z`
+2025-11-07T06:54:28.0088261Z debug - 2025-11-07 06:54:28,008 -- Translating `*.js` into `(?s:[^/]*\.js)\Z`
+2025-11-07T06:54:28.0089084Z debug - 2025-11-07 06:54:28,008 -- Translating `*.less` into `(?s:[^/]*\.less)\Z`
+2025-11-07T06:54:28.0089803Z debug - 2025-11-07 06:54:28,008 -- Translating `*.library` into `(?s:[^/]*\.library)\Z`
+2025-11-07T06:54:28.0090572Z debug - 2025-11-07 06:54:28,008 -- Translating `*.log` into `(?s:[^/]*\.log)\Z`
+2025-11-07T06:54:28.0091233Z debug - 2025-11-07 06:54:28,008 -- Translating `*.m4` into `(?s:[^/]*\.m4)\Z`
+2025-11-07T06:54:28.0091914Z debug - 2025-11-07 06:54:28,008 -- Translating `*.mak*` into `(?s:[^/]*\.mak[^/]*)\Z`
+2025-11-07T06:54:28.0092617Z debug - 2025-11-07 06:54:28,009 -- Translating `*.map` into `(?s:[^/]*\.map)\Z`
+2025-11-07T06:54:28.0093264Z debug - 2025-11-07 06:54:28,009 -- Translating `*.md` into `(?s:[^/]*\.md)\Z`
+2025-11-07T06:54:28.0094251Z debug - 2025-11-07 06:54:28,009 -- Translating `*.module` into `(?s:[^/]*\.module)\Z`
+2025-11-07T06:54:28.0095348Z debug - 2025-11-07 06:54:28,009 -- Translating `*.mp4` into `(?s:[^/]*\.mp4)\Z`
+2025-11-07T06:54:28.0096379Z debug - 2025-11-07 06:54:28,009 -- Translating `*.o` into `(?s:[^/]*\.o)\Z`
+2025-11-07T06:54:28.0097566Z debug - 2025-11-07 06:54:28,009 -- Translating `*.p12` into `(?s:[^/]*\.p12)\Z`
+2025-11-07T06:54:28.0098604Z debug - 2025-11-07 06:54:28,009 -- Translating `*.pem` into `(?s:[^/]*\.pem)\Z`
+2025-11-07T06:54:28.0099850Z debug - 2025-11-07 06:54:28,009 -- Translating `*.png` into `(?s:[^/]*\.png)\Z`
+2025-11-07T06:54:28.0101549Z debug - 2025-11-07 06:54:28,009 -- Translating `*.pom*` into `(?s:[^/]*\.pom[^/]*)\Z`
+2025-11-07T06:54:28.0102971Z debug - 2025-11-07 06:54:28,010 -- Translating `*.profdata` into `(?s:[^/]*\.profdata)\Z`
+2025-11-07T06:54:28.0104052Z debug - 2025-11-07 06:54:28,010 -- Translating `*.proto` into `(?s:[^/]*\.proto)\Z`
+2025-11-07T06:54:28.0105518Z debug - 2025-11-07 06:54:28,010 -- Translating `*.prototxt` into `(?s:[^/]*\.prototxt)\Z`
+2025-11-07T06:54:28.0106342Z debug - 2025-11-07 06:54:28,010 -- Translating `*.ps1` into `(?s:[^/]*\.ps1)\Z`
+2025-11-07T06:54:28.0107032Z debug - 2025-11-07 06:54:28,010 -- Translating `*.pth` into `(?s:[^/]*\.pth)\Z`
+2025-11-07T06:54:28.0109328Z debug - 2025-11-07 06:54:28,010 -- Translating `*.py` into `(?s:[^/]*\.py)\Z`
+2025-11-07T06:54:28.0110077Z debug - 2025-11-07 06:54:28,010 -- Translating `*.pyc` into `(?s:[^/]*\.pyc)\Z`
+2025-11-07T06:54:28.0111092Z debug - 2025-11-07 06:54:28,010 -- Translating `*.pyo` into `(?s:[^/]*\.pyo)\Z`
+2025-11-07T06:54:28.0112015Z debug - 2025-11-07 06:54:28,011 -- Translating `*.rake` into `(?s:[^/]*\.rake)\Z`
+2025-11-07T06:54:28.0113102Z debug - 2025-11-07 06:54:28,011 -- Translating `*.rb` into `(?s:[^/]*\.rb)\Z`
+2025-11-07T06:54:28.0114233Z debug - 2025-11-07 06:54:28,011 -- Translating `*.rsp` into `(?s:[^/]*\.rsp)\Z`
+2025-11-07T06:54:28.0115425Z debug - 2025-11-07 06:54:28,011 -- Translating `*.rst` into `(?s:[^/]*\.rst)\Z`
+2025-11-07T06:54:28.0116265Z debug - 2025-11-07 06:54:28,011 -- Translating `*.ru` into `(?s:[^/]*\.ru)\Z`
+2025-11-07T06:54:28.0117292Z debug - 2025-11-07 06:54:28,011 -- Translating `*.sbt` into `(?s:[^/]*\.sbt)\Z`
+2025-11-07T06:54:28.0118331Z debug - 2025-11-07 06:54:28,011 -- Translating `*.scss` into `(?s:[^/]*\.scss)\Z`
+2025-11-07T06:54:28.0119831Z debug - 2025-11-07 06:54:28,011 -- Translating `*.serialized` into `(?s:[^/]*\.serialized)\Z`
+2025-11-07T06:54:28.0120653Z debug - 2025-11-07 06:54:28,011 -- Translating `*.sh` into `(?s:[^/]*\.sh)\Z`
+2025-11-07T06:54:28.0121872Z debug - 2025-11-07 06:54:28,012 -- Translating `*.sha256sum` into `(?s:[^/]*\.sha256sum)\Z`
+2025-11-07T06:54:28.0123012Z debug - 2025-11-07 06:54:28,012 -- Translating `*.snapshot` into `(?s:[^/]*\.snapshot)\Z`
+2025-11-07T06:54:28.0124095Z debug - 2025-11-07 06:54:28,012 -- Translating `*.sql` into `(?s:[^/]*\.sql)\Z`
+2025-11-07T06:54:28.0126008Z debug - 2025-11-07 06:54:28,012 -- Translating `*.svg` into `(?s:[^/]*\.svg)\Z`
+2025-11-07T06:54:28.0127028Z debug - 2025-11-07 06:54:28,012 -- Translating `*.tar.tz` into `(?s:[^/]*\.tar\.tz)\Z`
+2025-11-07T06:54:28.0128161Z debug - 2025-11-07 06:54:28,012 -- Translating `*.template` into `(?s:[^/]*\.template)\Z`
+2025-11-07T06:54:28.0129279Z debug - 2025-11-07 06:54:28,012 -- Translating `*.ts` into `(?s:[^/]*\.ts)\Z`
+2025-11-07T06:54:28.0130553Z debug - 2025-11-07 06:54:28,012 -- Translating `*.whl` into `(?s:[^/]*\.whl)\Z`
+2025-11-07T06:54:28.0131838Z debug - 2025-11-07 06:54:28,013 -- Translating `*.xcconfig` into `(?s:[^/]*\.xcconfig)\Z`
+2025-11-07T06:54:28.0133045Z debug - 2025-11-07 06:54:28,013 -- Translating `*.xcoverage.*` into `(?s:[^/]*\.xcoverage\.[^/]*)\Z`
+2025-11-07T06:54:28.0133943Z debug - 2025-11-07 06:54:28,013 -- Translating `*.yaml` into `(?s:[^/]*\.yaml)\Z`
+2025-11-07T06:54:28.0135137Z debug - 2025-11-07 06:54:28,013 -- Translating `*.yml` into `(?s:[^/]*\.yml)\Z`
+2025-11-07T06:54:28.0136124Z debug - 2025-11-07 06:54:28,013 -- Translating `*.zip` into `(?s:[^/]*\.zip)\Z`
+2025-11-07T06:54:28.0137603Z debug - 2025-11-07 06:54:28,013 -- Translating `*/classycle/report.xml` into `(?s:[^/]+/classycle/report\.xml)\Z`
+2025-11-07T06:54:28.0138699Z debug - 2025-11-07 06:54:28,013 -- Translating `*codecov.yml` into `(?s:[^/]*codecov\.yml)\Z`
+2025-11-07T06:54:28.0139928Z debug - 2025-11-07 06:54:28,013 -- Translating `*~` into `(?s:[^/]*\~)\Z`
+2025-11-07T06:54:28.0140996Z debug - 2025-11-07 06:54:28,013 -- Translating `.*coveragerc` into `(?s:\.[^/]*coveragerc)\Z`
+2025-11-07T06:54:28.0142150Z debug - 2025-11-07 06:54:28,014 -- Translating `.coverage*` into `(?s:\.coverage[^/]*)\Z`
+2025-11-07T06:54:28.0143255Z debug - 2025-11-07 06:54:28,014 -- Translating `.ds_store` into `(?s:\.ds_store)\Z`
+2025-11-07T06:54:28.0144407Z debug - 2025-11-07 06:54:28,014 -- Translating `.git*` into `(?s:\.git[^/]*)\Z`
+2025-11-07T06:54:28.0147024Z debug - 2025-11-07 06:54:28,014 -- Translating `.nvmrc` into `(?s:\.nvmrc)\Z`
+2025-11-07T06:54:28.0148184Z debug - 2025-11-07 06:54:28,014 -- Translating `codecov.SHA256SUM` into `(?s:codecov\.SHA256SUM)\Z`
+2025-11-07T06:54:28.0149612Z debug - 2025-11-07 06:54:28,014 -- Translating `codecov.SHA256SUM.sig` into `(?s:codecov\.SHA256SUM\.sig)\Z`
+2025-11-07T06:54:28.0152099Z debug - 2025-11-07 06:54:28,014 -- Translating `codecov.yaml` into `(?s:codecov\.yaml)\Z`
+2025-11-07T06:54:28.0153118Z debug - 2025-11-07 06:54:28,014 -- Translating `coverage-summary.json` into `(?s:coverage\-summary\.json)\Z`
+2025-11-07T06:54:28.0154161Z debug - 2025-11-07 06:54:28,015 -- Translating `createdFiles.lst` into `(?s:createdFiles\.lst)\Z`
+2025-11-07T06:54:28.0155188Z debug - 2025-11-07 06:54:28,015 -- Translating `fullLocaleNames.lst` into `(?s:fullLocaleNames\.lst)\Z`
+2025-11-07T06:54:28.0156127Z debug - 2025-11-07 06:54:28,015 -- Translating `include.lst` into `(?s:include\.lst)\Z`
+2025-11-07T06:54:28.0157254Z debug - 2025-11-07 06:54:28,015 -- Translating `inputFiles.lst` into `(?s:inputFiles\.lst)\Z`
+2025-11-07T06:54:28.0158337Z debug - 2025-11-07 06:54:28,015 -- Translating `phpunit-code-coverage.xml` into `(?s:phpunit\-code\-coverage\.xml)\Z`
+2025-11-07T06:54:28.0159672Z debug - 2025-11-07 06:54:28,015 -- Translating `phpunit-coverage.xml` into `(?s:phpunit\-coverage\.xml)\Z`
+2025-11-07T06:54:28.0160879Z debug - 2025-11-07 06:54:28,015 -- Translating `remapInstanbul.coverage*.json` into `(?s:remapInstanbul\.coverage[^/]*\.json)\Z`
+2025-11-07T06:54:28.0162053Z debug - 2025-11-07 06:54:28,015 -- Translating `scoverage.measurements.*` into `(?s:scoverage\.measurements\.[^/]*)\Z`
+2025-11-07T06:54:28.0163276Z debug - 2025-11-07 06:54:28,015 -- Translating `test-result-*-codecoverage.json` into `(?s:test\-result\-[^/]*\-codecoverage\.json)\Z`
+2025-11-07T06:54:28.0164438Z debug - 2025-11-07 06:54:28,015 -- Translating `test_*_coverage.txt` into `(?s:test_[^/]*_coverage\.txt)\Z`
+2025-11-07T06:54:28.0165762Z debug - 2025-11-07 06:54:28,016 -- Translating `testrunner-coverage*` into `(?s:testrunner\-coverage[^/]*)\Z`
+2025-11-07T06:54:28.0220486Z debug - 2025-11-07 06:54:28,021 -- Translating `coverage.xml` into `(?s:coverage\.xml)\Z`
+2025-11-07T06:54:28.0224971Z debug - 2025-11-07 06:54:28,022 -- Translating `/home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/coverage.xml` into `(?s:/home/runner/work/financial\-asset\-relationship\-db/financial\-asset\-relationship\-db/coverage\.xml)\Z`
+2025-11-07T06:54:28.0272282Z debug - 2025-11-07 06:54:28,027 -- Translating `*.clover` into `(?s:[^/]*\.clover)\Z`
+2025-11-07T06:54:28.0273381Z debug - 2025-11-07 06:54:28,027 -- Translating `*.codecov.*` into `(?s:[^/]*\.codecov\.[^/]*)\Z`
+2025-11-07T06:54:28.0274489Z debug - 2025-11-07 06:54:28,027 -- Translating `*.gcov` into `(?s:[^/]*\.gcov)\Z`
+2025-11-07T06:54:28.0275381Z debug - 2025-11-07 06:54:28,027 -- Translating `*.lcov` into `(?s:[^/]*\.lcov)\Z`
+2025-11-07T06:54:28.0276333Z debug - 2025-11-07 06:54:28,027 -- Translating `*.lst` into `(?s:[^/]*\.lst)\Z`
+2025-11-07T06:54:28.0277462Z debug - 2025-11-07 06:54:28,027 -- Translating `*coverage*.*` into `(?s:[^/]*coverage[^/]*\.[^/]*)\Z`
+2025-11-07T06:54:28.0278666Z debug - 2025-11-07 06:54:28,027 -- Translating `*Jacoco*.xml` into `(?s:[^/]*Jacoco[^/]*\.xml)\Z`
+2025-11-07T06:54:28.0279920Z debug - 2025-11-07 06:54:28,027 -- Translating `clover.xml` into `(?s:clover\.xml)\Z`
+2025-11-07T06:54:28.0280935Z debug - 2025-11-07 06:54:28,027 -- Translating `cobertura.xml` into `(?s:cobertura\.xml)\Z`
+2025-11-07T06:54:28.0282030Z debug - 2025-11-07 06:54:28,027 -- Translating `codecov-result.json` into `(?s:codecov\-result\.json)\Z`
+2025-11-07T06:54:28.0283045Z debug - 2025-11-07 06:54:28,027 -- Translating `codecov.*` into `(?s:codecov\.[^/]*)\Z`
+2025-11-07T06:54:28.0283773Z debug - 2025-11-07 06:54:28,028 -- Translating `cover.out` into `(?s:cover\.out)\Z`
+2025-11-07T06:54:28.0284595Z debug - 2025-11-07 06:54:28,028 -- Translating `coverage-final.json` into `(?s:coverage\-final\.json)\Z`
+2025-11-07T06:54:28.0285489Z debug - 2025-11-07 06:54:28,028 -- Translating `excoveralls.json` into `(?s:excoveralls\.json)\Z`
+2025-11-07T06:54:28.0286332Z debug - 2025-11-07 06:54:28,028 -- Translating `gcov.info` into `(?s:gcov\.info)\Z`
+2025-11-07T06:54:28.0287118Z debug - 2025-11-07 06:54:28,028 -- Translating `jacoco*.xml` into `(?s:jacoco[^/]*\.xml)\Z`
+2025-11-07T06:54:28.0287958Z debug - 2025-11-07 06:54:28,028 -- Translating `lcov.dat` into `(?s:lcov\.dat)\Z`
+2025-11-07T06:54:28.0288709Z debug - 2025-11-07 06:54:28,028 -- Translating `pylcov.dat` into `(?s:pylcov\.dat)\Z`
+2025-11-07T06:54:28.0289768Z debug - 2025-11-07 06:54:28,028 -- Translating `lcov.info` into `(?s:lcov\.info)\Z`
+2025-11-07T06:54:28.0290604Z debug - 2025-11-07 06:54:28,028 -- Translating `luacov.report.out` into `(?s:luacov\.report\.out)\Z`
+2025-11-07T06:54:28.0291390Z debug - 2025-11-07 06:54:28,028 -- Translating `naxsi.info` into `(?s:naxsi\.info)\Z`
+2025-11-07T06:54:28.0292146Z debug - 2025-11-07 06:54:28,029 -- Translating `nosetests.xml` into `(?s:nosetests\.xml)\Z`
+2025-11-07T06:54:28.0293431Z debug - 2025-11-07 06:54:28,029 -- Translating `report.xml` into `(?s:report\.xml)\Z`
+2025-11-07T06:54:28.0294311Z debug - 2025-11-07 06:54:28,029 -- Translating `test_cov.xml` into `(?s:test_cov\.xml)\Z`
+2025-11-07T06:54:28.0342321Z info - 2025-11-07 06:54:28,034 -- Found 4 coverage files to report
+2025-11-07T06:54:28.0343701Z debug - 2025-11-07 06:54:28,034 -- Found 182 network files to report, (182 without filtering)
+2025-11-07T06:54:28.0344898Z info - 2025-11-07 06:54:28,034 -- > /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/frontend/coverage/lcov.info
+2025-11-07T06:54:28.0346180Z info - 2025-11-07 06:54:28,034 -- > /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/coverage.xml
+2025-11-07T06:54:28.0347591Z info - 2025-11-07 06:54:28,034 -- > /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/frontend/coverage/coverage-final.json
+2025-11-07T06:54:28.0349583Z info - 2025-11-07 06:54:28,034 -- > /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/frontend/coverage/clover.xml
+2025-11-07T06:54:28.0385410Z debug - 2025-11-07 06:54:28,038 -- Selected uploader to use: <class 'codecov_cli.services.upload.upload_sender.UploadSender'>
+2025-11-07T06:54:28.0396590Z debug - 2025-11-07 06:54:28,039 -- Sending upload request to Codecov
+2025-11-07T06:54:28.2028349Z info - 2025-11-07 06:54:28,202 -- Process Upload complete
+2025-11-07T06:54:28.2030649Z debug - 2025-11-07 06:54:28,202 -- Upload result --- {"result": "RequestResult(error=RequestError(code='HTTP Error 400', params={}, description='{\"message\":\"Token required - not valid tokenless upload\"}\\n'), warnings=[], status_code=400, text='{\"message\":\"Token required - not valid tokenless upload\"}\\n')"}
+2025-11-07T06:54:28.2032136Z error - 2025-11-07 06:54:28,202 -- Upload failed: {"message":"Token required - not valid tokenless upload"}
+2025-11-07T06:54:28.3107736Z Sentry is attempting to send 3 pending events
+2025-11-07T06:54:28.3108188Z Waiting up to 2 seconds
+2025-11-07T06:54:28.3108415Z Press Ctrl-C to quit

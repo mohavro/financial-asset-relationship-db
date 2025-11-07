@@ -9,14 +9,7 @@ This module contains comprehensive unit tests for all financial model classes in
 
 import pytest
 
-from src.models.financial_models import (
-    Asset,
-    AssetClass,
-    Bond,
-    Equity,
-    RegulatoryActivity,
-    RegulatoryEvent,
-)
+from src.models.financial_models import Asset, AssetClass, Bond, Equity, RegulatoryActivity, RegulatoryEvent
 
 
 class TestAsset:

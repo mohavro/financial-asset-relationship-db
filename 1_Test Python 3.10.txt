@@ -1,0 +1,1025 @@
+﻿2025-11-07T06:53:21.6010925Z Current runner version: '2.329.0'
+2025-11-07T06:53:21.6033474Z ##[group]Runner Image Provisioner
+2025-11-07T06:53:21.6034268Z Hosted Compute Agent
+2025-11-07T06:53:21.6034858Z Version: 20251016.436
+2025-11-07T06:53:21.6035522Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-07T06:53:21.6036222Z Build Date: 2025-10-15T20:44:12Z
+2025-11-07T06:53:21.6036858Z ##[endgroup]
+2025-11-07T06:53:21.6037415Z ##[group]Operating System
+2025-11-07T06:53:21.6037977Z Ubuntu
+2025-11-07T06:53:21.6038399Z 24.04.3
+2025-11-07T06:53:21.6038933Z LTS
+2025-11-07T06:53:21.6039355Z ##[endgroup]
+2025-11-07T06:53:21.6039828Z ##[group]Runner Image
+2025-11-07T06:53:21.6040472Z Image: ubuntu-24.04
+2025-11-07T06:53:21.6041331Z Version: 20251030.96.2
+2025-11-07T06:53:21.6042400Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251030.96/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-07T06:53:21.6044023Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251030.96
+2025-11-07T06:53:21.6044971Z ##[endgroup]
+2025-11-07T06:53:21.6046147Z ##[group]GITHUB_TOKEN Permissions
+2025-11-07T06:53:21.6048175Z Contents: read
+2025-11-07T06:53:21.6048822Z Metadata: read
+2025-11-07T06:53:21.6049288Z ##[endgroup]
+2025-11-07T06:53:21.6051972Z Secret source: Actions
+2025-11-07T06:53:21.6052912Z Prepare workflow directory
+2025-11-07T06:53:21.6378893Z Prepare all required actions
+2025-11-07T06:53:21.6417934Z Getting action download info
+2025-11-07T06:53:22.0040121Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-11-07T06:53:22.2132578Z Download action repository 'codecov/codecov-action@v4' (SHA:b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238)
+2025-11-07T06:53:22.6232297Z Complete job name: Test Python 3.10
+2025-11-07T06:53:22.6868517Z ##[group]Run actions/checkout@v4
+2025-11-07T06:53:22.6869409Z with:
+2025-11-07T06:53:22.6869934Z   repository: mohavro/financial-asset-relationship-db
+2025-11-07T06:53:22.6870727Z   token: ***
+2025-11-07T06:53:22.6871342Z   ssh-strict: true
+2025-11-07T06:53:22.6871793Z   ssh-user: git
+2025-11-07T06:53:22.6872228Z   persist-credentials: true
+2025-11-07T06:53:22.6872700Z   clean: true
+2025-11-07T06:53:22.6873148Z   sparse-checkout-cone-mode: true
+2025-11-07T06:53:22.6873658Z   fetch-depth: 1
+2025-11-07T06:53:22.6874083Z   fetch-tags: false
+2025-11-07T06:53:22.6874515Z   show-progress: true
+2025-11-07T06:53:22.6874976Z   lfs: false
+2025-11-07T06:53:22.6875377Z   submodules: false
+2025-11-07T06:53:22.6875816Z   set-safe-directory: true
+2025-11-07T06:53:22.6876544Z ##[endgroup]
+2025-11-07T06:53:22.7965289Z Syncing repository: mohavro/financial-asset-relationship-db
+2025-11-07T06:53:22.7967712Z ##[group]Getting Git version info
+2025-11-07T06:53:22.7969747Z Working directory is '/home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db'
+2025-11-07T06:53:22.7972607Z [command]/usr/bin/git version
+2025-11-07T06:53:22.8042135Z git version 2.51.2
+2025-11-07T06:53:22.8069491Z ##[endgroup]
+2025-11-07T06:53:22.8085590Z Temporarily overriding HOME='/home/runner/work/_temp/3f571721-2d03-496a-beee-fba289d7312d' before making global git config changes
+2025-11-07T06:53:22.8088299Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-07T06:53:22.8092427Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db
+2025-11-07T06:53:22.8127963Z Deleting the contents of '/home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db'
+2025-11-07T06:53:22.8130876Z ##[group]Initializing the repository
+2025-11-07T06:53:22.8136676Z [command]/usr/bin/git init /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db
+2025-11-07T06:53:22.8238849Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-11-07T06:53:22.8240245Z hint: is subject to change. To configure the initial branch name to use in all
+2025-11-07T06:53:22.8241778Z hint: of your new repositories, which will suppress this warning, call:
+2025-11-07T06:53:22.8243112Z hint:
+2025-11-07T06:53:22.8244139Z hint: 	git config --global init.defaultBranch <name>
+2025-11-07T06:53:22.8245357Z hint:
+2025-11-07T06:53:22.8246573Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-11-07T06:53:22.8248442Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-11-07T06:53:22.8249940Z hint:
+2025-11-07T06:53:22.8250675Z hint: 	git branch -m <name>
+2025-11-07T06:53:22.8251772Z hint:
+2025-11-07T06:53:22.8252945Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-11-07T06:53:22.8255711Z Initialized empty Git repository in /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/.git/
+2025-11-07T06:53:22.8259651Z [command]/usr/bin/git remote add origin https://github.com/mohavro/financial-asset-relationship-db
+2025-11-07T06:53:22.8290723Z ##[endgroup]
+2025-11-07T06:53:22.8292320Z ##[group]Disabling automatic garbage collection
+2025-11-07T06:53:22.8295743Z [command]/usr/bin/git config --local gc.auto 0
+2025-11-07T06:53:22.8324552Z ##[endgroup]
+2025-11-07T06:53:22.8325968Z ##[group]Setting up auth
+2025-11-07T06:53:22.8332298Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-07T06:53:22.8362456Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-07T06:53:22.8674240Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-07T06:53:22.8707740Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-07T06:53:22.8924716Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-07T06:53:22.8958308Z ##[endgroup]
+2025-11-07T06:53:22.8959771Z ##[group]Fetching the repository
+2025-11-07T06:53:22.8968496Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +f6c5dd2318074fd903c3ad6ca3549b24b31ef2ea:refs/remotes/pull/96/merge
+2025-11-07T06:53:23.2364275Z From https://github.com/mohavro/financial-asset-relationship-db
+2025-11-07T06:53:23.2365656Z  * [new ref]         f6c5dd2318074fd903c3ad6ca3549b24b31ef2ea -> pull/96/merge
+2025-11-07T06:53:23.2396039Z ##[endgroup]
+2025-11-07T06:53:23.2397775Z ##[group]Determining the checkout info
+2025-11-07T06:53:23.2399628Z ##[endgroup]
+2025-11-07T06:53:23.2402306Z [command]/usr/bin/git sparse-checkout disable
+2025-11-07T06:53:23.2439634Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-11-07T06:53:23.2466719Z ##[group]Checking out the ref
+2025-11-07T06:53:23.2470190Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/96/merge
+2025-11-07T06:53:23.2618046Z Note: switching to 'refs/remotes/pull/96/merge'.
+2025-11-07T06:53:23.2619201Z 
+2025-11-07T06:53:23.2619875Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-11-07T06:53:23.2621762Z changes and commit them, and you can discard any commits you make in this
+2025-11-07T06:53:23.2624689Z state without impacting any branches by switching back to a branch.
+2025-11-07T06:53:23.2626506Z 
+2025-11-07T06:53:23.2627694Z If you want to create a new branch to retain commits you create, you may
+2025-11-07T06:53:23.2630398Z do so (now or later) by using -c with the switch command. Example:
+2025-11-07T06:53:23.2632341Z 
+2025-11-07T06:53:23.2632904Z   git switch -c <new-branch-name>
+2025-11-07T06:53:23.2634015Z 
+2025-11-07T06:53:23.2634607Z Or undo this operation with:
+2025-11-07T06:53:23.2635496Z 
+2025-11-07T06:53:23.2635946Z   git switch -
+2025-11-07T06:53:23.2636590Z 
+2025-11-07T06:53:23.2637749Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-11-07T06:53:23.2639159Z 
+2025-11-07T06:53:23.2640563Z HEAD is now at f6c5dd2 Merge a3fac3fb060a1e01138d9d2f7cf5a974ea3df945 into a6b17adc9ab64a141f684f2d53022b9512cd3167
+2025-11-07T06:53:23.2646406Z ##[endgroup]
+2025-11-07T06:53:23.2663546Z [command]/usr/bin/git log -1 --format=%H
+2025-11-07T06:53:23.2684983Z f6c5dd2318074fd903c3ad6ca3549b24b31ef2ea
+2025-11-07T06:53:23.3065202Z Prepare all required actions
+2025-11-07T06:53:23.3066527Z Getting action download info
+2025-11-07T06:53:23.4478059Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2025-11-07T06:53:23.5625622Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-11-07T06:53:23.6931088Z ##[group]Run ./.github/actions/ci-common
+2025-11-07T06:53:23.6932136Z with:
+2025-11-07T06:53:23.6932860Z   language: python
+2025-11-07T06:53:23.6933659Z   python-version: 3.10
+2025-11-07T06:53:23.6997670Z   dependency-paths: requirements.txt
+requirements-dev.txt
+
+2025-11-07T06:53:23.7000127Z   install: python -m pip install --upgrade pip && \
+pip install -r requirements.txt && \
+pip install -r requirements-dev.txt
+
+2025-11-07T06:53:23.7004448Z   test: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics && \
+flake8 . --count --statistics && \
+black --check --diff . && \
+isort --check-only --diff . && \
+pylint src/ --fail-under=7.0 && \
+pytest --cov=src --cov-report=xml --cov-report=term-missing -v
+
+2025-11-07T06:53:23.7007654Z   working-directory: .
+2025-11-07T06:53:23.7008482Z ##[endgroup]
+2025-11-07T06:53:23.7240885Z ##[group]Run actions/setup-python@v5
+2025-11-07T06:53:23.7242038Z with:
+2025-11-07T06:53:23.7242736Z   python-version: 3.10
+2025-11-07T06:53:23.7243514Z   cache: pip
+2025-11-07T06:53:23.7244565Z   cache-dependency-path: requirements.txt
+requirements-dev.txt
+
+2025-11-07T06:53:23.7245843Z   check-latest: false
+2025-11-07T06:53:23.7246852Z   token: ***
+2025-11-07T06:53:23.7247588Z   update-environment: true
+2025-11-07T06:53:23.7248472Z   allow-prereleases: false
+2025-11-07T06:53:23.7249355Z   freethreaded: false
+2025-11-07T06:53:23.7250129Z ##[endgroup]
+2025-11-07T06:53:23.8920372Z ##[group]Installed versions
+2025-11-07T06:53:23.9031098Z Successfully set up CPython (3.10.19)
+2025-11-07T06:53:23.9032881Z ##[endgroup]
+2025-11-07T06:53:23.9339104Z [command]/opt/hostedtoolcache/Python/3.10.19/x64/bin/pip cache dir
+2025-11-07T06:53:25.5723136Z /home/runner/.cache/pip
+2025-11-07T06:53:25.7139323Z pip cache is not found
+2025-11-07T06:53:25.7285982Z ##[group]Run set -euo pipefail
+2025-11-07T06:53:25.7286355Z [36;1mset -euo pipefail[0m
+2025-11-07T06:53:25.7286710Z [36;1meval "python -m pip install --upgrade pip && \[0m
+2025-11-07T06:53:25.7287100Z [36;1mpip install -r requirements.txt && \[0m
+2025-11-07T06:53:25.7287443Z [36;1mpip install -r requirements-dev.txt[0m
+2025-11-07T06:53:25.7287738Z [36;1m"[0m
+2025-11-07T06:53:25.7327670Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2025-11-07T06:53:25.7328059Z env:
+2025-11-07T06:53:25.7328358Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64
+2025-11-07T06:53:25.7328831Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
+2025-11-07T06:53:25.7329268Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2025-11-07T06:53:25.7329663Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2025-11-07T06:53:25.7330082Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2025-11-07T06:53:25.7330507Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib
+2025-11-07T06:53:25.7330838Z ##[endgroup]
+2025-11-07T06:53:27.3292735Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (25.3)
+2025-11-07T06:53:28.1512672Z Collecting gradio>=4.0.0 (from -r requirements.txt (line 1))
+2025-11-07T06:53:28.2581688Z   Downloading gradio-5.49.1-py3-none-any.whl.metadata (16 kB)
+2025-11-07T06:53:28.3160449Z Collecting plotly>=5.0.0 (from -r requirements.txt (line 2))
+2025-11-07T06:53:28.3358210Z   Downloading plotly-6.4.0-py3-none-any.whl.metadata (8.5 kB)
+2025-11-07T06:53:28.5761593Z Collecting numpy>=1.21.0 (from -r requirements.txt (line 3))
+2025-11-07T06:53:28.5960346Z   Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+2025-11-07T06:53:28.6521440Z Collecting dataclasses-json>=0.5.7 (from -r requirements.txt (line 4))
+2025-11-07T06:53:28.6732854Z   Downloading dataclasses_json-0.6.7-py3-none-any.whl.metadata (25 kB)
+2025-11-07T06:53:28.7091271Z Collecting yfinance>=0.2.0 (from -r requirements.txt (line 5))
+2025-11-07T06:53:28.7288614Z   Downloading yfinance-0.2.66-py2.py3-none-any.whl.metadata (6.0 kB)
+2025-11-07T06:53:28.7610327Z Collecting requests>=2.28.0 (from -r requirements.txt (line 6))
+2025-11-07T06:53:28.7810912Z   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+2025-11-07T06:53:28.9384580Z Collecting pandas>=1.5.0 (from -r requirements.txt (line 7))
+2025-11-07T06:53:28.9584847Z   Downloading pandas-2.3.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+2025-11-07T06:53:29.0516460Z Collecting fastapi>=0.104.0 (from -r requirements.txt (line 8))
+2025-11-07T06:53:29.0715862Z   Downloading fastapi-0.121.0-py3-none-any.whl.metadata (28 kB)
+2025-11-07T06:53:29.1097018Z Collecting uvicorn>=0.24.0 (from uvicorn[standard]>=0.24.0->-r requirements.txt (line 9))
+2025-11-07T06:53:29.1294137Z   Downloading uvicorn-0.38.0-py3-none-any.whl.metadata (6.8 kB)
+2025-11-07T06:53:29.2698863Z Collecting pydantic>=2.4.0 (from -r requirements.txt (line 10))
+2025-11-07T06:53:29.2896195Z   Downloading pydantic-2.12.4-py3-none-any.whl.metadata (89 kB)
+2025-11-07T06:53:29.3169994Z Collecting PyJWT>=2.8.0 (from -r requirements.txt (line 12))
+2025-11-07T06:53:29.3363616Z   Downloading PyJWT-2.10.1-py3-none-any.whl.metadata (4.0 kB)
+2025-11-07T06:53:29.3508582Z Collecting passlib>=1.7.4 (from passlib[bcrypt]>=1.7.4->-r requirements.txt (line 13))
+2025-11-07T06:53:29.3704856Z   Downloading passlib-1.7.4-py2.py3-none-any.whl.metadata (1.7 kB)
+2025-11-07T06:53:29.3855511Z Collecting slowapi>=0.1.4 (from -r requirements.txt (line 14))
+2025-11-07T06:53:29.4050599Z   Downloading slowapi-0.1.9-py3-none-any.whl.metadata (3.0 kB)
+2025-11-07T06:53:29.4263249Z Collecting httpx>=0.24.0 (from -r requirements.txt (line 16))
+2025-11-07T06:53:29.4457439Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+2025-11-07T06:53:29.4615555Z Collecting aiofiles<25.0,>=22.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.4808928Z   Downloading aiofiles-24.1.0-py3-none-any.whl.metadata (10 kB)
+2025-11-07T06:53:29.5052251Z Collecting anyio<5.0,>=3.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.5247077Z   Downloading anyio-4.11.0-py3-none-any.whl.metadata (4.1 kB)
+2025-11-07T06:53:29.5648247Z Collecting brotli>=1.1.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.5847007Z   Downloading brotli-1.2.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (6.1 kB)
+2025-11-07T06:53:29.6221894Z Collecting ffmpy (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.6417024Z   Downloading ffmpy-0.6.4-py3-none-any.whl.metadata (2.9 kB)
+2025-11-07T06:53:29.6695870Z Collecting gradio-client==1.13.3 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.6891359Z   Downloading gradio_client-1.13.3-py3-none-any.whl.metadata (7.1 kB)
+2025-11-07T06:53:29.7043901Z Collecting groovy~=0.1 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.7239105Z   Downloading groovy-0.1.2-py3-none-any.whl.metadata (6.1 kB)
+2025-11-07T06:53:29.7801827Z Collecting huggingface-hub<2.0,>=0.33.5 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.7998957Z   Downloading huggingface_hub-1.1.2-py3-none-any.whl.metadata (13 kB)
+2025-11-07T06:53:29.8413171Z Collecting jinja2<4.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.8607744Z   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2025-11-07T06:53:29.9279350Z Collecting markupsafe<4.0,>=2.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:29.9480309Z   Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2025-11-07T06:53:30.3051636Z Collecting orjson~=3.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:30.3252795Z   Downloading orjson-3.11.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (41 kB)
+2025-11-07T06:53:30.3495863Z Collecting packaging (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:30.3690461Z   Downloading packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-07T06:53:30.6152606Z Collecting pillow<12.0,>=8.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:30.6350198Z   Downloading pillow-11.3.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.0 kB)
+2025-11-07T06:53:30.6631548Z Collecting pydantic>=2.4.0 (from -r requirements.txt (line 10))
+2025-11-07T06:53:30.6828452Z   Downloading pydantic-2.11.10-py3-none-any.whl.metadata (68 kB)
+2025-11-07T06:53:30.7062858Z Collecting pydub (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:30.7258354Z   Downloading pydub-0.25.1-py2.py3-none-any.whl.metadata (1.4 kB)
+2025-11-07T06:53:30.7391399Z Collecting python-multipart>=0.0.18 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:30.7586448Z   Downloading python_multipart-0.0.20-py3-none-any.whl.metadata (1.8 kB)
+2025-11-07T06:53:30.8033253Z Collecting pyyaml<7.0,>=5.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:30.8231521Z   Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2025-11-07T06:53:31.2849457Z Collecting ruff>=0.9.3 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.3047650Z   Downloading ruff-0.14.4-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (25 kB)
+2025-11-07T06:53:31.3184211Z Collecting safehttpx<0.2.0,>=0.1.6 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.3377895Z   Downloading safehttpx-0.1.7-py3-none-any.whl.metadata (4.2 kB)
+2025-11-07T06:53:31.3542220Z Collecting semantic-version~=2.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.3740143Z   Downloading semantic_version-2.10.0-py2.py3-none-any.whl.metadata (9.7 kB)
+2025-11-07T06:53:31.4119621Z Collecting starlette<1.0,>=0.40.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.4313122Z   Downloading starlette-0.50.0-py3-none-any.whl.metadata (6.3 kB)
+2025-11-07T06:53:31.4525393Z Collecting tomlkit<0.14.0,>=0.12.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.4719083Z   Downloading tomlkit-0.13.3-py3-none-any.whl.metadata (2.8 kB)
+2025-11-07T06:53:31.4950018Z Collecting typer<1.0,>=0.12 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.5169948Z   Downloading typer-0.20.0-py3-none-any.whl.metadata (16 kB)
+2025-11-07T06:53:31.5402503Z Collecting typing-extensions~=4.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.5597002Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-07T06:53:31.5960509Z Collecting fsspec (from gradio-client==1.13.3->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.6155494Z   Downloading fsspec-2025.10.0-py3-none-any.whl.metadata (10 kB)
+2025-11-07T06:53:31.7746019Z Collecting websockets<16.0,>=13.0 (from gradio-client==1.13.3->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.7942512Z   Downloading websockets-15.0.1-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+2025-11-07T06:53:31.8239477Z Collecting python-dateutil>=2.8.2 (from pandas>=1.5.0->-r requirements.txt (line 7))
+2025-11-07T06:53:31.8433433Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2025-11-07T06:53:31.8884832Z Collecting pytz>=2020.1 (from pandas>=1.5.0->-r requirements.txt (line 7))
+2025-11-07T06:53:31.9079559Z   Downloading pytz-2025.2-py2.py3-none-any.whl.metadata (22 kB)
+2025-11-07T06:53:31.9235351Z Collecting tzdata>=2022.7 (from pandas>=1.5.0->-r requirements.txt (line 7))
+2025-11-07T06:53:31.9429357Z   Downloading tzdata-2025.2-py2.py3-none-any.whl.metadata (1.4 kB)
+2025-11-07T06:53:31.9637200Z Collecting starlette<1.0,>=0.40.0 (from gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:31.9831440Z   Downloading starlette-0.49.3-py3-none-any.whl.metadata (6.4 kB)
+2025-11-07T06:53:32.0537359Z Collecting annotated-doc>=0.0.2 (from fastapi>=0.104.0->-r requirements.txt (line 8))
+2025-11-07T06:53:32.0733915Z   Downloading annotated_doc-0.0.3-py3-none-any.whl.metadata (6.6 kB)
+2025-11-07T06:53:32.0880807Z Collecting annotated-types>=0.6.0 (from pydantic>=2.4.0->-r requirements.txt (line 10))
+2025-11-07T06:53:32.1075538Z   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+2025-11-07T06:53:32.9711687Z Collecting pydantic-core==2.33.2 (from pydantic>=2.4.0->-r requirements.txt (line 10))
+2025-11-07T06:53:32.9910854Z   Downloading pydantic_core-2.33.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+2025-11-07T06:53:33.0104256Z Collecting typing-inspection>=0.4.0 (from pydantic>=2.4.0->-r requirements.txt (line 10))
+2025-11-07T06:53:33.0298849Z   Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+2025-11-07T06:53:33.0637063Z Collecting certifi (from httpx>=0.24.0->-r requirements.txt (line 16))
+2025-11-07T06:53:33.0832620Z   Downloading certifi-2025.10.5-py3-none-any.whl.metadata (2.5 kB)
+2025-11-07T06:53:33.1061390Z Collecting httpcore==1.* (from httpx>=0.24.0->-r requirements.txt (line 16))
+2025-11-07T06:53:33.1254435Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2025-11-07T06:53:33.1422217Z Collecting idna (from httpx>=0.24.0->-r requirements.txt (line 16))
+2025-11-07T06:53:33.1616522Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+2025-11-07T06:53:33.1785581Z Collecting exceptiongroup>=1.0.2 (from anyio<5.0,>=3.0->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.1980059Z   Downloading exceptiongroup-1.3.0-py3-none-any.whl.metadata (6.7 kB)
+2025-11-07T06:53:33.2115596Z Collecting sniffio>=1.1 (from anyio<5.0,>=3.0->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.2309096Z   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-07T06:53:33.2552812Z Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.24.0->-r requirements.txt (line 16))
+2025-11-07T06:53:33.2746286Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2025-11-07T06:53:33.2974202Z Collecting filelock (from huggingface-hub<2.0,>=0.33.5->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.3167236Z   Downloading filelock-3.20.0-py3-none-any.whl.metadata (2.1 kB)
+2025-11-07T06:53:33.3672406Z Collecting hf-xet<2.0.0,>=1.2.0 (from huggingface-hub<2.0,>=0.33.5->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.3867669Z   Downloading hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+2025-11-07T06:53:33.4141150Z Collecting shellingham (from huggingface-hub<2.0,>=0.33.5->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.4335967Z   Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+2025-11-07T06:53:33.4722911Z Collecting tqdm>=4.42.1 (from huggingface-hub<2.0,>=0.33.5->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.4985961Z   Downloading tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+2025-11-07T06:53:33.5200196Z Collecting typer-slim (from huggingface-hub<2.0,>=0.33.5->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.5394974Z   Downloading typer_slim-0.20.0-py3-none-any.whl.metadata (16 kB)
+2025-11-07T06:53:33.5995398Z Collecting click>=8.0.0 (from typer<1.0,>=0.12->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.6188326Z   Downloading click-8.3.0-py3-none-any.whl.metadata (2.6 kB)
+2025-11-07T06:53:33.7420194Z Collecting rich>=10.11.0 (from typer<1.0,>=0.12->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:33.7618489Z   Downloading rich-14.2.0-py3-none-any.whl.metadata (18 kB)
+2025-11-07T06:53:33.8362449Z Collecting narwhals>=1.15.1 (from plotly>=5.0.0->-r requirements.txt (line 2))
+2025-11-07T06:53:33.8600790Z   Downloading narwhals-2.10.2-py3-none-any.whl.metadata (11 kB)
+2025-11-07T06:53:33.9105034Z Collecting marshmallow<4.0.0,>=3.18.0 (from dataclasses-json>=0.5.7->-r requirements.txt (line 4))
+2025-11-07T06:53:33.9301320Z   Downloading marshmallow-3.26.1-py3-none-any.whl.metadata (7.3 kB)
+2025-11-07T06:53:33.9446509Z Collecting typing-inspect<1,>=0.4.0 (from dataclasses-json>=0.5.7->-r requirements.txt (line 4))
+2025-11-07T06:53:33.9643748Z   Downloading typing_inspect-0.9.0-py3-none-any.whl.metadata (1.5 kB)
+2025-11-07T06:53:33.9828099Z Collecting mypy-extensions>=0.3.0 (from typing-inspect<1,>=0.4.0->dataclasses-json>=0.5.7->-r requirements.txt (line 4))
+2025-11-07T06:53:34.0023403Z   Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-07T06:53:34.0540000Z Collecting multitasking>=0.0.7 (from yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:34.0737163Z   Downloading multitasking-0.0.12.tar.gz (19 kB)
+2025-11-07T06:53:34.0827427Z   Installing build dependencies: started
+2025-11-07T06:53:35.0810439Z   Installing build dependencies: finished with status 'done'
+2025-11-07T06:53:35.0817924Z   Getting requirements to build wheel: started
+2025-11-07T06:53:35.4312710Z   Getting requirements to build wheel: finished with status 'done'
+2025-11-07T06:53:35.4321627Z   Preparing metadata (pyproject.toml): started
+2025-11-07T06:53:35.6090694Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2025-11-07T06:53:35.6309013Z Collecting platformdirs>=2.0.0 (from yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:35.6503559Z   Downloading platformdirs-4.5.0-py3-none-any.whl.metadata (12 kB)
+2025-11-07T06:53:35.7043420Z Collecting frozendict>=2.3.4 (from yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:35.7257446Z   Downloading frozendict-2.4.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (23 kB)
+2025-11-07T06:53:35.7492436Z Collecting peewee>=3.16.2 (from yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:35.7686274Z   Downloading peewee-3.18.3.tar.gz (3.0 MB)
+2025-11-07T06:53:35.8508255Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.0/3.0 MB 47.0 MB/s  0:00:00
+2025-11-07T06:53:36.0295416Z   Installing build dependencies: started
+2025-11-07T06:53:36.9419331Z   Installing build dependencies: finished with status 'done'
+2025-11-07T06:53:36.9425996Z   Getting requirements to build wheel: started
+2025-11-07T06:53:37.3786223Z   Getting requirements to build wheel: finished with status 'done'
+2025-11-07T06:53:37.3795793Z   Preparing metadata (pyproject.toml): started
+2025-11-07T06:53:37.5924589Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2025-11-07T06:53:37.6111397Z Collecting beautifulsoup4>=4.11.1 (from yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:37.6305450Z   Downloading beautifulsoup4-4.14.2-py3-none-any.whl.metadata (3.8 kB)
+2025-11-07T06:53:37.6850060Z Collecting curl_cffi>=0.7 (from yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:37.7045057Z   Downloading curl_cffi-0.13.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (13 kB)
+2025-11-07T06:53:37.9023646Z Collecting protobuf>=3.19.0 (from yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:37.9221984Z   Downloading protobuf-6.33.0-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+2025-11-07T06:53:38.0227049Z Collecting charset_normalizer<4,>=2 (from requests>=2.28.0->-r requirements.txt (line 6))
+2025-11-07T06:53:38.0424755Z   Downloading charset_normalizer-3.4.4-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+2025-11-07T06:53:38.0793983Z Collecting urllib3<3,>=1.21.1 (from requests>=2.28.0->-r requirements.txt (line 6))
+2025-11-07T06:53:38.0987862Z   Downloading urllib3-2.5.0-py3-none-any.whl.metadata (6.5 kB)
+2025-11-07T06:53:38.1629047Z Collecting limits>=2.3 (from slowapi>=0.1.4->-r requirements.txt (line 14))
+2025-11-07T06:53:38.1824686Z   Downloading limits-5.6.0-py3-none-any.whl.metadata (10 kB)
+2025-11-07T06:53:38.2085482Z Collecting soupsieve>1.2 (from beautifulsoup4>=4.11.1->yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:38.2277426Z   Downloading soupsieve-2.8-py3-none-any.whl.metadata (4.6 kB)
+2025-11-07T06:53:38.3613779Z Collecting cffi>=1.12.0 (from curl_cffi>=0.7->yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:38.3811575Z   Downloading cffi-2.0.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2025-11-07T06:53:38.4002268Z Collecting pycparser (from cffi>=1.12.0->curl_cffi>=0.7->yfinance>=0.2.0->-r requirements.txt (line 5))
+2025-11-07T06:53:38.4195389Z   Downloading pycparser-2.23-py3-none-any.whl.metadata (993 bytes)
+2025-11-07T06:53:38.4434848Z Collecting deprecated>=1.2 (from limits>=2.3->slowapi>=0.1.4->-r requirements.txt (line 14))
+2025-11-07T06:53:38.4630538Z   Downloading deprecated-1.3.1-py2.py3-none-any.whl.metadata (5.9 kB)
+2025-11-07T06:53:38.6379113Z Collecting wrapt<3,>=1.10 (from deprecated>=1.2->limits>=2.3->slowapi>=0.1.4->-r requirements.txt (line 14))
+2025-11-07T06:53:38.7508709Z   Downloading wrapt-2.0.1-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (9.0 kB)
+2025-11-07T06:53:38.8132866Z Collecting bcrypt>=3.1.0 (from passlib[bcrypt]>=1.7.4->-r requirements.txt (line 13))
+2025-11-07T06:53:38.8328930Z   Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl.metadata (10 kB)
+2025-11-07T06:53:38.8573785Z Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas>=1.5.0->-r requirements.txt (line 7))
+2025-11-07T06:53:38.8768131Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2025-11-07T06:53:38.8974534Z Collecting markdown-it-py>=2.2.0 (from rich>=10.11.0->typer<1.0,>=0.12->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:38.9170551Z   Downloading markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+2025-11-07T06:53:38.9479135Z Collecting pygments<3.0.0,>=2.13.0 (from rich>=10.11.0->typer<1.0,>=0.12->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:38.9673675Z   Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+2025-11-07T06:53:38.9827039Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=10.11.0->typer<1.0,>=0.12->gradio>=4.0.0->-r requirements.txt (line 1))
+2025-11-07T06:53:39.0019596Z   Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2025-11-07T06:53:39.0709723Z Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.24.0->-r requirements.txt (line 9))
+2025-11-07T06:53:39.0904082Z   Downloading httptools-0.7.1-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+2025-11-07T06:53:39.1093377Z Collecting python-dotenv>=0.13 (from uvicorn[standard]>=0.24.0->-r requirements.txt (line 9))
+2025-11-07T06:53:39.1286229Z   Downloading python_dotenv-1.2.1-py3-none-any.whl.metadata (25 kB)
+2025-11-07T06:53:39.1776276Z Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.24.0->-r requirements.txt (line 9))
+2025-11-07T06:53:39.1971686Z   Downloading uvloop-0.22.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+2025-11-07T06:53:39.2911583Z Collecting watchfiles>=0.13 (from uvicorn[standard]>=0.24.0->-r requirements.txt (line 9))
+2025-11-07T06:53:39.3107745Z   Downloading watchfiles-1.1.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+2025-11-07T06:53:39.3632311Z Downloading gradio-5.49.1-py3-none-any.whl (63.5 MB)
+2025-11-07T06:53:39.7753327Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.5/63.5 MB 154.8 MB/s  0:00:00
+2025-11-07T06:53:39.7951587Z Downloading gradio_client-1.13.3-py3-none-any.whl (325 kB)
+2025-11-07T06:53:39.8180271Z Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.8 MB)
+2025-11-07T06:53:39.9194114Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.8/16.8 MB 169.2 MB/s  0:00:00
+2025-11-07T06:53:39.9390052Z Downloading pandas-2.3.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.8 MB)
+2025-11-07T06:53:40.0135756Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 174.1 MB/s  0:00:00
+2025-11-07T06:53:40.0331610Z Downloading fastapi-0.121.0-py3-none-any.whl (109 kB)
+2025-11-07T06:53:40.0551391Z Downloading pydantic-2.11.10-py3-none-any.whl (444 kB)
+2025-11-07T06:53:40.0785165Z Downloading pydantic_core-2.33.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+2025-11-07T06:53:40.0900057Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 196.5 MB/s  0:00:00
+2025-11-07T06:53:40.1094201Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2025-11-07T06:53:40.1312890Z Downloading aiofiles-24.1.0-py3-none-any.whl (15 kB)
+2025-11-07T06:53:40.1529469Z Downloading anyio-4.11.0-py3-none-any.whl (109 kB)
+2025-11-07T06:53:40.1750096Z Downloading groovy-0.1.2-py3-none-any.whl (14 kB)
+2025-11-07T06:53:40.1964133Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2025-11-07T06:53:40.2202666Z Downloading huggingface_hub-1.1.2-py3-none-any.whl (514 kB)
+2025-11-07T06:53:40.2436896Z Downloading hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2025-11-07T06:53:40.2603168Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 218.2 MB/s  0:00:00
+2025-11-07T06:53:40.2797243Z Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2025-11-07T06:53:40.3028006Z Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
+2025-11-07T06:53:40.3244391Z Downloading orjson-3.11.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (136 kB)
+2025-11-07T06:53:40.3465851Z Downloading pillow-11.3.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (6.6 MB)
+2025-11-07T06:53:40.3834870Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.6/6.6 MB 187.6 MB/s  0:00:00
+2025-11-07T06:53:40.4033088Z Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (770 kB)
+2025-11-07T06:53:40.4099831Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 770.3/770.3 kB 122.7 MB/s  0:00:00
+2025-11-07T06:53:40.4295727Z Downloading safehttpx-0.1.7-py3-none-any.whl (9.0 kB)
+2025-11-07T06:53:40.4508920Z Downloading semantic_version-2.10.0-py2.py3-none-any.whl (15 kB)
+2025-11-07T06:53:40.4733326Z Downloading starlette-0.49.3-py3-none-any.whl (74 kB)
+2025-11-07T06:53:40.4953106Z Downloading tomlkit-0.13.3-py3-none-any.whl (38 kB)
+2025-11-07T06:53:40.5168273Z Downloading typer-0.20.0-py3-none-any.whl (47 kB)
+2025-11-07T06:53:40.5384445Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2025-11-07T06:53:40.5605022Z Downloading websockets-15.0.1-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (181 kB)
+2025-11-07T06:53:40.5827536Z Downloading plotly-6.4.0-py3-none-any.whl (9.9 MB)
+2025-11-07T06:53:40.6381957Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 182.6 MB/s  0:00:00
+2025-11-07T06:53:40.6580273Z Downloading dataclasses_json-0.6.7-py3-none-any.whl (28 kB)
+2025-11-07T06:53:40.6794689Z Downloading marshmallow-3.26.1-py3-none-any.whl (50 kB)
+2025-11-07T06:53:40.7013925Z Downloading typing_inspect-0.9.0-py3-none-any.whl (8.8 kB)
+2025-11-07T06:53:40.7226579Z Downloading yfinance-0.2.66-py2.py3-none-any.whl (123 kB)
+2025-11-07T06:53:40.7445923Z Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+2025-11-07T06:53:40.7663459Z Downloading charset_normalizer-3.4.4-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (153 kB)
+2025-11-07T06:53:40.7882510Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+2025-11-07T06:53:40.8100857Z Downloading urllib3-2.5.0-py3-none-any.whl (129 kB)
+2025-11-07T06:53:40.8323432Z Downloading uvicorn-0.38.0-py3-none-any.whl (68 kB)
+2025-11-07T06:53:40.8542735Z Downloading PyJWT-2.10.1-py3-none-any.whl (22 kB)
+2025-11-07T06:53:40.8779899Z Downloading passlib-1.7.4-py2.py3-none-any.whl (525 kB)
+2025-11-07T06:53:40.8843322Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 525.6/525.6 kB 72.5 MB/s  0:00:00
+2025-11-07T06:53:40.9036863Z Downloading slowapi-0.1.9-py3-none-any.whl (14 kB)
+2025-11-07T06:53:40.9254860Z Downloading annotated_doc-0.0.3-py3-none-any.whl (5.5 kB)
+2025-11-07T06:53:40.9467872Z Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+2025-11-07T06:53:40.9682257Z Downloading beautifulsoup4-4.14.2-py3-none-any.whl (106 kB)
+2025-11-07T06:53:40.9906971Z Downloading brotli-1.2.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.4 MB)
+2025-11-07T06:53:41.0001899Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 170.1 MB/s  0:00:00
+2025-11-07T06:53:41.0201492Z Downloading certifi-2025.10.5-py3-none-any.whl (163 kB)
+2025-11-07T06:53:41.0420256Z Downloading click-8.3.0-py3-none-any.whl (107 kB)
+2025-11-07T06:53:41.0641880Z Downloading curl_cffi-0.13.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (8.3 MB)
+2025-11-07T06:53:41.1127119Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.3/8.3 MB 177.3 MB/s  0:00:00
+2025-11-07T06:53:41.1323083Z Downloading cffi-2.0.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (216 kB)
+2025-11-07T06:53:41.1548799Z Downloading exceptiongroup-1.3.0-py3-none-any.whl (16 kB)
+2025-11-07T06:53:41.1762921Z Downloading frozendict-2.4.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (117 kB)
+2025-11-07T06:53:41.1983272Z Downloading fsspec-2025.10.0-py3-none-any.whl (200 kB)
+2025-11-07T06:53:41.2204384Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2025-11-07T06:53:41.2421420Z Downloading limits-5.6.0-py3-none-any.whl (60 kB)
+2025-11-07T06:53:41.2638975Z Downloading deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+2025-11-07T06:53:41.2856226Z Downloading wrapt-2.0.1-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (113 kB)
+2025-11-07T06:53:41.3074234Z Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2025-11-07T06:53:41.3290047Z Downloading narwhals-2.10.2-py3-none-any.whl (419 kB)
+2025-11-07T06:53:41.3587761Z Downloading packaging-25.0-py3-none-any.whl (66 kB)
+2025-11-07T06:53:41.3805882Z Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl (278 kB)
+2025-11-07T06:53:41.4029625Z Downloading platformdirs-4.5.0-py3-none-any.whl (18 kB)
+2025-11-07T06:53:41.4245625Z Downloading protobuf-6.33.0-cp39-abi3-manylinux2014_x86_64.whl (323 kB)
+2025-11-07T06:53:41.4480921Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2025-11-07T06:53:41.4703709Z Downloading python_multipart-0.0.20-py3-none-any.whl (24 kB)
+2025-11-07T06:53:41.4918247Z Downloading pytz-2025.2-py2.py3-none-any.whl (509 kB)
+2025-11-07T06:53:41.5146755Z Downloading rich-14.2.0-py3-none-any.whl (243 kB)
+2025-11-07T06:53:41.5368549Z Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+2025-11-07T06:53:41.5456824Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 155.9 MB/s  0:00:00
+2025-11-07T06:53:41.5649575Z Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2025-11-07T06:53:41.5868240Z Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2025-11-07T06:53:41.6084547Z Downloading ruff-0.14.4-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.4 MB)
+2025-11-07T06:53:41.6862693Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.4/13.4 MB 174.5 MB/s  0:00:00
+2025-11-07T06:53:41.7058507Z Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+2025-11-07T06:53:41.7272585Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2025-11-07T06:53:41.7488986Z Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+2025-11-07T06:53:41.7703740Z Downloading soupsieve-2.8-py3-none-any.whl (36 kB)
+2025-11-07T06:53:41.7918429Z Downloading tqdm-4.67.1-py3-none-any.whl (78 kB)
+2025-11-07T06:53:41.8133900Z Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+2025-11-07T06:53:41.8346682Z Downloading tzdata-2025.2-py2.py3-none-any.whl (347 kB)
+2025-11-07T06:53:41.8575828Z Downloading httptools-0.7.1-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (440 kB)
+2025-11-07T06:53:41.8809725Z Downloading python_dotenv-1.2.1-py3-none-any.whl (21 kB)
+2025-11-07T06:53:41.9029971Z Downloading uvloop-0.22.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.7 MB)
+2025-11-07T06:53:41.9205347Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.7/3.7 MB 230.3 MB/s  0:00:00
+2025-11-07T06:53:41.9401715Z Downloading watchfiles-1.1.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (455 kB)
+2025-11-07T06:53:41.9632018Z Downloading ffmpy-0.6.4-py3-none-any.whl (5.6 kB)
+2025-11-07T06:53:41.9844993Z Downloading filelock-3.20.0-py3-none-any.whl (16 kB)
+2025-11-07T06:53:42.0056960Z Downloading pycparser-2.23-py3-none-any.whl (118 kB)
+2025-11-07T06:53:42.0276217Z Downloading pydub-0.25.1-py2.py3-none-any.whl (32 kB)
+2025-11-07T06:53:42.0492509Z Downloading typer_slim-0.20.0-py3-none-any.whl (47 kB)
+2025-11-07T06:53:42.2721418Z Building wheels for collected packages: multitasking, peewee
+2025-11-07T06:53:42.2731279Z   Building wheel for multitasking (pyproject.toml): started
+2025-11-07T06:53:42.4740860Z   Building wheel for multitasking (pyproject.toml): finished with status 'done'
+2025-11-07T06:53:42.4746629Z   Created wheel for multitasking: filename=multitasking-0.0.12-py3-none-any.whl size=15636 sha256=d707f7174cac017fe4992dbfc24ffe3c9704bba8d8d2403179ab14779659642b
+2025-11-07T06:53:42.4748680Z   Stored in directory: /home/runner/.cache/pip/wheels/e9/25/85/25d2e1cfc0ece64b930b16972f7e4cc3599c43b531f1eba06d
+2025-11-07T06:53:42.4776635Z   Building wheel for peewee (pyproject.toml): started
+2025-11-07T06:53:54.4827518Z   Building wheel for peewee (pyproject.toml): finished with status 'done'
+2025-11-07T06:53:54.4840682Z   Created wheel for peewee: filename=peewee-3.18.3-cp310-cp310-linux_x86_64.whl size=988834 sha256=10dab7e7586e715e0a5b5cb5d964ed102881d2d5419db1db716b24d23bcef2a9
+2025-11-07T06:53:54.4842579Z   Stored in directory: /home/runner/.cache/pip/wheels/3d/96/39/80c50cbf6bd446cdca9dac7d78a1a0d3a1f313859500529f8d
+2025-11-07T06:53:54.4860840Z Successfully built multitasking peewee
+2025-11-07T06:53:54.7969464Z Installing collected packages: pytz, pydub, peewee, passlib, multitasking, brotli, wrapt, websockets, uvloop, urllib3, tzdata, typing-extensions, tqdm, tomlkit, soupsieve, sniffio, six, shellingham, semantic-version, ruff, pyyaml, python-multipart, python-dotenv, PyJWT, pygments, pycparser, protobuf, platformdirs, pillow, packaging, orjson, numpy, narwhals, mypy-extensions, mdurl, markupsafe, idna, httptools, hf-xet, h11, groovy, fsspec, frozendict, filelock, ffmpy, click, charset_normalizer, certifi, bcrypt, annotated-types, annotated-doc, aiofiles, uvicorn, typing-inspection, typing-inspect, typer-slim, requests, python-dateutil, pydantic-core, plotly, marshmallow, markdown-it-py, jinja2, httpcore, exceptiongroup, deprecated, cffi, beautifulsoup4, rich, pydantic, pandas, limits, dataclasses-json, curl_cffi, anyio, yfinance, watchfiles, typer, starlette, slowapi, httpx, safehttpx, huggingface-hub, fastapi, gradio-client, gradio
+2025-11-07T06:54:09.0830540Z 
+2025-11-07T06:54:09.0965833Z Successfully installed PyJWT-2.10.1 aiofiles-24.1.0 annotated-doc-0.0.3 annotated-types-0.7.0 anyio-4.11.0 bcrypt-5.0.0 beautifulsoup4-4.14.2 brotli-1.2.0 certifi-2025.10.5 cffi-2.0.0 charset_normalizer-3.4.4 click-8.3.0 curl_cffi-0.13.0 dataclasses-json-0.6.7 deprecated-1.3.1 exceptiongroup-1.3.0 fastapi-0.121.0 ffmpy-0.6.4 filelock-3.20.0 frozendict-2.4.6 fsspec-2025.10.0 gradio-5.49.1 gradio-client-1.13.3 groovy-0.1.2 h11-0.16.0 hf-xet-1.2.0 httpcore-1.0.9 httptools-0.7.1 httpx-0.28.1 huggingface-hub-1.1.2 idna-3.11 jinja2-3.1.6 limits-5.6.0 markdown-it-py-4.0.0 markupsafe-3.0.3 marshmallow-3.26.1 mdurl-0.1.2 multitasking-0.0.12 mypy-extensions-1.1.0 narwhals-2.10.2 numpy-2.2.6 orjson-3.11.4 packaging-25.0 pandas-2.3.3 passlib-1.7.4 peewee-3.18.3 pillow-11.3.0 platformdirs-4.5.0 plotly-6.4.0 protobuf-6.33.0 pycparser-2.23 pydantic-2.11.10 pydantic-core-2.33.2 pydub-0.25.1 pygments-2.19.2 python-dateutil-2.9.0.post0 python-dotenv-1.2.1 python-multipart-0.0.20 pytz-2025.2 pyyaml-6.0.3 requests-2.32.5 rich-14.2.0 ruff-0.14.4 safehttpx-0.1.7 semantic-version-2.10.0 shellingham-1.5.4 six-1.17.0 slowapi-0.1.9 sniffio-1.3.1 soupsieve-2.8 starlette-0.49.3 tomlkit-0.13.3 tqdm-4.67.1 typer-0.20.0 typer-slim-0.20.0 typing-extensions-4.15.0 typing-inspect-0.9.0 typing-inspection-0.4.2 tzdata-2025.2 urllib3-2.5.0 uvicorn-0.38.0 uvloop-0.22.1 watchfiles-1.1.1 websockets-15.0.1 wrapt-2.0.1 yfinance-0.2.66
+2025-11-07T06:54:10.2900462Z Collecting pytest>=7.0.0 (from -r requirements-dev.txt (line 2))
+2025-11-07T06:54:10.3930102Z   Downloading pytest-8.4.2-py3-none-any.whl.metadata (7.7 kB)
+2025-11-07T06:54:10.4129604Z Collecting pytest-cov>=4.0.0 (from -r requirements-dev.txt (line 3))
+2025-11-07T06:54:10.4324723Z   Downloading pytest_cov-7.0.0-py3-none-any.whl.metadata (31 kB)
+2025-11-07T06:54:10.4799947Z Collecting pytest-asyncio>=0.21.0 (from -r requirements-dev.txt (line 4))
+2025-11-07T06:54:10.4997771Z   Downloading pytest_asyncio-1.2.0-py3-none-any.whl.metadata (4.1 kB)
+2025-11-07T06:54:10.5246660Z Collecting flake8>=6.0.0 (from -r requirements-dev.txt (line 5))
+2025-11-07T06:54:10.5441445Z   Downloading flake8-7.3.0-py2.py3-none-any.whl.metadata (3.8 kB)
+2025-11-07T06:54:10.5882233Z Collecting pylint>=2.17.0 (from -r requirements-dev.txt (line 6))
+2025-11-07T06:54:10.6075327Z   Downloading pylint-4.0.2-py3-none-any.whl.metadata (12 kB)
+2025-11-07T06:54:10.7330035Z Collecting mypy>=1.0.0 (from -r requirements-dev.txt (line 7))
+2025-11-07T06:54:10.7527894Z   Downloading mypy-1.18.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.2 kB)
+2025-11-07T06:54:10.8116867Z Collecting black>=23.0.0 (from -r requirements-dev.txt (line 8))
+2025-11-07T06:54:10.8328859Z   Downloading black-25.9.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl.metadata (83 kB)
+2025-11-07T06:54:10.9020157Z Collecting isort>=5.12.0 (from -r requirements-dev.txt (line 9))
+2025-11-07T06:54:10.9220302Z   Downloading isort-7.0.0-py3-none-any.whl.metadata (11 kB)
+2025-11-07T06:54:11.0864853Z Collecting pre-commit>=3.0.0 (from -r requirements-dev.txt (line 10))
+2025-11-07T06:54:11.1061805Z   Downloading pre_commit-4.3.0-py2.py3-none-any.whl.metadata (1.2 kB)
+2025-11-07T06:54:11.1106200Z Requirement already satisfied: exceptiongroup>=1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pytest>=7.0.0->-r requirements-dev.txt (line 2)) (1.3.0)
+2025-11-07T06:54:11.1185798Z Collecting iniconfig>=1 (from pytest>=7.0.0->-r requirements-dev.txt (line 2))
+2025-11-07T06:54:11.1380239Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2025-11-07T06:54:11.1410575Z Requirement already satisfied: packaging>=20 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pytest>=7.0.0->-r requirements-dev.txt (line 2)) (25.0)
+2025-11-07T06:54:11.1517022Z Collecting pluggy<2,>=1.5 (from pytest>=7.0.0->-r requirements-dev.txt (line 2))
+2025-11-07T06:54:11.1713602Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2025-11-07T06:54:11.1753317Z Requirement already satisfied: pygments>=2.7.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pytest>=7.0.0->-r requirements-dev.txt (line 2)) (2.19.2)
+2025-11-07T06:54:11.1913345Z Collecting tomli>=1 (from pytest>=7.0.0->-r requirements-dev.txt (line 2))
+2025-11-07T06:54:11.2109384Z   Downloading tomli-2.3.0-py3-none-any.whl.metadata (10 kB)
+2025-11-07T06:54:11.6174683Z Collecting coverage>=7.10.6 (from coverage[toml]>=7.10.6->pytest-cov>=4.0.0->-r requirements-dev.txt (line 3))
+2025-11-07T06:54:11.6373923Z   Downloading coverage-7.11.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (9.0 kB)
+2025-11-07T06:54:11.6532508Z Collecting backports-asyncio-runner<2,>=1.1 (from pytest-asyncio>=0.21.0->-r requirements-dev.txt (line 4))
+2025-11-07T06:54:11.6728839Z   Downloading backports_asyncio_runner-1.2.0-py3-none-any.whl.metadata (7.5 kB)
+2025-11-07T06:54:11.6868338Z Requirement already satisfied: typing-extensions>=4.12 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pytest-asyncio>=0.21.0->-r requirements-dev.txt (line 4)) (4.15.0)
+2025-11-07T06:54:11.6962595Z Collecting mccabe<0.8.0,>=0.7.0 (from flake8>=6.0.0->-r requirements-dev.txt (line 5))
+2025-11-07T06:54:11.7160609Z   Downloading mccabe-0.7.0-py2.py3-none-any.whl.metadata (5.0 kB)
+2025-11-07T06:54:11.7288231Z Collecting pycodestyle<2.15.0,>=2.14.0 (from flake8>=6.0.0->-r requirements-dev.txt (line 5))
+2025-11-07T06:54:11.7483762Z   Downloading pycodestyle-2.14.0-py2.py3-none-any.whl.metadata (4.5 kB)
+2025-11-07T06:54:11.7628508Z Collecting pyflakes<3.5.0,>=3.4.0 (from flake8>=6.0.0->-r requirements-dev.txt (line 5))
+2025-11-07T06:54:11.7822140Z   Downloading pyflakes-3.4.0-py2.py3-none-any.whl.metadata (3.5 kB)
+2025-11-07T06:54:11.8220050Z Collecting astroid<=4.1.dev0,>=4.0.1 (from pylint>=2.17.0->-r requirements-dev.txt (line 6))
+2025-11-07T06:54:11.8413147Z   Downloading astroid-4.0.1-py3-none-any.whl.metadata (4.4 kB)
+2025-11-07T06:54:11.8576932Z Collecting dill>=0.2 (from pylint>=2.17.0->-r requirements-dev.txt (line 6))
+2025-11-07T06:54:11.8796983Z   Downloading dill-0.4.0-py3-none-any.whl.metadata (10 kB)
+2025-11-07T06:54:11.8987150Z Requirement already satisfied: platformdirs>=2.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pylint>=2.17.0->-r requirements-dev.txt (line 6)) (4.5.0)
+2025-11-07T06:54:11.9023818Z Requirement already satisfied: tomlkit>=0.10.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pylint>=2.17.0->-r requirements-dev.txt (line 6)) (0.13.3)
+2025-11-07T06:54:11.9057519Z Requirement already satisfied: mypy_extensions>=1.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from mypy>=1.0.0->-r requirements-dev.txt (line 7)) (1.1.0)
+2025-11-07T06:54:11.9158908Z Collecting pathspec>=0.9.0 (from mypy>=1.0.0->-r requirements-dev.txt (line 7))
+2025-11-07T06:54:11.9352750Z   Downloading pathspec-0.12.1-py3-none-any.whl.metadata (21 kB)
+2025-11-07T06:54:11.9401483Z Requirement already satisfied: click>=8.0.0 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from black>=23.0.0->-r requirements-dev.txt (line 8)) (8.3.0)
+2025-11-07T06:54:11.9508786Z Collecting pytokens>=0.1.10 (from black>=23.0.0->-r requirements-dev.txt (line 8))
+2025-11-07T06:54:11.9726522Z   Downloading pytokens-0.3.0-py3-none-any.whl.metadata (2.0 kB)
+2025-11-07T06:54:11.9925835Z Collecting cfgv>=2.0.0 (from pre-commit>=3.0.0->-r requirements-dev.txt (line 10))
+2025-11-07T06:54:12.0120398Z   Downloading cfgv-3.4.0-py2.py3-none-any.whl.metadata (8.5 kB)
+2025-11-07T06:54:12.0640188Z Collecting identify>=1.0.0 (from pre-commit>=3.0.0->-r requirements-dev.txt (line 10))
+2025-11-07T06:54:12.0867482Z   Downloading identify-2.6.15-py2.py3-none-any.whl.metadata (4.4 kB)
+2025-11-07T06:54:12.1035622Z Collecting nodeenv>=0.11.1 (from pre-commit>=3.0.0->-r requirements-dev.txt (line 10))
+2025-11-07T06:54:12.1230613Z   Downloading nodeenv-1.9.1-py2.py3-none-any.whl.metadata (21 kB)
+2025-11-07T06:54:12.1268651Z Requirement already satisfied: pyyaml>=5.1 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from pre-commit>=3.0.0->-r requirements-dev.txt (line 10)) (6.0.3)
+2025-11-07T06:54:12.1766715Z Collecting virtualenv>=20.10.0 (from pre-commit>=3.0.0->-r requirements-dev.txt (line 10))
+2025-11-07T06:54:12.1962097Z   Downloading virtualenv-20.35.4-py3-none-any.whl.metadata (4.6 kB)
+2025-11-07T06:54:12.2338570Z Collecting distlib<1,>=0.3.7 (from virtualenv>=20.10.0->pre-commit>=3.0.0->-r requirements-dev.txt (line 10))
+2025-11-07T06:54:12.2533183Z   Downloading distlib-0.4.0-py2.py3-none-any.whl.metadata (5.2 kB)
+2025-11-07T06:54:12.2563767Z Requirement already satisfied: filelock<4,>=3.12.2 in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (from virtualenv>=20.10.0->pre-commit>=3.0.0->-r requirements-dev.txt (line 10)) (3.20.0)
+2025-11-07T06:54:12.2785290Z Downloading pytest-8.4.2-py3-none-any.whl (365 kB)
+2025-11-07T06:54:12.3250502Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2025-11-07T06:54:12.3481978Z Downloading pytest_cov-7.0.0-py3-none-any.whl (22 kB)
+2025-11-07T06:54:12.3696237Z Downloading pytest_asyncio-1.2.0-py3-none-any.whl (15 kB)
+2025-11-07T06:54:12.3906583Z Downloading backports_asyncio_runner-1.2.0-py3-none-any.whl (12 kB)
+2025-11-07T06:54:12.4119679Z Downloading flake8-7.3.0-py2.py3-none-any.whl (57 kB)
+2025-11-07T06:54:12.4386247Z Downloading mccabe-0.7.0-py2.py3-none-any.whl (7.3 kB)
+2025-11-07T06:54:12.4602770Z Downloading pycodestyle-2.14.0-py2.py3-none-any.whl (31 kB)
+2025-11-07T06:54:12.4815715Z Downloading pyflakes-3.4.0-py2.py3-none-any.whl (63 kB)
+2025-11-07T06:54:12.5045220Z Downloading pylint-4.0.2-py3-none-any.whl (536 kB)
+2025-11-07T06:54:12.5256880Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.0/536.0 kB 15.7 MB/s  0:00:00
+2025-11-07T06:54:12.5451208Z Downloading isort-7.0.0-py3-none-any.whl (94 kB)
+2025-11-07T06:54:12.5673410Z Downloading astroid-4.0.1-py3-none-any.whl (276 kB)
+2025-11-07T06:54:12.5904758Z Downloading mypy-1.18.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (13.2 MB)
+2025-11-07T06:54:12.6922241Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.2/13.2 MB 132.2 MB/s  0:00:00
+2025-11-07T06:54:12.7121154Z Downloading black-25.9.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl (1.6 MB)
+2025-11-07T06:54:12.7214544Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 200.2 MB/s  0:00:00
+2025-11-07T06:54:12.7414357Z Downloading pre_commit-4.3.0-py2.py3-none-any.whl (220 kB)
+2025-11-07T06:54:12.7633025Z Downloading cfgv-3.4.0-py2.py3-none-any.whl (7.2 kB)
+2025-11-07T06:54:12.7879499Z Downloading coverage-7.11.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (244 kB)
+2025-11-07T06:54:12.8099753Z Downloading dill-0.4.0-py3-none-any.whl (119 kB)
+2025-11-07T06:54:12.8315950Z Downloading identify-2.6.15-py2.py3-none-any.whl (99 kB)
+2025-11-07T06:54:12.8529324Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2025-11-07T06:54:12.8740007Z Downloading nodeenv-1.9.1-py2.py3-none-any.whl (22 kB)
+2025-11-07T06:54:12.9048286Z Downloading pathspec-0.12.1-py3-none-any.whl (31 kB)
+2025-11-07T06:54:12.9265770Z Downloading pytokens-0.3.0-py3-none-any.whl (12 kB)
+2025-11-07T06:54:12.9477862Z Downloading tomli-2.3.0-py3-none-any.whl (14 kB)
+2025-11-07T06:54:12.9696113Z Downloading virtualenv-20.35.4-py3-none-any.whl (6.0 MB)
+2025-11-07T06:54:13.0094234Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.0/6.0 MB 154.5 MB/s  0:00:00
+2025-11-07T06:54:13.0293254Z Downloading distlib-0.4.0-py2.py3-none-any.whl (469 kB)
+2025-11-07T06:54:13.3541858Z Installing collected packages: distlib, virtualenv, tomli, pytokens, pyflakes, pycodestyle, pluggy, pathspec, nodeenv, mccabe, isort, iniconfig, identify, dill, coverage, cfgv, backports-asyncio-runner, astroid, pytest, pylint, pre-commit, mypy, flake8, black, pytest-cov, pytest-asyncio
+2025-11-07T06:54:16.0369559Z 
+2025-11-07T06:54:16.0532260Z Successfully installed astroid-4.0.1 backports-asyncio-runner-1.2.0 black-25.9.0 cfgv-3.4.0 coverage-7.11.0 dill-0.4.0 distlib-0.4.0 flake8-7.3.0 identify-2.6.15 iniconfig-2.3.0 isort-7.0.0 mccabe-0.7.0 mypy-1.18.2 nodeenv-1.9.1 pathspec-0.12.1 pluggy-1.6.0 pre-commit-4.3.0 pycodestyle-2.14.0 pyflakes-3.4.0 pylint-4.0.2 pytest-8.4.2 pytest-asyncio-1.2.0 pytest-cov-7.0.0 pytokens-0.3.0 tomli-2.3.0 virtualenv-20.35.4
+2025-11-07T06:54:16.1790018Z ##[group]Run set -euo pipefail
+2025-11-07T06:54:16.1790304Z [36;1mset -euo pipefail[0m
+2025-11-07T06:54:16.1790664Z [36;1meval "flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics && \[0m
+2025-11-07T06:54:16.1791308Z [36;1mflake8 . --count --statistics && \[0m
+2025-11-07T06:54:16.1791580Z [36;1mblack --check --diff . && \[0m
+2025-11-07T06:54:16.1791841Z [36;1misort --check-only --diff . && \[0m
+2025-11-07T06:54:16.1792101Z [36;1mpylint src/ --fail-under=7.0 && \[0m
+2025-11-07T06:54:16.1792448Z [36;1mpytest --cov=src --cov-report=xml --cov-report=term-missing -v[0m
+2025-11-07T06:54:16.1792781Z [36;1m"[0m
+2025-11-07T06:54:16.1827001Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2025-11-07T06:54:16.1827318Z env:
+2025-11-07T06:54:16.1827563Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64
+2025-11-07T06:54:16.1827983Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
+2025-11-07T06:54:16.1828389Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2025-11-07T06:54:16.1828737Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2025-11-07T06:54:16.1829090Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+2025-11-07T06:54:16.1829435Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib
+2025-11-07T06:54:16.1829729Z ##[endgroup]
+2025-11-07T06:54:17.1387644Z 0
+2025-11-07T06:54:17.7360415Z 0
+2025-11-07T06:54:18.9198765Z All done! ✨ 🍰 ✨
+2025-11-07T06:54:18.9199391Z 32 files would be left unchanged.
+2025-11-07T06:54:19.1364311Z Skipped 1 files
+2025-11-07T06:54:19.4296067Z ************* Module /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db/pyproject.toml
+2025-11-07T06:54:19.4297221Z pyproject.toml:1:0: E0015: Unrecognized option found: suggestion-mode (unrecognized-option)
+2025-11-07T06:54:21.9907758Z ************* Module models.financial_models
+2025-11-07T06:54:21.9932240Z src/models/financial_models.py:111:0: C0325: Unnecessary parens after 'not' keyword (superfluous-parens)
+2025-11-07T06:54:21.9933092Z ************* Module logic.asset_graph
+2025-11-07T06:54:21.9933724Z src/logic/asset_graph.py:109:0: C0301: Line too long (123/120) (line-too-long)
+2025-11-07T06:54:21.9934669Z src/logic/asset_graph.py:5:0: E0401: Unable to import 'src.models.financial_models' (import-error)
+2025-11-07T06:54:21.9935734Z src/logic/asset_graph.py:33:4: R0917: Too many positional arguments (6/5) (too-many-positional-arguments)
+2025-11-07T06:54:21.9936893Z src/logic/asset_graph.py:91:46: W1114: Positional arguments appear to be out of order (arguments-out-of-order)
+2025-11-07T06:54:21.9937952Z src/logic/asset_graph.py:231:27: W0612: Unused variable 'rel_type' (unused-variable)
+2025-11-07T06:54:21.9938803Z src/logic/asset_graph.py:231:37: W0612: Unused variable 'strength' (unused-variable)
+2025-11-07T06:54:21.9939453Z ************* Module reports.schema_report
+2025-11-07T06:54:21.9940111Z src/reports/schema_report.py:89:0: C0301: Line too long (140/120) (line-too-long)
+2025-11-07T06:54:21.9941243Z src/reports/schema_report.py:1:0: E0401: Unable to import 'src.logic.asset_graph' (import-error)
+2025-11-07T06:54:21.9942014Z ************* Module visualizations.graph_2d_visuals
+2025-11-07T06:54:21.9942804Z src/visualizations/graph_2d_visuals.py:11:0: E0401: Unable to import 'src.logic.asset_graph' (import-error)
+2025-11-07T06:54:21.9944019Z src/visualizations/graph_2d_visuals.py:14:0: R0917: Too many positional arguments (10/5) (too-many-positional-arguments)
+2025-11-07T06:54:21.9945200Z src/visualizations/graph_2d_visuals.py:14:0: R0914: Too many local variables (24/20) (too-many-locals)
+2025-11-07T06:54:21.9947140Z src/visualizations/graph_2d_visuals.py:93:19: R1735: Consider using '{"size": node_sizes, "color": colors, "line": dict(width=2, color='black'), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9949025Z src/visualizations/graph_2d_visuals.py:93:60: R1735: Consider using '{"width": 2, "color": 'black'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9950482Z src/visualizations/graph_2d_visuals.py:96:21: R1735: Consider using '{"size": 10, "color": 'white'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9952944Z src/visualizations/graph_2d_visuals.py:106:14: R1735: Consider using '{"text": '📈 2D Asset Relationship Network', "x": 0.5, "font": dict(size=20, color='#2C3E50'), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9954703Z src/visualizations/graph_2d_visuals.py:106:74: R1735: Consider using '{"size": 20, "color": '#2C3E50'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9956188Z src/visualizations/graph_2d_visuals.py:109:15: R1735: Consider using '{"b": 40, "l": 40, "r": 40, "t": 80}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9958246Z src/visualizations/graph_2d_visuals.py:111:12: R1735: Consider using '{"text": f'Network Layout: {layout_type.title()} | Assets: {len(asset_ids)} | Relationships: {sum((len(rels) for rels in graph.relationships.values()))}', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9960300Z src/visualizations/graph_2d_visuals.py:121:21: R1735: Consider using '{"size": 12, "color": '#7F8C8D'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9992331Z src/visualizations/graph_2d_visuals.py:124:14: R1735: Consider using '{"showgrid": False, "zeroline": False, "showticklabels": False, "title": '', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9994470Z src/visualizations/graph_2d_visuals.py:125:14: R1735: Consider using '{"showgrid": False, "zeroline": False, "showticklabels": False, "title": '', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9996369Z src/visualizations/graph_2d_visuals.py:128:13: R1735: Consider using '{"family": 'Arial, sans-serif', "size": 12}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9998123Z src/visualizations/graph_2d_visuals.py:129:15: R1735: Consider using '{"orientation": 'h', "yanchor": 'bottom', "y": 1.02, "xanchor": 'right', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:21.9999657Z src/visualizations/graph_2d_visuals.py:129:90: R1735: Consider using '{"size": 10}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0000869Z src/visualizations/graph_2d_visuals.py:172:18: W0612: Unused variable 'z3d' (unused-variable)
+2025-11-07T06:54:22.0002279Z src/visualizations/graph_2d_visuals.py:179:0: R0917: Too many positional arguments (11/5) (too-many-positional-arguments)
+2025-11-07T06:54:22.0003536Z src/visualizations/graph_2d_visuals.py:179:0: R0914: Too many local variables (34/20) (too-many-locals)
+2025-11-07T06:54:22.0005015Z src/visualizations/graph_2d_visuals.py:266:21: R1735: Consider using '{"color": color, "width": line_width, "dash": line_dash}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0006447Z src/visualizations/graph_2d_visuals.py:182:4: W0613: Unused argument 'asset_ids' (unused-argument)
+2025-11-07T06:54:22.0007270Z ************* Module visualizations.formulaic_visuals
+2025-11-07T06:54:22.0008206Z src/visualizations/formulaic_visuals.py:7:0: E0401: Unable to import 'src.analysis.formulaic_analysis' (import-error)
+2025-11-07T06:54:22.0009454Z src/visualizations/formulaic_visuals.py:25:4: R0914: Too many local variables (29/20) (too-many-locals)
+2025-11-07T06:54:22.0011920Z src/visualizations/formulaic_visuals.py:59:27: R1735: Consider using '{"colors": [self.color_scheme.get(cat, '#CCCCCC') for cat in categories.keys()], ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0013788Z src/visualizations/formulaic_visuals.py:77:27: R1735: Consider using '{"color": colors}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0015591Z src/visualizations/formulaic_visuals.py:125:29: R1735: Consider using '{"title": 'Correlation'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0017327Z src/visualizations/formulaic_visuals.py:142:27: R1735: Consider using '{"color": 'lightblue'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0018846Z src/visualizations/formulaic_visuals.py:158:55: R1735: Consider using '{"color": 'lightgreen'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0020662Z src/visualizations/formulaic_visuals.py:177:27: R1735: Consider using '{"values": list(table_data.keys()), "fill_color": 'paleturquoise'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0052677Z src/visualizations/formulaic_visuals.py:178:103: R1735: Consider using '{"size": 10}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0054499Z src/visualizations/formulaic_visuals.py:180:26: R1735: Consider using '{"values": list(table_data.values()), "fill_color": 'lavender', "align": 'left', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0056270Z src/visualizations/formulaic_visuals.py:184:29: R1735: Consider using '{"size": 9}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0058558Z src/visualizations/formulaic_visuals.py:194:18: R1735: Consider using '{"text": '📊 Financial Formulaic Analysis Dashboard', "x": 0.5, "font": dict(size=20, color='#2C3E50'), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0060518Z src/visualizations/formulaic_visuals.py:194:87: R1735: Consider using '{"size": 20, "color": '#2C3E50'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0062369Z src/visualizations/formulaic_visuals.py:199:17: R1735: Consider using '{"family": 'Arial, sans-serif', "size": 10}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0064093Z src/visualizations/formulaic_visuals.py:231:17: R1735: Consider using '{"size": 12, "family": 'Arial, sans-serif'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0065728Z src/visualizations/formulaic_visuals.py:240:18: R1735: Consider using '{"visible": False}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0067235Z src/visualizations/formulaic_visuals.py:241:18: R1735: Consider using '{"visible": False}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0068718Z src/visualizations/formulaic_visuals.py:245:19: R1735: Consider using '{"l": 50, "r": 50, "t": 80, "b": 50}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0070035Z src/visualizations/formulaic_visuals.py:250:4: R0914: Too many local variables (21/20) (too-many-locals)
+2025-11-07T06:54:22.0071471Z src/visualizations/formulaic_visuals.py:263:21: R1735: Consider using '{"size": 16}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0072996Z src/visualizations/formulaic_visuals.py:303:25: R1735: Consider using '{"color": color, "width": width}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0074817Z src/visualizations/formulaic_visuals.py:319:19: R1735: Consider using '{"size": 30, "color": 'lightblue', "line": dict(width=2, color='darkblue'), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0076614Z src/visualizations/formulaic_visuals.py:319:57: R1735: Consider using '{"width": 2, "color": 'darkblue'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.0078143Z src/visualizations/formulaic_visuals.py:332:19: R1735: Consider using '{"b": 20, "l": 5, "r": 5, "t": 40}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6708839Z src/visualizations/formulaic_visuals.py:334:16: R1735: Consider using '{"text": 'Node size represents asset importance<br>Line thickness represents correlation strength', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6711655Z src/visualizations/formulaic_visuals.py:342:25: R1735: Consider using '{"size": 10}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6713573Z src/visualizations/formulaic_visuals.py:345:18: R1735: Consider using '{"showgrid": False, "zeroline": False, "showticklabels": False}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6715549Z src/visualizations/formulaic_visuals.py:346:18: R1735: Consider using '{"showgrid": False, "zeroline": False, "showticklabels": False}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6717292Z src/visualizations/formulaic_visuals.py:383:23: R1735: Consider using '{"color": 'lightcoral'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6718815Z src/visualizations/formulaic_visuals.py:395:23: R1735: Consider using '{"color": 'lightblue'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6720315Z src/visualizations/formulaic_visuals.py:403:18: R1735: Consider using '{"title": 'Category'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6722132Z src/visualizations/formulaic_visuals.py:404:18: R1735: Consider using '{"title": 'Average R-squared', "side": 'left'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6723947Z src/visualizations/formulaic_visuals.py:405:19: R1735: Consider using '{"title": 'Number of Formulas', "side": 'right', "overlaying": 'y', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6725563Z src/visualizations/formulaic_visuals.py:409:19: R1735: Consider using '{"x": 0.7, "y": 1}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6726519Z ************* Module visualizations.metric_visuals
+2025-11-07T06:54:22.6727344Z src/visualizations/metric_visuals.py:6:0: E0401: Unable to import 'src.logic.asset_graph' (import-error)
+2025-11-07T06:54:22.6728182Z ************* Module visualizations.graph_visuals
+2025-11-07T06:54:22.6728907Z src/visualizations/graph_visuals.py:167:0: C0301: Line too long (137/120) (line-too-long)
+2025-11-07T06:54:22.6729887Z src/visualizations/graph_visuals.py:456:0: C0301: Line too long (137/120) (line-too-long)
+2025-11-07T06:54:22.6731118Z src/visualizations/graph_visuals.py:6:0: E0401: Unable to import 'src.logic.asset_graph' (import-error)
+2025-11-07T06:54:22.6732710Z src/visualizations/graph_visuals.py:34:19: R1735: Consider using '{"size": 15, "color": colors, "opacity": 0.9, "line": dict(color='rgba(0,0,0,0.8)', width=2), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6734442Z src/visualizations/graph_visuals.py:38:21: R1735: Consider using '{"color": 'rgba(0,0,0,0.8)', "width": 2}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6735915Z src/visualizations/graph_visuals.py:45:21: R1735: Consider using '{"size": 12, "color": 'black'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6737674Z src/visualizations/graph_visuals.py:58:14: R1735: Consider using '{"xaxis": dict(title='Dimension 1', showgrid=True, gridcolor='rgba(200, 200, 200, 0.3)'), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6739683Z src/visualizations/graph_visuals.py:59:18: R1735: Consider using '{"title": 'Dimension 1', "showgrid": True, "gridcolor": 'rgba(200, 200, 200, 0.3)', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6741849Z src/visualizations/graph_visuals.py:60:18: R1735: Consider using '{"title": 'Dimension 2', "showgrid": True, "gridcolor": 'rgba(200, 200, 200, 0.3)', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6743820Z src/visualizations/graph_visuals.py:61:18: R1735: Consider using '{"title": 'Dimension 3', "showgrid": True, "gridcolor": 'rgba(200, 200, 200, 0.3)', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6745518Z src/visualizations/graph_visuals.py:63:19: R1735: Consider using '{"eye": dict(x=1.5, y=1.5, z=1.5)}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6747222Z src/visualizations/graph_visuals.py:63:28: R1735: Consider using '{"x": 1.5, "y": 1.5, "z": 1.5}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6749004Z src/visualizations/graph_visuals.py:69:15: R1735: Consider using '{"x": 0.02, "y": 0.98, "bgcolor": 'rgba(255, 255, 255, 0.8)', "bordercolor": 'rgba(0, 0, 0, 0.3)', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6750492Z src/visualizations/graph_visuals.py:77:0: R0914: Too many local variables (35/20) (too-many-locals)
+2025-11-07T06:54:22.6752068Z src/visualizations/graph_visuals.py:186:21: R1735: Consider using '{"color": color, "width": line_width, "dash": line_dash}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6753454Z src/visualizations/graph_visuals.py:77:0: R0912: Too many branches (17/15) (too-many-branches)
+2025-11-07T06:54:22.6754539Z src/visualizations/graph_visuals.py:102:54: W0612: Unused variable 'reverse_strength' (unused-variable)
+2025-11-07T06:54:22.6755653Z src/visualizations/graph_visuals.py:198:0: R0914: Too many local variables (21/20) (too-many-locals)
+2025-11-07T06:54:22.6757219Z src/visualizations/graph_visuals.py:248:19: R1735: Consider using '{"symbol": 'diamond', "size": 8, "color": 'rgba(255, 0, 0, 0.8)', "line": dict(color='red', width=1), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6758959Z src/visualizations/graph_visuals.py:252:21: R1735: Consider using '{"color": 'red', "width": 1}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6760218Z src/visualizations/graph_visuals.py:209:33: W0612: Unused variable 'strength' (unused-variable)
+2025-11-07T06:54:22.6761494Z src/visualizations/graph_visuals.py:216:54: W0612: Unused variable 'reverse_strength' (unused-variable)
+2025-11-07T06:54:22.6762733Z src/visualizations/graph_visuals.py:264:0: R0917: Too many positional arguments (10/5) (too-many-positional-arguments)
+2025-11-07T06:54:22.6764418Z src/visualizations/graph_visuals.py:317:19: R1735: Consider using '{"size": 15, "color": colors, "opacity": 0.9, "line": dict(color='rgba(0,0,0,0.8)', width=2), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6766153Z src/visualizations/graph_visuals.py:318:57: R1735: Consider using '{"color": 'rgba(0,0,0,0.8)', "width": 2}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6767639Z src/visualizations/graph_visuals.py:324:21: R1735: Consider using '{"size": 12, "color": 'black'}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6769398Z src/visualizations/graph_visuals.py:340:14: R1735: Consider using '{"xaxis": dict(title='Dimension 1', showgrid=True, gridcolor='rgba(200, 200, 200, 0.3)'), ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6771566Z src/visualizations/graph_visuals.py:341:18: R1735: Consider using '{"title": 'Dimension 1', "showgrid": True, "gridcolor": 'rgba(200, 200, 200, 0.3)', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6773536Z src/visualizations/graph_visuals.py:342:18: R1735: Consider using '{"title": 'Dimension 2', "showgrid": True, "gridcolor": 'rgba(200, 200, 200, 0.3)', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6775474Z src/visualizations/graph_visuals.py:343:18: R1735: Consider using '{"title": 'Dimension 3', "showgrid": True, "gridcolor": 'rgba(200, 200, 200, 0.3)', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6777162Z src/visualizations/graph_visuals.py:345:19: R1735: Consider using '{"eye": dict(x=1.5, y=1.5, z=1.5)}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6778554Z src/visualizations/graph_visuals.py:345:28: R1735: Consider using '{"x": 1.5, "y": 1.5, "z": 1.5}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6780168Z src/visualizations/graph_visuals.py:351:15: R1735: Consider using '{"x": 0.02, "y": 0.98, "bgcolor": 'rgba(255, 255, 255, 0.8)', "bordercolor": 'rgba(0, 0, 0, 0.3)', ... }' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6782018Z src/visualizations/graph_visuals.py:359:0: R0914: Too many local variables (36/20) (too-many-locals)
+2025-11-07T06:54:22.6783614Z src/visualizations/graph_visuals.py:475:21: R1735: Consider using '{"color": color, "width": line_width, "dash": line_dash}' instead of a call to 'dict'. (use-dict-literal)
+2025-11-07T06:54:22.6785010Z src/visualizations/graph_visuals.py:359:0: R0912: Too many branches (19/15) (too-many-branches)
+2025-11-07T06:54:22.6786060Z src/visualizations/graph_visuals.py:359:0: R0915: Too many statements (53/50) (too-many-statements)
+2025-11-07T06:54:22.6787178Z src/visualizations/graph_visuals.py:392:54: W0612: Unused variable 'reverse_strength' (unused-variable)
+2025-11-07T06:54:22.6787964Z ************* Module data.database
+2025-11-07T06:54:22.6788652Z src/data/database.py:51:15: W0718: Catching too general exception Exception (broad-exception-caught)
+2025-11-07T06:54:22.6789860Z src/data/database.py:32:12: C0415: Import outside toplevel (supabase.Client, supabase.create_client) (import-outside-toplevel)
+2025-11-07T06:54:22.6791154Z src/data/database.py:51:8: W0612: Unused variable 'e' (unused-variable)
+2025-11-07T06:54:22.6792070Z src/data/database.py:74:15: W0718: Catching too general exception Exception (broad-exception-caught)
+2025-11-07T06:54:26.2370894Z src/data/database.py:58:12: C0415: Import outside toplevel (psycopg2) (import-outside-toplevel)
+2025-11-07T06:54:26.2372452Z src/data/database.py:111:15: W0718: Catching too general exception Exception (broad-exception-caught)
+2025-11-07T06:54:26.2373971Z src/data/database.py:95:12: R1705: Unnecessary "elif" after "return", remove the leading "el" from "elif" (no-else-return)
+2025-11-07T06:54:26.2375311Z src/data/database.py:112:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2376856Z src/data/database.py:88:4: R1710: Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
+2025-11-07T06:54:26.2378020Z ************* Module data.sample_data
+2025-11-07T06:54:26.2378495Z src/data/sample_data.py:3:0: E0401: Unable to import 'src.logic.asset_graph' (import-error)
+2025-11-07T06:54:26.2379157Z src/data/sample_data.py:4:0: E0401: Unable to import 'src.models.financial_models' (import-error)
+2025-11-07T06:54:26.2379798Z src/data/sample_data.py:17:0: R0914: Too many local variables (29/20) (too-many-locals)
+2025-11-07T06:54:26.2380488Z src/data/sample_data.py:346:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2381497Z src/data/sample_data.py:349:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2382282Z src/data/sample_data.py:358:8: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2382829Z ************* Module data.real_data_fetcher
+2025-11-07T06:54:26.2383268Z src/data/real_data_fetcher.py:52:0: C0301: Line too long (148/120) (line-too-long)
+2025-11-07T06:54:26.2383893Z src/data/real_data_fetcher.py:6:0: E0401: Unable to import 'src.logic.asset_graph' (import-error)
+2025-11-07T06:54:26.2384600Z src/data/real_data_fetcher.py:7:0: E0401: Unable to import 'src.models.financial_models' (import-error)
+2025-11-07T06:54:26.2385302Z src/data/real_data_fetcher.py:56:15: W0718: Catching too general exception Exception (broad-exception-caught)
+2025-11-07T06:54:26.2385965Z src/data/real_data_fetcher.py:51:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2386639Z src/data/real_data_fetcher.py:57:12: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2387255Z src/data/real_data_fetcher.py:60:12: E0401: Unable to import 'src.data.sample_data' (import-error)
+2025-11-07T06:54:26.2387934Z src/data/real_data_fetcher.py:60:12: C0415: Import outside toplevel (src.data.sample_data.create_sample_database) (import-outside-toplevel)
+2025-11-07T06:54:26.2388925Z src/data/real_data_fetcher.py:102:19: W0718: Catching too general exception Exception (broad-exception-caught)
+2025-11-07T06:54:26.2389590Z src/data/real_data_fetcher.py:81:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2390395Z src/data/real_data_fetcher.py:100:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2391288Z src/data/real_data_fetcher.py:103:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2391952Z src/data/real_data_fetcher.py:146:19: W0718: Catching too general exception Exception (broad-exception-caught)
+2025-11-07T06:54:26.2392605Z src/data/real_data_fetcher.py:125:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2393260Z src/data/real_data_fetcher.py:144:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2393921Z src/data/real_data_fetcher.py:147:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2394563Z src/data/real_data_fetcher.py:190:19: W0718: Catching too general exception Exception (broad-exception-caught)
+2025-11-07T06:54:26.2395212Z src/data/real_data_fetcher.py:167:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2395867Z src/data/real_data_fetcher.py:188:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2396518Z src/data/real_data_fetcher.py:191:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2397162Z src/data/real_data_fetcher.py:230:19: W0718: Catching too general exception Exception (broad-exception-caught)
+2025-11-07T06:54:26.2397797Z src/data/real_data_fetcher.py:211:20: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2398460Z src/data/real_data_fetcher.py:228:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2399129Z src/data/real_data_fetcher.py:231:16: W1203: Use lazy % formatting in logging functions (logging-fstring-interpolation)
+2025-11-07T06:54:26.2399619Z ************* Module analysis.formulaic_analysis
+2025-11-07T06:54:26.2400024Z src/analysis/formulaic_analysis.py:442:0: C0301: Line too long (124/120) (line-too-long)
+2025-11-07T06:54:26.2400535Z src/analysis/formulaic_analysis.py:452:0: C0301: Line too long (130/120) (line-too-long)
+2025-11-07T06:54:26.2401213Z src/analysis/formulaic_analysis.py:581:0: C0301: Line too long (128/120) (line-too-long)
+2025-11-07T06:54:26.2401725Z src/analysis/formulaic_analysis.py:630:0: C0301: Line too long (136/120) (line-too-long)
+2025-11-07T06:54:26.2402281Z src/analysis/formulaic_analysis.py:5:0: E0401: Unable to import 'src.logic.asset_graph' (import-error)
+2025-11-07T06:54:26.2402921Z src/analysis/formulaic_analysis.py:6:0: E0401: Unable to import 'src.models.financial_models' (import-error)
+2025-11-07T06:54:26.2403510Z src/analysis/formulaic_analysis.py:471:39: W0613: Unused argument 'graph' (unused-argument)
+2025-11-07T06:54:26.2404214Z src/analysis/formulaic_analysis.py:478:8: C0200: Consider using enumerate instead of iterating with range and len (consider-using-enumerate)
+2025-11-07T06:54:26.2404916Z src/analysis/formulaic_analysis.py:494:41: W0613: Unused argument 'graph' (unused-argument)
+2025-11-07T06:54:26.2405443Z src/analysis/formulaic_analysis.py:513:53: W0613: Unused argument 'graph' (unused-argument)
+2025-11-07T06:54:26.2405969Z src/analysis/formulaic_analysis.py:525:53: W0613: Unused argument 'graph' (unused-argument)
+2025-11-07T06:54:26.2406513Z src/analysis/formulaic_analysis.py:548:69: W0613: Unused argument 'assets_data' (unused-argument)
+2025-11-07T06:54:26.2406928Z ************* Module analysis.__init__
+2025-11-07T06:54:26.2407235Z src/analysis/__init__.py:1:0: R0801: Similar lines in 2 files
+2025-11-07T06:54:26.2407700Z ==visualizations.graph_2d_visuals:[208:215]
+2025-11-07T06:54:26.2407976Z ==visualizations.graph_visuals:[141:148]
+2025-11-07T06:54:26.2408224Z         "same_sector": "#FF6B6B",
+2025-11-07T06:54:26.2408459Z         "market_cap_similar": "#4ECDC4",
+2025-11-07T06:54:26.2408795Z         "correlation": "#45B7D1",
+2025-11-07T06:54:26.2409038Z         "corporate_bond_to_equity": "#96CEB4",
+2025-11-07T06:54:26.2409286Z         "commodity_currency": "#FFEAA7",
+2025-11-07T06:54:26.2409527Z         "income_comparison": "#DDA0DD",
+2025-11-07T06:54:26.2409800Z         "regulatory_impact": "#98D8C8", (duplicate-code)
+2025-11-07T06:54:26.2410136Z src/analysis/__init__.py:1:0: R0801: Similar lines in 2 files
+2025-11-07T06:54:26.2410457Z ==visualizations.graph_2d_visuals:[264:271]
+2025-11-07T06:54:26.2410717Z ==visualizations.graph_visuals:[184:191]
+2025-11-07T06:54:26.2411113Z                 mode="lines",
+2025-11-07T06:54:26.2411506Z                 line=dict(color=color, width=line_width, dash=line_dash),
+2025-11-07T06:54:26.2411860Z                 hovertext=hover_texts,
+2025-11-07T06:54:26.2412095Z                 hoverinfo="text",
+2025-11-07T06:54:26.2412309Z                 name=trace_name,
+2025-11-07T06:54:26.2412523Z                 visible=True,
+2025-11-07T06:54:26.2412761Z                 legendgroup=rel_type, (duplicate-code)
+2025-11-07T06:54:26.2413092Z src/analysis/__init__.py:1:0: R0801: Similar lines in 2 files
+2025-11-07T06:54:26.2413425Z ==visualizations.formulaic_visuals:[335:341]
+2025-11-07T06:54:26.2413697Z ==visualizations.graph_2d_visuals:[113:119]
+2025-11-07T06:54:26.2413963Z                 showarrow=False,
+2025-11-07T06:54:26.2414176Z                 xref="paper",
+2025-11-07T06:54:26.2414387Z                 yref="paper",
+2025-11-07T06:54:26.2414587Z                 x=0.005,
+2025-11-07T06:54:26.2414802Z                 y=-0.002,
+2025-11-07T06:54:26.2415012Z                 xanchor="left", (duplicate-code)
+2025-11-07T06:54:26.2415295Z 
+2025-11-07T06:54:26.2415382Z -----------------------------------
+2025-11-07T06:54:26.2415618Z Your code has been rated at 8.20/10
+2025-11-07T06:54:26.2415769Z 
+2025-11-07T06:54:26.9273190Z ============================= test session starts ==============================
+2025-11-07T06:54:26.9274101Z platform linux -- Python 3.10.19, pytest-8.4.2, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.10.19/x64/bin/python
+2025-11-07T06:54:26.9274672Z cachedir: .pytest_cache
+2025-11-07T06:54:26.9275182Z rootdir: /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db
+2025-11-07T06:54:26.9275728Z configfile: pyproject.toml
+2025-11-07T06:54:26.9276007Z testpaths: tests
+2025-11-07T06:54:26.9276287Z plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
+2025-11-07T06:54:26.9277023Z asyncio: mode=strict, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+2025-11-07T06:54:28.7607876Z collecting ... collected 186 items
+2025-11-07T06:54:28.7608248Z 
+2025-11-07T06:54:32.6424905Z tests/integration/test_api_integration.py::TestCompleteAPIFlow::test_full_data_retrieval_flow PASSED [  0%]
+2025-11-07T06:54:32.6488569Z tests/integration/test_api_integration.py::TestCompleteAPIFlow::test_metrics_consistency PASSED [  1%]
+2025-11-07T06:54:32.6557548Z tests/integration/test_api_integration.py::TestCompleteAPIFlow::test_visualization_data_consistency PASSED [  1%]
+2025-11-07T06:54:32.6860703Z tests/integration/test_api_integration.py::TestCompleteAPIFlow::test_filter_combinations PASSED [  2%]
+2025-11-07T06:54:32.6968744Z tests/integration/test_api_integration.py::TestDataIntegrity::test_asset_detail_matches_list PASSED [  2%]
+2025-11-07T06:54:32.7278642Z tests/integration/test_api_integration.py::TestDataIntegrity::test_relationship_bidirectionality PASSED [  3%]
+2025-11-07T06:54:32.7382181Z tests/integration/test_api_integration.py::TestPerformance::test_response_times PASSED [  3%]
+2025-11-07T06:54:32.7680417Z tests/integration/test_api_integration.py::TestPerformance::test_concurrent_requests PASSED [  4%]
+2025-11-07T06:54:32.7716376Z tests/integration/test_api_integration.py::TestErrorRecovery::test_invalid_endpoints_return_404 PASSED [  4%]
+2025-11-07T06:54:32.7752945Z tests/integration/test_api_integration.py::TestErrorRecovery::test_invalid_asset_id_returns_404 PASSED [  5%]
+2025-11-07T06:54:32.7791825Z tests/integration/test_api_integration.py::TestErrorRecovery::test_malformed_requests PASSED [  5%]
+2025-11-07T06:54:32.7830224Z tests/unit/test_api.py::TestRootAndHealth::test_root_endpoint PASSED     [  6%]
+2025-11-07T06:54:32.7866886Z tests/unit/test_api.py::TestRootAndHealth::test_health_check_endpoint PASSED [  6%]
+2025-11-07T06:54:32.7887442Z tests/unit/test_api.py::TestCORSValidation::test_validate_origin_localhost_http_dev PASSED [  7%]
+2025-11-07T06:54:32.7903547Z tests/unit/test_api.py::TestCORSValidation::test_validate_origin_localhost_https_always PASSED [  8%]
+2025-11-07T06:54:32.7918473Z tests/unit/test_api.py::TestCORSValidation::test_validate_origin_vercel_urls PASSED [  8%]
+2025-11-07T06:54:32.7944923Z tests/unit/test_api.py::TestCORSValidation::test_validate_origin_https_domains PASSED [  9%]
+2025-11-07T06:54:32.7965837Z tests/unit/test_api.py::TestCORSValidation::test_validate_origin_invalid PASSED [  9%]
+2025-11-07T06:54:32.8025355Z tests/unit/test_api.py::TestAssetsEndpoint::test_get_all_assets PASSED   [ 10%]
+2025-11-07T06:54:32.8069686Z tests/unit/test_api.py::TestAssetsEndpoint::test_filter_by_asset_class PASSED [ 10%]
+2025-11-07T06:54:32.8114849Z tests/unit/test_api.py::TestAssetsEndpoint::test_filter_by_sector PASSED [ 11%]
+2025-11-07T06:54:32.8159316Z tests/unit/test_api.py::TestAssetsEndpoint::test_filter_combined PASSED  [ 11%]
+2025-11-07T06:54:32.8213281Z tests/unit/test_api.py::TestAssetsEndpoint::test_assets_additional_fields PASSED [ 12%]
+2025-11-07T06:54:32.8265062Z tests/unit/test_api.py::TestAssetsEndpoint::test_assets_error_handling PASSED [ 12%]
+2025-11-07T06:54:32.8309770Z tests/unit/test_api.py::TestAssetDetailEndpoint::test_get_asset_detail_success PASSED [ 13%]
+2025-11-07T06:54:32.8351942Z tests/unit/test_api.py::TestAssetDetailEndpoint::test_get_asset_detail_not_found PASSED [ 13%]
+2025-11-07T06:54:32.8399298Z tests/unit/test_api.py::TestAssetDetailEndpoint::test_get_bond_detail_with_issuer PASSED [ 14%]
+2025-11-07T06:54:32.8441783Z tests/unit/test_api.py::TestRelationshipsEndpoint::test_get_asset_relationships PASSED [ 15%]
+2025-11-07T06:54:32.8485352Z tests/unit/test_api.py::TestRelationshipsEndpoint::test_get_asset_relationships_not_found PASSED [ 15%]
+2025-11-07T06:54:32.8528079Z tests/unit/test_api.py::TestRelationshipsEndpoint::test_get_all_relationships PASSED [ 16%]
+2025-11-07T06:54:32.8572733Z tests/unit/test_api.py::TestMetricsEndpoint::test_get_metrics PASSED     [ 16%]
+2025-11-07T06:54:32.8615372Z tests/unit/test_api.py::TestMetricsEndpoint::test_metrics_asset_class_distribution PASSED [ 17%]
+2025-11-07T06:54:32.8660098Z tests/unit/test_api.py::TestVisualizationEndpoint::test_get_visualization_data PASSED [ 17%]
+2025-11-07T06:54:32.8702837Z tests/unit/test_api.py::TestVisualizationEndpoint::test_visualization_node_structure PASSED [ 18%]
+2025-11-07T06:54:32.8747120Z tests/unit/test_api.py::TestVisualizationEndpoint::test_visualization_edge_structure PASSED [ 18%]
+2025-11-07T06:54:32.8783446Z tests/unit/test_api.py::TestMetadataEndpoints::test_get_asset_classes PASSED [ 19%]
+2025-11-07T06:54:32.8825394Z tests/unit/test_api.py::TestMetadataEndpoints::test_get_sectors PASSED   [ 19%]
+2025-11-07T06:54:32.8887420Z tests/unit/test_api.py::TestEdgeCases::test_empty_graph PASSED           [ 20%]
+2025-11-07T06:54:32.8930172Z tests/unit/test_api.py::TestEdgeCases::test_special_characters_in_asset_id PASSED [ 20%]
+2025-11-07T06:54:32.8974967Z tests/unit/test_api.py::TestEdgeCases::test_filter_no_matches PASSED     [ 21%]
+2025-11-07T06:54:32.9107755Z tests/unit/test_api.py::TestConcurrency::test_multiple_concurrent_requests PASSED [ 22%]
+2025-11-07T06:54:32.9152883Z tests/unit/test_api.py::TestResponseValidation::test_asset_response_schema PASSED [ 22%]
+2025-11-07T06:54:32.9194851Z tests/unit/test_api.py::TestResponseValidation::test_relationship_response_schema PASSED [ 23%]
+2025-11-07T06:54:32.9250487Z tests/unit/test_api.py::TestRealDataFetcherFallback::test_real_data_fetcher_complete_failure_fallback PASSED [ 23%]
+2025-11-07T06:54:32.9278182Z tests/unit/test_api.py::TestRealDataFetcherFallback::test_real_data_fetcher_partial_fetch_success PASSED [ 24%]
+2025-11-07T06:54:32.9311751Z tests/unit/test_api.py::TestRealDataFetcherFallback::test_fetcher_falls_back_on_unhandled_exception PASSED [ 24%]
+2025-11-07T06:54:32.9354123Z tests/unit/test_api.py::TestRealDataFetcherFallback::test_real_data_fetcher_empty_history_graceful_handling PASSED [ 25%]
+2025-11-07T06:54:32.9410176Z tests/unit/test_api.py::TestRealDataFetcherFallback::test_real_data_fetcher_logs_fallback_on_exception PASSED [ 25%]
+2025-11-07T06:54:32.9446549Z tests/unit/test_api.py::TestRealDataFetcherFallback::test_individual_asset_class_fetch_failures_logged PASSED [ 26%]
+2025-11-07T06:54:32.9471215Z tests/unit/test_api_main.py::TestValidateOrigin::test_validate_origin_http_localhost_development PASSED [ 26%]
+2025-11-07T06:54:32.9495082Z tests/unit/test_api_main.py::TestValidateOrigin::test_validate_origin_http_localhost_production PASSED [ 27%]
+2025-11-07T06:54:32.9507268Z tests/unit/test_api_main.py::TestValidateOrigin::test_validate_origin_https_localhost PASSED [ 27%]
+2025-11-07T06:54:32.9519492Z tests/unit/test_api_main.py::TestValidateOrigin::test_validate_origin_vercel_urls PASSED [ 28%]
+2025-11-07T06:54:32.9532017Z tests/unit/test_api_main.py::TestValidateOrigin::test_validate_origin_https_valid_domains PASSED [ 29%]
+2025-11-07T06:54:32.9544275Z tests/unit/test_api_main.py::TestValidateOrigin::test_validate_origin_invalid_schemes PASSED [ 29%]
+2025-11-07T06:54:32.9556465Z tests/unit/test_api_main.py::TestValidateOrigin::test_validate_origin_malformed_urls PASSED [ 30%]
+2025-11-07T06:54:32.9568031Z tests/unit/test_api_main.py::TestGraphInitialization::test_graph_initialization PASSED [ 30%]
+2025-11-07T06:54:32.9579670Z tests/unit/test_api_main.py::TestGraphInitialization::test_graph_singleton PASSED [ 31%]
+2025-11-07T06:54:32.9591467Z tests/unit/test_api_main.py::TestPydanticModels::test_asset_response_model_valid PASSED [ 31%]
+2025-11-07T06:54:32.9603705Z tests/unit/test_api_main.py::TestPydanticModels::test_asset_response_model_optional_fields PASSED [ 32%]
+2025-11-07T06:54:32.9615971Z tests/unit/test_api_main.py::TestPydanticModels::test_relationship_response_model PASSED [ 32%]
+2025-11-07T06:54:32.9627724Z tests/unit/test_api_main.py::TestPydanticModels::test_metrics_response_model PASSED [ 33%]
+2025-11-07T06:54:32.9639670Z tests/unit/test_api_main.py::TestPydanticModels::test_visualization_data_response_model PASSED [ 33%]
+2025-11-07T06:54:32.9678209Z tests/unit/test_api_main.py::TestAPIEndpoints::test_root_endpoint PASSED [ 34%]
+2025-11-07T06:54:32.9714215Z tests/unit/test_api_main.py::TestAPIEndpoints::test_health_check_endpoint PASSED [ 34%]
+2025-11-07T06:54:32.9753886Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_assets_all PASSED [ 35%]
+2025-11-07T06:54:32.9791760Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_assets_filter_by_class PASSED [ 36%]
+2025-11-07T06:54:32.9832641Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_assets_filter_by_sector PASSED [ 36%]
+2025-11-07T06:54:32.9871518Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_assets_filter_by_class_and_sector PASSED [ 37%]
+2025-11-07T06:54:32.9933536Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_asset_detail_valid PASSED [ 37%]
+2025-11-07T06:54:32.9969700Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_asset_detail_not_found PASSED [ 38%]
+2025-11-07T06:54:33.0030917Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_asset_relationships_valid PASSED [ 38%]
+2025-11-07T06:54:33.0066958Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_asset_relationships_not_found PASSED [ 39%]
+2025-11-07T06:54:33.0106685Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_all_relationships PASSED [ 39%]
+2025-11-07T06:54:33.0144439Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_metrics PASSED   [ 40%]
+2025-11-07T06:54:33.0186553Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_visualization_data PASSED [ 40%]
+2025-11-07T06:54:33.0222840Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_asset_classes PASSED [ 41%]
+2025-11-07T06:54:33.0258607Z tests/unit/test_api_main.py::TestAPIEndpoints::test_get_sectors PASSED   [ 41%]
+2025-11-07T06:54:33.0304133Z tests/unit/test_api_main.py::TestErrorHandling::test_get_assets_server_error PASSED [ 42%]
+2025-11-07T06:54:33.0356208Z tests/unit/test_api_main.py::TestErrorHandling::test_get_metrics_server_error PASSED [ 43%]
+2025-11-07T06:54:33.0428527Z tests/unit/test_api_main.py::TestErrorHandling::test_invalid_http_methods PASSED [ 43%]
+2025-11-07T06:54:33.0466740Z tests/unit/test_api_main.py::TestCORSConfiguration::test_cors_headers_present PASSED [ 44%]
+2025-11-07T06:54:33.0515196Z tests/unit/test_api_main.py::TestCORSConfiguration::test_cors_allows_development_origins PASSED [ 44%]
+2025-11-07T06:54:33.0552648Z tests/unit/test_api_main.py::TestAdditionalFields::test_equity_additional_fields PASSED [ 45%]
+2025-11-07T06:54:33.0590028Z tests/unit/test_api_main.py::TestAdditionalFields::test_bond_additional_fields PASSED [ 45%]
+2025-11-07T06:54:33.0631642Z tests/unit/test_api_main.py::TestVisualizationDataProcessing::test_visualization_coordinate_types PASSED [ 46%]
+2025-11-07T06:54:33.0674634Z tests/unit/test_api_main.py::TestVisualizationDataProcessing::test_visualization_node_defaults PASSED [ 46%]
+2025-11-07T06:54:33.0716665Z tests/unit/test_api_main.py::TestVisualizationDataProcessing::test_visualization_edge_defaults PASSED [ 47%]
+2025-11-07T06:54:33.0798704Z tests/unit/test_api_main.py::TestIntegrationScenarios::test_full_workflow_asset_exploration PASSED [ 47%]
+2025-11-07T06:54:33.0861163Z tests/unit/test_api_main.py::TestIntegrationScenarios::test_full_workflow_visualization_and_metrics PASSED [ 48%]
+2025-11-07T06:54:33.0948209Z tests/unit/test_api_main.py::TestIntegrationScenarios::test_filter_refinement_workflow PASSED [ 48%]
+2025-11-07T06:54:33.0961924Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_empty_graph_initialization PASSED [ 49%]
+2025-11-07T06:54:33.0976289Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_add_single_asset PASSED [ 50%]
+2025-11-07T06:54:33.0994552Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_add_multiple_assets PASSED [ 50%]
+2025-11-07T06:54:33.1012571Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_add_relationship PASSED [ 51%]
+2025-11-07T06:54:33.1030658Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_add_bidirectional_relationship PASSED [ 51%]
+2025-11-07T06:54:33.1046077Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_relationship_strength_clamping PASSED [ 52%]
+2025-11-07T06:54:33.1065162Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_add_regulatory_event PASSED [ 52%]
+2025-11-07T06:54:33.1084182Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_build_relationships PASSED [ 53%]
+2025-11-07T06:54:33.1103490Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_calculate_metrics PASSED [ 53%]
+2025-11-07T06:54:33.1115854Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_same_sector_relationship PASSED [ 54%]
+2025-11-07T06:54:33.1128247Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_corporate_bond_relationship PASSED [ 54%]
+2025-11-07T06:54:33.1146998Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_get_3d_visualization_data PASSED [ 55%]
+2025-11-07T06:54:33.1202791Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_positions_persistence PASSED [ 55%]
+2025-11-07T06:54:33.1218896Z tests/unit/test_asset_graph.py::TestAssetRelationshipGraph::test_deduplication PASSED [ 56%]
+2025-11-07T06:54:33.1231891Z tests/unit/test_config_validation.py::TestVercelConfig::test_vercel_config_valid_json PASSED [ 56%]
+2025-11-07T06:54:33.1245922Z tests/unit/test_config_validation.py::TestVercelConfig::test_vercel_config_has_builds PASSED [ 57%]
+2025-11-07T06:54:33.1259948Z tests/unit/test_config_validation.py::TestVercelConfig::test_vercel_config_has_routes PASSED [ 58%]
+2025-11-07T06:54:33.1274326Z tests/unit/test_config_validation.py::TestVercelConfig::test_vercel_build_python_backend PASSED [ 58%]
+2025-11-07T06:54:33.1287854Z tests/unit/test_config_validation.py::TestVercelConfig::test_vercel_build_nextjs_frontend PASSED [ 59%]
+2025-11-07T06:54:33.1301614Z tests/unit/test_config_validation.py::TestVercelConfig::test_vercel_routes_api_routing PASSED [ 59%]
+2025-11-07T06:54:33.1315488Z tests/unit/test_config_validation.py::TestVercelConfig::test_vercel_routes_frontend_routing PASSED [ 60%]
+2025-11-07T06:54:33.1329212Z tests/unit/test_config_validation.py::TestVercelConfig::test_vercel_lambda_size_reasonable PASSED [ 60%]
+2025-11-07T06:54:33.1341210Z tests/unit/test_config_validation.py::TestNextConfig::test_next_config_exists PASSED [ 61%]
+2025-11-07T06:54:33.1356670Z tests/unit/test_config_validation.py::TestNextConfig::test_next_config_has_module_exports PASSED [ 61%]
+2025-11-07T06:54:33.1370158Z tests/unit/test_config_validation.py::TestNextConfig::test_next_config_has_react_strict_mode PASSED [ 62%]
+2025-11-07T06:54:33.1383891Z tests/unit/test_config_validation.py::TestNextConfig::test_next_config_has_env_configuration PASSED [ 62%]
+2025-11-07T06:54:33.1396541Z tests/unit/test_config_validation.py::TestPackageJson::test_package_json_valid_json PASSED [ 63%]
+2025-11-07T06:54:33.1410567Z tests/unit/test_config_validation.py::TestPackageJson::test_package_json_has_required_fields PASSED [ 63%]
+2025-11-07T06:54:33.1424680Z tests/unit/test_config_validation.py::TestPackageJson::test_package_json_has_build_scripts PASSED [ 64%]
+2025-11-07T06:54:33.1439031Z tests/unit/test_config_validation.py::TestPackageJson::test_package_json_has_react_dependencies PASSED [ 65%]
+2025-11-07T06:54:33.1452946Z tests/unit/test_config_validation.py::TestPackageJson::test_package_json_has_visualization_deps PASSED [ 65%]
+2025-11-07T06:54:33.1466494Z tests/unit/test_config_validation.py::TestPackageJson::test_package_json_has_axios PASSED [ 66%]
+2025-11-07T06:54:33.1480350Z tests/unit/test_config_validation.py::TestPackageJson::test_package_json_has_typescript_deps PASSED [ 66%]
+2025-11-07T06:54:33.1497451Z tests/unit/test_config_validation.py::TestPackageJson::test_package_json_version_format PASSED [ 67%]
+2025-11-07T06:54:33.1510049Z tests/unit/test_config_validation.py::TestTSConfig::test_tsconfig_valid_json PASSED [ 67%]
+2025-11-07T06:54:33.1524210Z tests/unit/test_config_validation.py::TestTSConfig::test_tsconfig_has_compiler_options PASSED [ 68%]
+2025-11-07T06:54:33.1537890Z tests/unit/test_config_validation.py::TestTSConfig::test_tsconfig_strict_mode_enabled PASSED [ 68%]
+2025-11-07T06:54:33.1551677Z tests/unit/test_config_validation.py::TestTSConfig::test_tsconfig_has_jsx_configuration PASSED [ 69%]
+2025-11-07T06:54:33.1565680Z tests/unit/test_config_validation.py::TestTSConfig::test_tsconfig_module_resolution PASSED [ 69%]
+2025-11-07T06:54:33.1579699Z tests/unit/test_config_validation.py::TestTSConfig::test_tsconfig_has_path_mapping PASSED [ 70%]
+2025-11-07T06:54:33.1591986Z tests/unit/test_config_validation.py::TestTailwindConfig::test_tailwind_config_exists PASSED [ 70%]
+2025-11-07T06:54:33.1605691Z tests/unit/test_config_validation.py::TestTailwindConfig::test_tailwind_config_has_module_exports PASSED [ 71%]
+2025-11-07T06:54:33.1619216Z tests/unit/test_config_validation.py::TestTailwindConfig::test_tailwind_config_has_content_paths PASSED [ 72%]
+2025-11-07T06:54:33.1634066Z tests/unit/test_config_validation.py::TestTailwindConfig::test_tailwind_config_includes_app_directory PASSED [ 72%]
+2025-11-07T06:54:33.1646009Z tests/unit/test_config_validation.py::TestEnvExample::test_env_example_exists PASSED [ 73%]
+2025-11-07T06:54:33.1659516Z tests/unit/test_config_validation.py::TestEnvExample::test_env_example_has_api_url PASSED [ 73%]
+2025-11-07T06:54:33.1673157Z tests/unit/test_config_validation.py::TestEnvExample::test_env_example_has_cors_config PASSED [ 74%]
+2025-11-07T06:54:33.1686576Z tests/unit/test_config_validation.py::TestEnvExample::test_env_example_has_comments PASSED [ 74%]
+2025-11-07T06:54:33.1700266Z tests/unit/test_config_validation.py::TestEnvExample::test_env_example_no_real_secrets PASSED [ 75%]
+2025-11-07T06:54:33.1712182Z tests/unit/test_config_validation.py::TestGitignore::test_gitignore_exists PASSED [ 75%]
+2025-11-07T06:54:33.1725740Z tests/unit/test_config_validation.py::TestGitignore::test_gitignore_excludes_node_modules PASSED [ 76%]
+2025-11-07T06:54:33.1739377Z tests/unit/test_config_validation.py::TestGitignore::test_gitignore_excludes_next_artifacts PASSED [ 76%]
+2025-11-07T06:54:33.1752910Z tests/unit/test_config_validation.py::TestGitignore::test_gitignore_excludes_env_files PASSED [ 77%]
+2025-11-07T06:54:33.1766323Z tests/unit/test_config_validation.py::TestGitignore::test_gitignore_excludes_vercel PASSED [ 77%]
+2025-11-07T06:54:33.1779799Z tests/unit/test_config_validation.py::TestGitignore::test_gitignore_excludes_python_artifacts PASSED [ 78%]
+2025-11-07T06:54:33.1791968Z tests/unit/test_config_validation.py::TestRequirementsTxt::test_requirements_exists PASSED [ 79%]
+2025-11-07T06:54:33.1805771Z tests/unit/test_config_validation.py::TestRequirementsTxt::test_requirements_has_fastapi PASSED [ 79%]
+2025-11-07T06:54:33.1819420Z tests/unit/test_config_validation.py::TestRequirementsTxt::test_requirements_has_uvicorn PASSED [ 80%]
+2025-11-07T06:54:33.1833209Z tests/unit/test_config_validation.py::TestRequirementsTxt::test_requirements_has_pydantic PASSED [ 80%]
+2025-11-07T06:54:33.1848027Z tests/unit/test_config_validation.py::TestRequirementsTxt::test_requirements_has_version_constraints PASSED [ 81%]
+2025-11-07T06:54:33.1861737Z tests/unit/test_config_validation.py::TestPostCSSConfig::test_postcss_config_has_tailwindcss PASSED [ 81%]
+2025-11-07T06:54:33.1875423Z tests/unit/test_config_validation.py::TestPostCSSConfig::test_postcss_config_has_autoprefixer PASSED [ 82%]
+2025-11-07T06:54:33.1887821Z tests/unit/test_config_validation.py::TestConfigurationConsistency::test_api_url_consistency PASSED [ 82%]
+2025-11-07T06:54:33.1900872Z tests/unit/test_config_validation.py::TestConfigurationConsistency::test_package_json_and_tsconfig_consistency PASSED [ 83%]
+2025-11-07T06:54:33.1914472Z tests/unit/test_config_validation.py::TestConfigurationConsistency::test_frontend_build_configuration_matches PASSED [ 83%]
+2025-11-07T06:54:33.1926079Z tests/unit/test_dev_scripts.py::TestVercelConfiguration::test_vercel_json_exists PASSED [ 84%]
+2025-11-07T06:54:33.1938287Z tests/unit/test_dev_scripts.py::TestVercelConfiguration::test_vercel_json_valid PASSED [ 84%]
+2025-11-07T06:54:33.1950695Z tests/unit/test_dev_scripts.py::TestVercelConfiguration::test_vercel_builds_configuration PASSED [ 85%]
+2025-11-07T06:54:33.1963256Z tests/unit/test_dev_scripts.py::TestVercelConfiguration::test_vercel_routes_configuration PASSED [ 86%]
+2025-11-07T06:54:33.1975053Z tests/unit/test_dev_scripts.py::TestEnvironmentConfiguration::test_env_example_exists PASSED [ 86%]
+2025-11-07T06:54:33.1987216Z tests/unit/test_dev_scripts.py::TestEnvironmentConfiguration::test_env_example_has_required_vars PASSED [ 87%]
+2025-11-07T06:54:33.1999172Z tests/unit/test_dev_scripts.py::TestGitIgnore::test_gitignore_excludes_build_artifacts PASSED [ 87%]
+2025-11-07T06:54:33.2012832Z tests/unit/test_dev_scripts.py::TestDocumentationFiles::test_documentation_exists[README.md] PASSED [ 88%]
+2025-11-07T06:54:33.2026076Z tests/unit/test_dev_scripts.py::TestDocumentationFiles::test_documentation_exists[DEPLOYMENT.md] PASSED [ 88%]
+2025-11-07T06:54:33.2039390Z tests/unit/test_dev_scripts.py::TestDocumentationFiles::test_documentation_exists[INTEGRATION_SUMMARY.md] PASSED [ 89%]
+2025-11-07T06:54:33.2052525Z tests/unit/test_dev_scripts.py::TestDocumentationFiles::test_documentation_exists[ARCHITECTURE.md] PASSED [ 89%]
+2025-11-07T06:54:33.2065360Z tests/unit/test_dev_scripts.py::TestDocumentationFiles::test_documentation_exists[QUICK_START.md] PASSED [ 90%]
+2025-11-07T06:54:33.2078593Z tests/unit/test_dev_scripts.py::TestDocumentationFiles::test_documentation_exists[UI_COMPARISON.md] PASSED [ 90%]
+2025-11-07T06:54:33.2091939Z tests/unit/test_dev_scripts.py::TestDocumentationFiles::test_documentation_exists[VERCEL_DEPLOYMENT_CHECKLIST.md] PASSED [ 91%]
+2025-11-07T06:54:33.2104484Z tests/unit/test_dev_scripts.py::TestDocumentationFiles::test_readme_has_quick_start PASSED [ 91%]
+2025-11-07T06:54:33.2117130Z tests/unit/test_financial_models.py::TestAsset::test_asset_creation PASSED [ 92%]
+2025-11-07T06:54:33.2132946Z tests/unit/test_financial_models.py::TestAsset::test_asset_invalid_id PASSED [ 93%]
+2025-11-07T06:54:33.2147587Z tests/unit/test_financial_models.py::TestAsset::test_asset_invalid_price PASSED [ 93%]
+2025-11-07T06:54:33.2162678Z tests/unit/test_financial_models.py::TestAsset::test_asset_invalid_currency PASSED [ 94%]
+2025-11-07T06:54:33.2177993Z tests/unit/test_financial_models.py::TestAsset::test_asset_invalid_market_cap PASSED [ 94%]
+2025-11-07T06:54:33.2191308Z tests/unit/test_financial_models.py::TestEquity::test_equity_creation PASSED [ 95%]
+2025-11-07T06:54:33.2203545Z tests/unit/test_financial_models.py::TestEquity::test_equity_optional_fields PASSED [ 95%]
+2025-11-07T06:54:33.2216363Z tests/unit/test_financial_models.py::TestBond::test_bond_creation PASSED [ 96%]
+2025-11-07T06:54:33.2228121Z tests/unit/test_financial_models.py::TestBond::test_bond_optional_fields PASSED [ 96%]
+2025-11-07T06:54:33.2241180Z tests/unit/test_financial_models.py::TestCommodity::test_commodity_creation PASSED [ 97%]
+2025-11-07T06:54:33.2254298Z tests/unit/test_financial_models.py::TestCurrency::test_currency_creation PASSED [ 97%]
+2025-11-07T06:54:33.2267174Z tests/unit/test_financial_models.py::TestRegulatoryEvent::test_event_creation PASSED [ 98%]
+2025-11-07T06:54:33.2282424Z tests/unit/test_financial_models.py::TestRegulatoryEvent::test_event_invalid_impact_score PASSED [ 98%]
+2025-11-07T06:54:33.2296795Z tests/unit/test_financial_models.py::TestRegulatoryEvent::test_event_invalid_date PASSED [ 99%]
+2025-11-07T06:54:33.8450746Z tests/unit/test_financial_models.py::TestRegulatoryEvent::test_event_empty_description PASSED [100%]
+2025-11-07T06:54:33.8451600Z 
+2025-11-07T06:54:33.8451801Z ================================ tests coverage ================================
+2025-11-07T06:54:33.8452283Z _______________ coverage: platform linux, python 3.10.19-final-0 _______________
+2025-11-07T06:54:33.8452614Z 
+2025-11-07T06:54:33.8452759Z Name                                 Stmts   Miss  Cover   Missing
+2025-11-07T06:54:33.8453142Z ------------------------------------------------------------------
+2025-11-07T06:54:33.8453542Z src/analysis/__init__.py                 0      0   100%
+2025-11-07T06:54:33.8453988Z src/analysis/formulaic_analysis.py     254    254     0%   1-643
+2025-11-07T06:54:33.8454457Z src/data/real_data_fetcher.py          119      2    98%   282-283
+2025-11-07T06:54:33.8454914Z src/data/sample_data.py                 47      3    94%   357-359
+2025-11-07T06:54:33.8455398Z src/logic/asset_graph.py               153     23    85%   55, 57, 111, 229, 242-286
+2025-11-07T06:54:33.8455922Z src/models/financial_models.py          83      4    95%   43, 45, 108, 110
+2025-11-07T06:54:33.8456404Z ------------------------------------------------------------------
+2025-11-07T06:54:33.8456816Z TOTAL                                  656    286    56%
+2025-11-07T06:54:33.8457163Z Coverage HTML written to dir htmlcov
+2025-11-07T06:54:33.8457449Z Coverage XML written to file coverage.xml
+2025-11-07T06:54:33.8457770Z ============================= 186 passed in 6.77s ==============================
+2025-11-07T06:54:34.0030907Z Post job cleanup.
+2025-11-07T06:54:34.0077334Z Post job cleanup.
+2025-11-07T06:54:34.1767144Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db --files-from manifest.txt --use-compress-program zstdmt
+2025-11-07T06:54:35.6047955Z Sent 0 of 187269649 (0.0%), 0.0 MBs/sec
+2025-11-07T06:54:36.6051847Z Sent 134217728 of 187269649 (71.7%), 64.0 MBs/sec
+2025-11-07T06:54:37.1384146Z Sent 187269649 of 187269649 (100.0%), 70.5 MBs/sec
+2025-11-07T06:54:37.2784281Z Cache saved with the key: setup-python-Linux-x64-24.04-Ubuntu-python-3.10.19-pip-2dbad9a09919b5ad6540e3f1a0eb36a31a24915ece20733f1f752ee8ee463861
+2025-11-07T06:54:37.2962740Z Post job cleanup.
+2025-11-07T06:54:37.3912500Z [command]/usr/bin/git version
+2025-11-07T06:54:37.3955038Z git version 2.51.2
+2025-11-07T06:54:37.3999123Z Temporarily overriding HOME='/home/runner/work/_temp/c5ca7430-c3aa-4857-a1dd-f9e715629b2f' before making global git config changes
+2025-11-07T06:54:37.4000355Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-07T06:54:37.4004884Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/financial-asset-relationship-db/financial-asset-relationship-db
+2025-11-07T06:54:37.4038209Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-07T06:54:37.4070034Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-07T06:54:37.4296725Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-07T06:54:37.4317645Z http.https://github.com/.extraheader
+2025-11-07T06:54:37.4330471Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-11-07T06:54:37.4362608Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-07T06:54:37.4682471Z Cleaning up orphan processes

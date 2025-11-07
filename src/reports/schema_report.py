@@ -86,6 +86,7 @@ def generate_schema_report(graph: AssetRelationshipGraph) -> str:
     report += "\n\n## Implementation Notes\n- All timestamps in ISO 8601 format\n"
     report += "- Relationship strengths normalized to 0-1 range\n"
     report += "- Impact scores on -1 to +1 scale for comparability\n"
-    report += "- Relationship directionality: some types are bidirectional (e.g., same_sector, income_comparison); others are directional\n"
+    report += "- Relationship directionality: some types are bidirectional (e.g., same_sector, income_comparison);\n"
+    report += "  others are directional\n"
 
     return report

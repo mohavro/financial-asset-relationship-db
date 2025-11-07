@@ -108,7 +108,7 @@ class RegulatoryEvent:
             raise ValueError("Event id must be a non-empty string")
         if not self.asset_id or not isinstance(self.asset_id, str):
             raise ValueError("Asset id must be a non-empty string")
-        if not isinstance(self.impact_score, (int, float)) or not (-1 <= self.impact_score <= 1):
+        if not isinstance(self.impact_score, (int, float)) or not -1 <= self.impact_score <= 1:
             raise ValueError("Impact score must be a float between -1 and 1")
         # Basic ISO 8601 date validation
         if not re.match(r"^\d{4}-\d{2}-\d{2}", self.date):

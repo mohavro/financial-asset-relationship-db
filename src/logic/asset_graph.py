@@ -106,7 +106,8 @@ class AssetRelationshipGraph:
                 relationships.append(("same_sector", 0.7, True))
 
         # Currency relationship (simple): link asset to single-currency asset whose symbol matches asset.currency
-        # With current data, Currency asset has symbol="EUR" for EURUSD representation; this links only non-USD EUR assets.
+        # With current data, Currency asset has symbol="EUR" for EURUSD representation;
+        # this links only non-USD EUR assets.
         if isinstance(asset2, Currency) and getattr(asset1, "currency", None) == asset2.symbol:
             relationships.append(("currency_exposure", 0.8, False))
 
@@ -228,7 +229,7 @@ class AssetRelationshipGraph:
             if source_id not in asset_ids:
                 continue
             source_idx = asset_ids.index(source_id)
-            for target_id, rel_type, strength in rels:
+            for target_id, _, _ in rels:
                 if target_id in asset_ids:
                     target_idx = asset_ids.index(target_id)
                     edges_x.extend([positions[source_idx, 0], positions[target_idx, 0], None])
