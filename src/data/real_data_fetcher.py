@@ -358,8 +358,7 @@ def _serialize_graph(graph: AssetRelationshipGraph) -> Dict[str, Any]:
 
 def _deserialize_asset(data: Dict[str, Any]):
     type_name = data.pop("__type__", "Asset")
-    asset_class_value = data.get("asset_class")
-    if asset_class_value:
+    if asset_class_value := data.get("asset_class"):
         data["asset_class"] = AssetClass(asset_class_value)
 
     cls_map = {
