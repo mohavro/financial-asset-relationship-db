@@ -368,6 +368,7 @@ class TestAPIEndpoints:
         assert metrics["avg_degree"] >= 0
         assert metrics["max_degree"] >= 0
         assert 0 <= metrics["network_density"] <= 100
+        assert 0 <= metrics["relationship_density"] <= 100
 
     def test_get_visualization_data(self, client):
         """Test getting 3D visualization data."""
