@@ -223,7 +223,7 @@ class AssetRelationshipGraph:
             metrics["max_degree"] = max_total_degree
 
             # Relationship density (% of possible directed pairs without self-loops)
-            possible_edges = node_count * (node_count - 1) if node_count > 1 else 1
+            possible_edges = node_count * (node_count - 1) if node_count > 1 else 0
             density = (total_out_degree / possible_edges) * 100.0 if possible_edges else 0.0
             metrics["network_density"] = density
             metrics["relationship_density"] = density
