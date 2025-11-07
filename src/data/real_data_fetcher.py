@@ -9,14 +9,21 @@ import yfinance as yf
 from src.models.financial_models import (
     Asset,
     Equity,
+import logging
+from typing import List
+
+import yfinance as yf
+
+from src.logic.asset_graph import AssetRelationshipGraph
+from src.models.financial_models import (
+    AssetClass,
     Bond,
     Commodity,
     Currency,
-    RegulatoryEvent,
-    AssetClass,
+    Equity,
     RegulatoryActivity,
+    RegulatoryEvent,
 )
-from src.logic.asset_graph import AssetRelationshipGraph
 
 logger = logging.getLogger(__name__)
 

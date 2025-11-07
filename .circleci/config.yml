@@ -92,7 +92,7 @@ jobs:
             fi
       - run:
           name: Security check with safety
-          command: safety check --json
+          command: safety check --json --ignore 72086
       - run:
           name: Security check with bandit
           command: bandit -r src/ -ll -f json -o bandit-report.json

@@ -1,5 +1,3 @@
-import json
-from typing import Dict, Any
 from src.logic.asset_graph import AssetRelationshipGraph
 
 
@@ -41,7 +39,7 @@ def generate_schema_report(graph: AssetRelationshipGraph) -> str:
     for asset_class, count in sorted(metrics["asset_class_distribution"].items()):
         report += f"- **{asset_class}**: {count} assets\n"
 
-    report += f"""
+    report += """
 
 ## Top Relationships
 """
@@ -88,6 +86,7 @@ def generate_schema_report(graph: AssetRelationshipGraph) -> str:
     report += "\n\n## Implementation Notes\n- All timestamps in ISO 8601 format\n"
     report += "- Relationship strengths normalized to 0-1 range\n"
     report += "- Impact scores on -1 to +1 scale for comparability\n"
-    report += "- Relationship directionality: some types are bidirectional (e.g., same_sector, income_comparison); others are directional\n"
+    report += "- Relationship directionality: some types are bidirectional (e.g., same_sector, income_comparison);\n"
+    report += "  others are directional\n"
 
     return report
