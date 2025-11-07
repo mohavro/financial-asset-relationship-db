@@ -1,5 +1,8 @@
 name: PR Agent Workflow
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -10,6 +13,8 @@ on:
 
 jobs:
   pr-agent-trigger:
+    permissions:
+      issues: write
     if: |
       (github.event_name == 'pull_request_review' && github.event.review.state == 'changes_requested') ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@copilot'))
@@ -115,6 +120,8 @@ jobs:
             }
 
   auto-merge-check:
+    permissions:
+      issues: write
     if: github.event_name == 'pull_request' && github.event.action == 'synchronize'
     runs-on: ubuntu-latest
     
@@ -159,6 +166,8 @@ jobs:
             }
 
   dependency-update:
+    permissions:
+      pull-requests: write
     if: github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'deps')
     runs-on: ubuntu-latest
     
