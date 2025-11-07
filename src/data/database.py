@@ -97,8 +97,24 @@ class DatabaseConnection:
                 return response.data
 
             elif self.connection_type == "postgres":
+                # Validate inputs to prevent SQL injection
+                import re
+                if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', table):
+                    logger.error(f"Invalid table name: {table}")
+                    return []
+                
+                # For select, allow basic column names, *, and comma-separated lists
+                if not re.match(r'^[a-zA-Z0-9_,\s\*]+$', select):
+                    logger.error(f"Invalid select clause: {select}")
+                    return []
+                
+                if not isinstance(limit, int) or limit <= 0 or limit > 10000:
+                    logger.error(f"Invalid limit: {limit}")
+                    return []
+                
                 cursor = self.pg_conn.cursor()
-                cursor.execute(f"SELECT {select} FROM {table} LIMIT {limit}")
+                # Use parameterized query for limit, but table and column names must be validated above
+                cursor.execute(f"SELECT {select} FROM {table} LIMIT %s", (limit,))  # nosec B608
                 columns = [desc[0] for desc in cursor.description]
                 results = []
 
