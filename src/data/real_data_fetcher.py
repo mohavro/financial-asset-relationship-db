@@ -330,9 +330,7 @@ def create_real_database() -> AssetRelationshipGraph:
 def _enum_to_value(value: Any) -> Any:
     from enum import Enum
 
-    if isinstance(value, Enum):
-        return value.value
-    return value
+    return value.value if isinstance(value, Enum) else value
 
 
 def _serialize_dataclass(obj: Any) -> Dict[str, Any]:
