@@ -90,8 +90,12 @@ class AssetRelationshipGraph:
         """Remove a relationship from the database."""
 
         def _op(repo: AssetGraphRepository) -> None:
+            record = repo.get_relationship(source_id, target_id, rel_type)
+            if record is None:
+                return
             repo.delete_relationship(source_id, target_id, rel_type)
-            repo.delete_relationship(target_id, source_id, rel_type)
+            if record.bidirectional:
+                repo.delete_relationship(target_id, source_id, rel_type)
 
         self._run_repository(_op)
         self._invalidate_caches()

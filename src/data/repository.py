@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -111,6 +111,25 @@ class AssetGraphRepository:
             )
             for rel in result
         ]
+
+    def get_relationship(self, source_id: str, target_id: str, rel_type: str) -> Optional[RelationshipRecord]:
+        """Fetch a single relationship if it exists."""
+
+        stmt = select(AssetRelationshipORM).where(
+            AssetRelationshipORM.source_asset_id == source_id,
+            AssetRelationshipORM.target_asset_id == target_id,
+            AssetRelationshipORM.relationship_type == rel_type,
+        )
+        relationship = self.session.execute(stmt).scalar_one_or_none()
+        if relationship is None:
+            return None
+        return RelationshipRecord(
+            source_id=relationship.source_asset_id,
+            target_id=relationship.target_asset_id,
+            relationship_type=relationship.relationship_type,
+            strength=relationship.strength,
+            bidirectional=relationship.bidirectional,
+        )
 
     def delete_relationship(self, source_id: str, target_id: str, rel_type: str) -> None:
         """Remove a relationship."""
