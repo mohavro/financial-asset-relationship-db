@@ -273,7 +273,7 @@ metrics = MetricsResponse(
 
     def test_get_metrics_no_assets(self, client):
         """Metrics endpoint should handle empty graph (no assets)."""
-        api_main.set_graph(AssetRelationshipGraph())
+        api_main.set_graph(AssetRelationshipGraph(database_url="sqlite:///:memory:"))
         response = client.get("/api/metrics")
         assert response.status_code == 200
         data = response.json()
@@ -285,7 +285,7 @@ metrics = MetricsResponse(
 
     def test_get_metrics_one_asset_no_relationships(self, client):
         """Metrics endpoint should handle graph with one asset and no relationships."""
-        graph = AssetRelationshipGraph()
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
         graph.add_asset(
             Equity(
                 id="AAPL",
@@ -308,7 +308,7 @@ metrics = MetricsResponse(
 
     def test_get_metrics_multiple_assets_no_relationships(self, client):
         """Metrics endpoint should handle graph with multiple assets and no relationships."""
-        graph = AssetRelationshipGraph()
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
         graph.add_asset(
             Equity(
                 id="AAPL",
