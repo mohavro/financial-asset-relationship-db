@@ -195,7 +195,15 @@ class TestPydanticModels:
 class TestAPIEndpoints:
     """Test all FastAPI endpoints."""
 
-    @pytest.fixture
+metrics = MetricsResponse(
+        total_assets=10,
+        total_relationships=20,
+        asset_classes={"EQUITY": 5, "BOND": 5},
+        avg_degree=2.0,
+        max_degree=5,
+        network_density=0.4,
+        relationship_density=0.5,
+    )
     def client(self):
         """Create a test client."""
         api_main.set_graph(create_sample_database())
