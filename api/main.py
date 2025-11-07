@@ -23,7 +23,7 @@ from src.data.real_data_fetcher import RealDataFetcher
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import AssetClass
 
-from .auth import Token, authenticate_user, create_access_token
+from .auth import Token, User, authenticate_user, create_access_token, get_current_active_user
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -182,12 +182,10 @@ ENV = os.getenv("ENV", "development").lower()
 @limiter.limit("5/minute")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     """Generate JWT token for authenticated users"""
-    from .auth import fake_users_db  # Import here to avoid circular imports
-
     # The `request` parameter is required by slowapi's limiter for dependency injection.
     _ = request
 
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -197,6 +195,17 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.get("/api/users/me", response_model=User)
+@limiter.limit("10/minute")
+async def read_users_me(request: Request, current_user: User = Depends(get_current_active_user)):
+    """Return details about the currently authenticated user."""
+
+    # The `request` parameter is required by slowapi's limiter for dependency injection.
+    _ = request
+
+    return current_user
 
 
 def validate_origin(origin: str) -> bool:
