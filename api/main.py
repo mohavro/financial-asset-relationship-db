@@ -8,7 +8,7 @@ import os
 import re
 import threading
 
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -102,10 +102,13 @@ ENV = os.getenv("ENV", "development").lower()
 
 @app.post("/token", response_model=Token)
 @limiter.limit("5/minute")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     """Generate JWT token for authenticated users"""
     from .auth import fake_users_db  # Import here to avoid circular imports
-    
+
+    # The `request` parameter is required by slowapi's limiter for dependency injection.
+    _ = request
+
     user = authenticate_user(fake_users_db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(

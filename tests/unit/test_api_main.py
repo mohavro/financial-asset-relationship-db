@@ -17,6 +17,7 @@ from api.main import (
     MetricsResponse,
     VisualizationDataResponse,
 )
+from src.data.sample_data import create_sample_database
 from src.models.financial_models import AssetClass
 
 
@@ -157,6 +158,11 @@ class TestAPIEndpoints:
     @pytest.fixture
     def client(self):
         """Create a test client."""
+        import api.main as api_main
+
+        with api_main.graph_lock:
+            api_main.graph = create_sample_database()
+
         return TestClient(app)
 
     def test_root_endpoint(self, client):
@@ -203,6 +209,18 @@ class TestAPIEndpoints:
         # All assets should be EQUITY
         for asset in assets:
             assert asset["asset_class"] == "EQUITY"
+
+    def test_get_metrics_enriched_statistics(self, client):
+        """Metrics endpoint should return populated graph statistics when relationships exist."""
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["total_assets"] > 0
+        assert data["total_relationships"] > 0
+        assert data["avg_degree"] > 0
+        assert data["max_degree"] >= data["avg_degree"]
+        assert data["network_density"] > 0
 
     def test_get_assets_filter_by_sector(self, client):
         """Test filtering assets by sector."""
@@ -306,7 +324,7 @@ class TestAPIEndpoints:
         assert isinstance(metrics["asset_classes"], dict)
         assert metrics["avg_degree"] >= 0
         assert metrics["max_degree"] >= 0
-        assert 0 <= metrics["network_density"] <= 1
+        assert 0 <= metrics["network_density"] <= 100
 
     def test_get_visualization_data(self, client):
         """Test getting 3D visualization data."""
