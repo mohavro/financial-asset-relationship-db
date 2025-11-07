@@ -52,10 +52,10 @@ class AppConstants:
     # Missing markdown constants
     INTERACTIVE_3D_GRAPH_MD = """
     ## Interactive 3D Network Graph
-    
-    Explore the relationships between financial assets in three dimensions. Each node represents an asset, 
+
+    Explore the relationships between financial assets in three dimensions. Each node represents an asset,
     and edges show the strength and type of relationships between them.
-    
+
     **Asset Colors:**
     - 🔵 Blue: Equities (Stocks)
     - 🟢 Green: Fixed Income (Bonds)
@@ -66,41 +66,41 @@ class AppConstants:
 
     NETWORK_METRICS_ANALYSIS_MD = """
     ## Network Metrics & Analytics
-    
+
     Comprehensive analysis of asset relationships, distributions, and regulatory event impacts.
     """
 
     SCHEMA_RULES_GUIDE_MD = """
     ## Database Schema & Business Rules
-    
+
     View the automatically generated schema documentation including relationship types, business rules, and validation constraints.
     """
 
     DETAILED_ASSET_INFO_MD = """
     ## Asset Explorer
-    
+
     Select any asset to view detailed information including financial metrics, relationships, and connected assets.
     """
 
     DOC_MARKDOWN = """
     ## Documentation & Help
-    
+
     ### Quick Start
     1. **3D Visualization**: Explore the interactive network graph
     2. **Metrics**: View quantitative analysis of relationships
     3. **Schema**: Understand the data model and business rules
     4. **Explorer**: Drill down into individual asset details
-    
+
     ### Features
     - **Cross-Asset Analysis**: Automatic relationship discovery
-    - **Regulatory Integration**: Corporate events impact modeling  
+    - **Regulatory Integration**: Corporate events impact modeling
     - **Real-time Metrics**: Network statistics and strength analysis
     - **Deterministic Layout**: Consistent 3D positioning across sessions
-    
+
     ### Asset Classes
     - Equities, Bonds, Commodities, Currencies, Derivatives
     - Relationship types: sector affinity, corporate links, currency exposure, regulatory events
-    
+
     For technical details, see the GitHub repository documentation.
     """
 
@@ -488,7 +488,7 @@ class FinancialAssetApp:
                     gr.Markdown(
                         """
                     ## Mathematical Relationships & Formulas
-                    
+
                     This section extracts and visualizes mathematical formulas and relationships between financial variables.
                     It includes fundamental financial ratios, correlation patterns, valuation models, and empirical relationships
                     derived from the asset database.

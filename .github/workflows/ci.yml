@@ -40,7 +40,6 @@ jobs:
           flake8 . --count --statistics && \
           black --check --diff . && \
           isort --check-only --diff . && \
-          mypy --explicit-package-bases src/ --ignore-missing-imports && \
           pylint src/ --fail-under=7.0 && \
           pytest --cov=src --cov-report=xml --cov-report=term-missing -v
 

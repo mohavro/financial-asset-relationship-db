@@ -449,7 +449,7 @@ class FormulaicdAnalyzer:
             if isinstance(asset, Equity) and asset.dividend_yield:
                 annual_div = asset.price * asset.dividend_yield
                 examples.append(
-                    f"{asset.symbol}: Yield = (${annual_div:.2f} / ${asset.price:.2f}) × 100% = {asset.dividend_yield*100:.2f}%"
+                    f"{asset.symbol}: Yield = (${annual_div:.2f} / ${asset.price:.2f}) × 100% = {asset.dividend_yield * 100:.2f}%"
                 )
         return "\n".join(examples[:3]) if examples else "Dividend calculation requires yield data"
 
@@ -458,14 +458,14 @@ class FormulaicdAnalyzer:
         for asset in graph.assets.values():
             if isinstance(asset, Bond):
                 ytm = asset.yield_to_maturity or 0.03
-                examples.append(f"{asset.symbol}: YTM ≈ {ytm*100:.2f}% (simplified for ETF)")
+                examples.append(f"{asset.symbol}: YTM ≈ {ytm * 100:.2f}% (simplified for ETF)")
         return "\n".join(examples[:3]) if examples else "YTM calculation for bond ETFs"
 
     def _calculate_market_cap_examples(self, graph: AssetRelationshipGraph) -> str:
         examples = []
         for asset in graph.assets.values():
             if isinstance(asset, Equity) and asset.market_cap:
-                examples.append(f"{asset.symbol}: Market Cap = ${asset.market_cap/1e9:.1f}B")
+                examples.append(f"{asset.symbol}: Market Cap = ${asset.market_cap / 1e9:.1f}B")
         return "\n".join(examples[:3]) if examples else "Market cap data from API"
 
     def _calculate_beta_examples(self, graph: AssetRelationshipGraph) -> str:
@@ -498,7 +498,7 @@ class FormulaicdAnalyzer:
         examples = []
         for asset in graph.assets.values():
             if isinstance(asset, Commodity) and asset.volatility:
-                examples.append(f"{asset.symbol}: σ = {asset.volatility*100:.1f}% (annualized)")
+                examples.append(f"{asset.symbol}: σ = {asset.volatility * 100:.1f}% (annualized)")
         return "\n".join(examples[:3]) if examples else "Volatility estimation from commodity data"
 
     def _calculate_portfolio_return_examples(self, graph: AssetRelationshipGraph) -> str:

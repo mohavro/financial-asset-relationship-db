@@ -1,8 +1,6 @@
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import List
 
-import pandas as pd
 import yfinance as yf
 
 from src.logic.asset_graph import AssetRelationshipGraph
