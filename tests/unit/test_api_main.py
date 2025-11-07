@@ -112,6 +112,22 @@ class TestGraphInitialization:
 
         graph = api.main.get_graph()
 
+    def test_graph_fallback_on_corrupted_cache(self, tmp_path, monkeypatch):
+        """Graph initialization should fallback when cache is corrupted or invalid."""
+        import api.main
+
+        cache_path = tmp_path / "graph_snapshot.json"
+        # Write invalid/corrupted data to the cache file
+        cache_path.write_text("not a valid json or graph data")
+
+        monkeypatch.setenv("GRAPH_CACHE_PATH", str(cache_path))
+        api.main.reset_graph()
+
+        # Should not raise, and should return a valid graph object
+        graph = api.main.get_graph()
+        assert graph is not None
+        assert hasattr(graph, "assets")
+
         assert graph is not None
         assert len(graph.assets) == len(reference_graph.assets)
 
