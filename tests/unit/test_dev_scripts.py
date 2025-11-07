@@ -6,9 +6,10 @@ This module validates:
 - Vercel deployment configuration
 """
 
-import pytest
 import json
 import os
+
+import pytest
 
 
 class TestVercelConfiguration:

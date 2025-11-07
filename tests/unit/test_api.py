@@ -10,12 +10,14 @@ This module tests all API endpoints including:
 - Error handling and edge cases
 """
 
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch
+
 from api.main import app, validate_origin
 from src.logic.asset_graph import AssetRelationshipGraph
-from src.models.financial_models import AssetClass, Equity, Bond, Commodity, Currency
+from src.models.financial_models import AssetClass, Bond, Commodity, Currency, Equity
 
 
 @pytest.fixture
@@ -708,8 +710,9 @@ class TestRealDataFetcherFallback:
     @patch("src.data.real_data_fetcher.yf.Ticker")
     def test_real_data_fetcher_empty_history_graceful_handling(self, mock_ticker):
         """Test RealDataFetcher handles empty ticker history gracefully."""
-        from src.data.real_data_fetcher import RealDataFetcher
         import pandas as pd
+
+        from src.data.real_data_fetcher import RealDataFetcher
 
         # Mock ticker to return empty history
         mock_ticker_instance = mock_ticker.return_value

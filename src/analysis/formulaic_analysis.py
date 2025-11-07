@@ -1,8 +1,9 @@
-from typing import Dict, List, Any
-from dataclasses import dataclass
-from src.logic.asset_graph import AssetRelationshipGraph
-from src.models.financial_models import Equity, Bond, Commodity, Currency
 import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
+from src.logic.asset_graph import AssetRelationshipGraph
+from src.models.financial_models import Bond, Commodity, Currency, Equity
 
 logger = logging.getLogger(__name__)
 
@@ -448,7 +449,7 @@ class FormulaicdAnalyzer:
             if isinstance(asset, Equity) and asset.dividend_yield:
                 annual_div = asset.price * asset.dividend_yield
                 examples.append(
-                    f"{asset.symbol}: Yield = (${annual_div:.2f} / ${asset.price:.2f}) × 100% = {asset.dividend_yield*100:.2f}%"
+                    f"{asset.symbol}: Yield = (${annual_div:.2f} / ${asset.price:.2f}) × 100% = {asset.dividend_yield * 100:.2f}%"
                 )
         return "\n".join(examples[:3]) if examples else "Dividend calculation requires yield data"
 
@@ -457,17 +458,17 @@ class FormulaicdAnalyzer:
         for asset in graph.assets.values():
             if isinstance(asset, Bond):
                 ytm = asset.yield_to_maturity or 0.03
-                examples.append(f"{asset.symbol}: YTM ≈ {ytm*100:.2f}% (simplified for ETF)")
+                examples.append(f"{asset.symbol}: YTM ≈ {ytm * 100:.2f}% (simplified for ETF)")
         return "\n".join(examples[:3]) if examples else "YTM calculation for bond ETFs"
 
     def _calculate_market_cap_examples(self, graph: AssetRelationshipGraph) -> str:
         examples = []
         for asset in graph.assets.values():
             if isinstance(asset, Equity) and asset.market_cap:
-                examples.append(f"{asset.symbol}: Market Cap = ${asset.market_cap/1e9:.1f}B")
+                examples.append(f"{asset.symbol}: Market Cap = ${asset.market_cap / 1e9:.1f}B")
         return "\n".join(examples[:3]) if examples else "Market cap data from API"
 
-    def _calculate_beta_examples(self, graph: AssetRelationshipGraph) -> str:
+    def _calculate_beta_examples(self, _graph: AssetRelationshipGraph) -> str:
         return "Beta calculation requires historical price data (estimated: Tech stocks β ≈ 1.2, Utilities β ≈ 0.8)"
 
     def _calculate_correlation_examples(self, graph: AssetRelationshipGraph) -> str:
@@ -490,14 +491,14 @@ class FormulaicdAnalyzer:
                 examples.append(f"{asset.symbol}: P/B = ${asset.price:.2f} / ${asset.book_value:.2f} = {pb_ratio:.2f}")
         return "\n".join(examples[:3]) if examples else "P/B calculation requires book value data"
 
-    def _calculate_sharpe_examples(self, graph: AssetRelationshipGraph) -> str:
+    def _calculate_sharpe_examples(self, _graph: AssetRelationshipGraph) -> str:
         return "Sharpe ratio calculation requires return history and risk-free rate (estimated range: 0.5-1.5)"
 
     def _calculate_volatility_examples(self, graph: AssetRelationshipGraph) -> str:
         examples = []
         for asset in graph.assets.values():
             if isinstance(asset, Commodity) and asset.volatility:
-                examples.append(f"{asset.symbol}: σ = {asset.volatility*100:.1f}% (annualized)")
+                examples.append(f"{asset.symbol}: σ = {asset.volatility * 100:.1f}% (annualized)")
         return "\n".join(examples[:3]) if examples else "Volatility estimation from commodity data"
 
     def _calculate_portfolio_return_examples(self, graph: AssetRelationshipGraph) -> str:
@@ -509,7 +510,7 @@ class FormulaicdAnalyzer:
             return example
         return "Portfolio return calculation example"
 
-    def _calculate_portfolio_variance_examples(self, graph: AssetRelationshipGraph) -> str:
+    def _calculate_portfolio_variance_examples(self, _graph: AssetRelationshipGraph) -> str:
         return "Portfolio variance: σ²p = w₁²σ₁² + w₂²σ₂² + 2w₁w₂ρ₁₂σ₁σ₂ (requires correlation data)"
 
     def _calculate_exchange_rate_examples(self, graph: AssetRelationshipGraph) -> str:
@@ -521,7 +522,7 @@ class FormulaicdAnalyzer:
             return "\n".join(examples)
         return "Exchange rate relationships from forex data"
 
-    def _calculate_commodity_currency_examples(self, graph: AssetRelationshipGraph) -> str:
+    def _calculate_commodity_currency_examples(self, _graph: AssetRelationshipGraph) -> str:
         return "Gold price vs USD: Higher gold prices often correlate with weaker USD"
 
     def _calculate_correlation_matrix(self, assets_data: Dict) -> Dict:
@@ -544,7 +545,7 @@ class FormulaicdAnalyzer:
 
         return correlations
 
-    def _find_strongest_correlations(self, correlation_matrix: Dict, assets_data: Dict) -> List[Dict]:
+    def _find_strongest_correlations(self, correlation_matrix: Dict, _assets_data: Dict) -> List[Dict]:
         """Find the strongest correlations in the matrix"""
         correlations = []
         for pair, corr in correlation_matrix.items():
