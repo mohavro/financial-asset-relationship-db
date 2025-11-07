@@ -125,7 +125,7 @@ def _should_use_real_data_fetcher() -> bool:
     Decides whether the application should use the real data fetcher based on the `USE_REAL_DATA_FETCHER` environment variable.
 
     Returns:
-        `true` if `USE_REAL_DATA_FETCHER` is set to a truthy value (`1`, `true`, `yes`, `on`), `false` otherwise.
+        `True` if `USE_REAL_DATA_FETCHER` is set to a truthy value (`1`, `true`, `yes`, `on`), `False` otherwise.
     """
     flag = os.getenv("USE_REAL_DATA_FETCHER", "false")
     return flag.strip().lower() in {"1", "true", "yes", "on"}
