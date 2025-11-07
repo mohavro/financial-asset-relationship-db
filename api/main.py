@@ -40,13 +40,10 @@ graph_lock = threading.Lock()
 
 def get_graph() -> AssetRelationshipGraph:
     """
-    Get or create the global graph instance with thread-safe initialization.
-
-    Uses double-check locking pattern for efficiency in concurrent environments.
-    The graph is lazily initialized on first access or during application startup.
+    Provide the global AssetRelationshipGraph, initialising it on first access if necessary.
 
     Returns:
-        AssetRelationshipGraph: The initialized graph instance.
+        AssetRelationshipGraph: The global graph instance.
     """
     global graph
     if graph is None:
@@ -58,7 +55,12 @@ def get_graph() -> AssetRelationshipGraph:
 
 
 def set_graph(graph_instance: AssetRelationshipGraph) -> None:
-    """Explicitly set the global graph instance."""
+    """
+    Set the module-level graph to the provided AssetRelationshipGraph and clear any configured graph factory.
+
+    Parameters:
+        graph_instance (AssetRelationshipGraph): Graph instance to use as the global graph.
+    """
     global graph, graph_factory
     with graph_lock:
         graph = graph_instance
@@ -66,7 +68,14 @@ def set_graph(graph_instance: AssetRelationshipGraph) -> None:
 
 
 def set_graph_factory(factory: Optional[Callable[[], AssetRelationshipGraph]]) -> None:
-    """Configure a custom factory used to build the graph on demand."""
+    """
+    Set the callable used to construct the global AssetRelationshipGraph on demand.
+
+    If `factory` is a callable it will be used to build the graph the next time `get_graph()` is called. Passing `None` clears any configured factory. In all cases the current global graph instance is cleared so a new graph will be created on next access; this operation is performed in a thread-safe manner.
+
+    Parameters:
+        factory (Optional[Callable[[], AssetRelationshipGraph]]): A zero-argument callable that returns an `AssetRelationshipGraph`, or `None` to remove the factory and force recreation from defaults.
+    """
     global graph, graph_factory
     with graph_lock:
         graph_factory = factory
@@ -74,12 +83,23 @@ def set_graph_factory(factory: Optional[Callable[[], AssetRelationshipGraph]]) -
 
 
 def reset_graph() -> None:
-    """Reset the graph and any configured factory."""
+    """
+    Clear the global graph and any configured factory so the graph will be reinitialised on next access.
+
+    This removes any existing graph instance and clears the graph factory.
+    """
     set_graph_factory(None)
 
 
 def _initialize_graph() -> AssetRelationshipGraph:
-    """Resolve and build the graph using the configured strategy."""
+    """
+    Construct the asset relationship graph using the configured factory or environment-backed data sources.
+
+    If a `graph_factory` is configured it is invoked. Otherwise, if `GRAPH_CACHE_PATH` is set a real-data graph is created (network access enabled when `USE_REAL_DATA_FETCHER` indicates real data should be used). If `GRAPH_CACHE_PATH` is not set but `USE_REAL_DATA_FETCHER` is true, `REAL_DATA_CACHE_PATH` is consulted to create a real-data graph. If neither real-data path nor real-data mode is available, a sample database graph is returned.
+
+    Returns:
+        AssetRelationshipGraph: The initialized graph instance.
+    """
     if graph_factory is not None:
         return graph_factory()
 
@@ -101,7 +121,12 @@ def _initialize_graph() -> AssetRelationshipGraph:
 
 
 def _should_use_real_data_fetcher() -> bool:
-    """Check environment flag to determine if real data should be used."""
+    """
+    Decides whether the application should use the real data fetcher based on the `USE_REAL_DATA_FETCHER` environment variable.
+
+    Returns:
+        `true` if `USE_REAL_DATA_FETCHER` is set to a truthy value (`1`, `true`, `yes`, `on`), `false` otherwise.
+    """
     flag = os.getenv("USE_REAL_DATA_FETCHER", "false")
     return flag.strip().lower() in {"1", "true", "yes", "on"}
 
@@ -109,10 +134,12 @@ def _should_use_real_data_fetcher() -> bool:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Application lifespan event handler.
+    Manage the application's lifespan by initialising the global graph on startup and logging shutdown.
 
-    Initializes the graph during startup and handles cleanup on shutdown.
-    This ensures the database is ready before handling any requests.
+    Initialises the global asset relationship graph before the application begins handling requests; if initialisation fails the exception is re-raised to abort startup. Yields control for the application's running lifetime and logs on shutdown.
+
+    Parameters:
+        app (FastAPI): The FastAPI application instance.
     """
     # Startup
     try:
@@ -173,7 +200,21 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
 
 
 def validate_origin(origin: str) -> bool:
-    """Validate that an origin matches expected patterns"""
+    """
+    Determine whether an HTTP origin is permitted by the application's CORS rules.
+
+    The check respects an explicit ALLOWED_ORIGINS environment list and allows:
+    - HTTPS origins with a valid domain,
+    - Vercel preview deployment hostnames,
+    - HTTPS localhost/127.0.0.1 on any environment,
+    - HTTP localhost/127.0.0.1 when ENV is set to "development".
+
+    Parameters:
+        origin (str): The origin URL to validate (e.g. "https://example.com" or "http://localhost:3000").
+
+    Returns:
+        bool: `True` if the origin is allowed, `False` otherwise.
+    """
     # Read environment dynamically to support runtime overrides (e.g., during tests)
     current_env = os.getenv("ENV", "development").lower()
     
@@ -521,18 +562,17 @@ async def get_all_relationships():
 @app.get("/api/metrics", response_model=MetricsResponse)
 async def get_metrics():
     """
-    Return aggregated network metrics and counts of assets grouped by asset class.
-
-    Builds a MetricsResponse containing overall network statistics and a mapping from asset class name to the number of assets in that class.
+    Aggregate network metrics and counts of assets by asset class.
 
     Returns:
-        MetricsResponse: Object with the following fields:
-            - total_assets: total number of assets in the graph.
-            - total_relationships: total number of directed relationships in the graph.
-            - asset_classes: dict mapping asset class name (str) to its asset count (int).
+        MetricsResponse: Aggregated metrics including:
+            - total_assets: total number of assets.
+            - total_relationships: total number of directed relationships.
+            - asset_classes: dict mapping asset class name (str) to asset count (int).
             - avg_degree: average node degree (float).
             - max_degree: maximum node degree (int).
             - network_density: network density (float).
+            - relationship_density: relationship density (float).
 
     Raises:
         HTTPException: with status code 500 if metrics cannot be obtained.
