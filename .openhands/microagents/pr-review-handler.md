@@ -3,12 +3,32 @@ name: PR Review Handler
 type: knowledge
 version: 1.0.0
 agent: CodeActAgent
-triggers: []
+triggers: ["review PR", "review comment", "review comments", "review all unresolved comments", "review commit", "review all commits", "fix", "make changes", "recommend change", "recommend changes", "recommend fix", "recommend fixes", "review merge conflict", "fix merge conflict", "request review from @mohavro", "request review by me", "request review from me", "request review MM", "request review mm"]
 ---
 
 # PR Review Handler Microagent
 
 This microagent is designed to handle pull request reviews and implement reviewer feedback for the financial-asset-relationship-db repository.
+
+## Activation
+
+### Manual Activation
+To manually activate this microagent, use the reference: **@openhands-agent-prrh**
+
+### Automatic Triggers
+This microagent automatically activates when any of these keywords/phrases are mentioned:
+- `review PR`
+- `review comment` / `review comments`
+- `review all unresolved comments`
+- `review commit` / `review all commits`
+- `fix`
+- `make changes`
+- `recommend change` / `recommend changes`
+- `recommend fix` / `recommend fixes`
+- `review merge conflict` / `fix merge conflict`
+- `request review from @mohavro`
+- `request review by me` / `request review from me`
+- `request review MM` / `request review mm`
 
 ## Purpose
 
