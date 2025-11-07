@@ -59,9 +59,12 @@ actions:
   require_approval_for:
     - "package.json"
     - "requirements.txt"
+    - "pyproject.toml"
     - "Dockerfile"
-    - ".github/"
+    - ".github/workflows/"
+    - ".github/pr-agent-config.yml"
     - "database/"
+    - "*.env*"
 
 # Code quality standards
 quality:
@@ -107,10 +110,11 @@ ci:
   max_check_retries: 2
   
   required_checks:
-    - "ci/circleci: frontend-lint"
-    - "ci/circleci: frontend-build"
-    - "ci/circleci: python-lint"
-    - "ci/circleci: python-test"
+    - "frontend-lint"
+    - "frontend-build" 
+    - "python-lint"
+    - "python-test"
+    - "ci/circleci"
   
   optional_checks:
     - "netlify"
@@ -199,9 +203,10 @@ repository:
   frontend_framework: "nextjs"
   
   key_files:
-    - "app.py"
+    - "main.py"
+    - "api/main.py"
     - "src/logic/asset_graph.py"
-    - "src/models/financial_models.py"
+    - "src/data/database.py"
     - "frontend/app/page.tsx"
   
   test_directories:
