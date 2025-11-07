@@ -216,8 +216,8 @@ class AssetRelationshipGraph:
             metrics["total_relationships"] = total_out_degree
             metrics["average_in_degree"] = total_in_degree / node_count
             metrics["average_out_degree"] = total_out_degree / node_count
-            metrics["average_degree"] = (total_in_degree + total_out_degree) / node_count
-            metrics["avg_degree"] = metrics["average_degree"]
+            metrics["avg_degree"] = (total_in_degree + total_out_degree) / node_count
+
             metrics["max_in_degree"] = max_in_degree
             metrics["max_out_degree"] = max_out_degree
             metrics["max_degree"] = max_total_degree
