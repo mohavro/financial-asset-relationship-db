@@ -44,8 +44,23 @@ DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 
 
+_MEMORY_CONNECTION: sqlite3.Connection | None = None
+
+
 def _connect() -> sqlite3.Connection:
-    """Create a new SQLite connection with sensible defaults."""
+    """Create (or return) a SQLite connection with sensible defaults."""
+
+    global _MEMORY_CONNECTION
+
+    if DATABASE_PATH == ":memory:":
+        if _MEMORY_CONNECTION is None:
+            _MEMORY_CONNECTION = sqlite3.connect(
+                DATABASE_PATH,
+                detect_types=sqlite3.PARSE_DECLTYPES,
+                check_same_thread=False,
+            )
+            _MEMORY_CONNECTION.row_factory = sqlite3.Row
+        return _MEMORY_CONNECTION
 
     connection = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
     connection.row_factory = sqlite3.Row
@@ -60,7 +75,8 @@ def get_connection() -> Iterator[sqlite3.Connection]:
     try:
         yield connection
     finally:
-        connection.close()
+        if DATABASE_PATH != ":memory:":
+            connection.close()
 
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
