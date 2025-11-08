@@ -189,7 +189,11 @@ export default function AssetList() {
   };
 
   const goToPage = (nextPage: number) => {
-    if (nextPage < 1 || (totalPages !== null && nextPage > totalPages)) return;
+    if (
+      nextPage < 1 ||
+      (totalPages !== null && nextPage > totalPages) ||
+      nextPage === page
+    ) return;
     setPage(nextPage);
     updateQueryParams({ page: String(nextPage) });
   };
