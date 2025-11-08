@@ -143,7 +143,10 @@ export default function AssetList() {
       });
 
       const queryString = params.toString();
-      router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+      const currentQueryString = searchParams.toString();
+      if (queryString !== currentQueryString) {
+        router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+      }
     },
     [pathname, router, searchParams]
   );
