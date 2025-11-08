@@ -181,7 +181,16 @@ ENV = os.getenv("ENV", "development").lower()
 @app.post("/token", response_model=Token)
 @limiter.limit("5/minute")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    """Generate JWT token for authenticated users"""
+    """
+    Generate a JWT access token for a user authenticated with username and password.
+    
+    Parameters:
+        request (Request): Required for slowapi's rate limiter dependency injection; not otherwise used.
+        form_data (OAuth2PasswordRequestForm): Credentials submitted by the client.
+    
+    Returns:
+        dict: Mapping containing `access_token` (JWT string) and `token_type` set to `'bearer'`.
+    """
     # The `request` parameter is required by slowapi's limiter for dependency injection.
     _ = request
 
@@ -200,7 +209,16 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
 @app.get("/api/users/me", response_model=User)
 @limiter.limit("10/minute")
 async def read_users_me(request: Request, current_user: User = Depends(get_current_active_user)):
-    """Return details about the currently authenticated user."""
+    """
+    Get the currently authenticated user.
+    
+    Parameters:
+        request (Request): Required for slowapi's rate-limiter dependency injection; parameter is unused.
+        current_user (User): The authenticated user injected by the dependency.
+    
+    Returns:
+        User: The currently authenticated user.
+    """
 
     # The `request` parameter is required by slowapi's limiter for dependency injection.
     _ = request
@@ -211,16 +229,12 @@ async def read_users_me(request: Request, current_user: User = Depends(get_curre
 def validate_origin(origin: str) -> bool:
     """
     Determine whether an HTTP origin is permitted by the application's CORS rules.
-
-    The check respects an explicit ALLOWED_ORIGINS environment list and allows:
-    - HTTPS origins with a valid domain,
-    - Vercel preview deployment hostnames,
-    - HTTPS localhost/127.0.0.1 on any environment,
-    - HTTP localhost/127.0.0.1 when ENV is set to "development".
-
+    
+    Allows origins that are explicitly listed via the ALLOWED_ORIGINS environment variable, HTTPS origins with a valid domain, Vercel preview hostnames, HTTPS localhost/127.0.0.1 in any environment, and HTTP localhost/127.0.0.1 when ENV is "development".
+    
     Parameters:
-        origin (str): The origin URL to validate (e.g. "https://example.com" or "http://localhost:3000").
-
+        origin (str): The origin URL to validate (for example "https://example.com" or "http://localhost:3000").
+    
     Returns:
         bool: `True` if the origin is allowed, `False` otherwise.
     """
