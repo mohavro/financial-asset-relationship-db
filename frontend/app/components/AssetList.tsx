@@ -175,7 +175,7 @@ export default function AssetList() {
   const canGoPrev = !loading && page > 1;
 
   const handleFilterChange = (field: 'asset_class' | 'sector') => (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
+    const {value} = event.target;
     setFilter(prev => ({ ...prev, [field]: value }));
     setPage(1);
     updateQueryParams({ [field]: value || null, page: '1' });
