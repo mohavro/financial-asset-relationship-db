@@ -56,12 +56,14 @@ def _resolve_sqlite_path(url: str) -> str:
     else:
         path = parsed.path
 
-    # Handle in-memory databases.
-    if path == "/:memory:":
-        return ":memory:"
-
+# Handle three-slash relative paths (sqlite:///path.db)
+if parsed.netloc == "" and path.startswith("/") and path != "/:memory:":
+    relative_path = path[1:]  # Remove leading slash
+    resolved = Path(relative_path)
+else:
     resolved = Path(path).expanduser().resolve()
-    resolved.parent.mkdir(parents=True, exist_ok=True)
+resolved.parent.mkdir(parents=True, exist_ok=True)
+return str(resolved)
     return str(resolved)
 
 
