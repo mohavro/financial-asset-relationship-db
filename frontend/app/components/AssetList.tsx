@@ -164,13 +164,7 @@ export default function AssetList() {
     return Math.max(1, Math.ceil(total / pageSize));
   }, [pageSize, total]);
 
-  const canGoNext = useMemo(() => {
-    if (loading) return false;
-    if (totalPages !== null) {
-      return page < totalPages;
-    }
-    return assets.length === pageSize;
-  }, [assets.length, loading, page, pageSize, totalPages]);
+const canGoNext = !loading && totalPages !== null && page < totalPages;
 
   const canGoPrev = !loading && page > 1;
 
