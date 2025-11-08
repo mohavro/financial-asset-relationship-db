@@ -211,16 +211,16 @@ class AssetGraphRepository:
 
     def _to_asset_model(self, orm: AssetORM) -> Asset:
         asset_class = AssetClass(orm.asset_class)
-        base_kwargs = dict(
-            id=orm.id,
-            symbol=orm.symbol,
-            name=orm.name,
-            asset_class=asset_class,
-            sector=orm.sector,
-            price=orm.price,
-            market_cap=orm.market_cap,
-            currency=orm.currency,
-        )
+        base_kwargs = {
+            "id": orm.id,
+            "symbol": orm.symbol,
+            "name": orm.name,
+            "asset_class": asset_class,
+            "sector": orm.sector,
+            "price": orm.price,
+            "market_cap": orm.market_cap,
+            "currency": orm.currency,
+        }
 
         if asset_class == AssetClass.EQUITY:
             return Equity(
@@ -254,7 +254,6 @@ class AssetGraphRepository:
                 central_bank_rate=orm.central_bank_rate,
             )
         return Asset(**base_kwargs)
-
     def _to_regulatory_event_model(self, orm: RegulatoryEventORM) -> RegulatoryEvent:
         related_assets = [assoc.asset_id for assoc in orm.related_assets]
         return RegulatoryEvent(
