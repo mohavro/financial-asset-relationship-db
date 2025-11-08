@@ -364,7 +364,7 @@ class AssetRelationshipGraph:
             self._positions_known_asset_ids = []
 
     def _positions_asset_ids_changed(self, asset_ids: List[str]) -> bool:
-        return asset_ids != self._positions_known_asset_ids
+        return sorted(asset_ids) != sorted(self._positions_known_asset_ids)
 
     def _build_outgoing_map(self, relationships: List[RelationshipRecord]) -> Dict[str, List[Tuple[str, str, float]]]:
         outgoing: Dict[str, List[Tuple[str, str, float]]] = {}
