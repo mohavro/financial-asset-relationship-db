@@ -118,7 +118,7 @@ class TestGraphInitialization:
         import api.main
 
         cache_path = tmp_path / "graph_snapshot.json"
-        reference_graph = create_sample_database()
+         # Write invalid/corrupted data to the cache file
         # Write invalid/corrupted data to the cache file
         cache_path.write_text("not a valid json or graph data")
 
