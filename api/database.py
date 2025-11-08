@@ -110,9 +110,7 @@ def fetch_value(query: str, parameters: tuple | list | None = None):
     row = fetch_one(query, parameters)
     if row is None:
         return None
-    if isinstance(row, sqlite3.Row):
-        return row[0]
-    return row
+    return row[0] if isinstance(row, sqlite3.Row) else row
 
 
 def initialize_schema() -> None:
