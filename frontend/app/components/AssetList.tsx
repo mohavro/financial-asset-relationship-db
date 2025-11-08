@@ -107,7 +107,7 @@ export default function AssetList() {
     } finally {
       setLoading(false);
     }
-  }, [filter, page, pageSize, querySummary]);
+  }, [filter, page, pageSize]);
 
   const syncStateFromParams = useCallback(() => {
     const nextAssetClass = searchParams.get('asset_class') ?? '';
