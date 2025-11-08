@@ -20,7 +20,32 @@ def _get_database_url() -> str:
 
 
 def _resolve_sqlite_path(url: str) -> str:
-    """Resolve a SQLite URL (sqlite:///path.db) to a filesystem path."""
+    """Resolve a SQLite URL (sqlite:///path.db) to a filesystem path, handling query parameters and relative paths."""
+
+    from urllib.parse import urlparse, unquote
+
+    parsed = urlparse(url)
+    if parsed.scheme != "sqlite":
+        raise ValueError(f"Not a valid sqlite URI: {url}")
+
+    # Handle in-memory database
+    if parsed.path == "/:memory:" or parsed.path == ":memory:":
+        return ":memory:"
+
+    # Remove leading slash for relative paths (sqlite:///foo.db)
+    # For absolute paths (sqlite:////abs/path.db), keep leading slash
+    path = unquote(parsed.path)
+    if path.startswith("/") and not path.startswith("//"):
+        # This is an absolute path
+        resolved_path = Path(path).resolve()
+    elif path.startswith("//"):
+        # Remove one leading slash for absolute path
+        resolved_path = Path(path[1:]).resolve()
+    else:
+        # Relative path
+        resolved_path = Path(path.lstrip("/")).resolve()
+
+    return str(resolved_path)
 
     parsed = urlparse(url)
     if parsed.scheme != "sqlite":
