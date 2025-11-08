@@ -74,7 +74,7 @@ class AssetGraphRepository:
     # Relationship helpers
     # ------------------------------------------------------------------
     def add_or_update_relationship(
-        self, source_id: str, target_id: str, rel_type: str, strength: float, bidirectional: bool
+        self, source_id: str, target_id: str, rel_type: str, strength: float, *, bidirectional: bool
     ) -> None:
         """Insert or update a relationship between two assets."""
 
