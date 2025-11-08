@@ -209,7 +209,12 @@ class TestAPIEndpoints:
 
     @pytest.fixture
     def client(self):
-        """Create a test client."""
+        """
+        Provide a TestClient configured with a sample graph and ensure the graph is reset after use.
+        
+        Yields:
+            client (TestClient): A TestClient instance for the FastAPI app with a sample graph preloaded.
+        """
 
         api_main.set_graph(create_sample_database())
         client = TestClient(app)
