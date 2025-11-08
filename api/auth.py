@@ -62,7 +62,6 @@ def _is_truthy(value: str | None) -> bool:
     if not value:
         return False
     return value.lower() in ('true', '1', 'yes', 'on')
-    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 class UserRepository:
