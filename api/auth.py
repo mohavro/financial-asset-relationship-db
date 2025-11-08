@@ -50,10 +50,9 @@ class UserInDB(User):
 
 
 def _is_truthy(value: str | None) -> bool:
-    """Return True if the provided string represents a truthy value."""
-
-    if value is None:
+    if not value:
         return False
+    return value.lower() in ('true', '1', 'yes', 'on')
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
