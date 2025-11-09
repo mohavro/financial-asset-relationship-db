@@ -2,8 +2,10 @@
 """Quick test script to verify API endpoints work"""
 
 import sys
-from api.main import app
+
 from fastapi.testclient import TestClient
+
+from api.main import app
 
 
 def test_api():

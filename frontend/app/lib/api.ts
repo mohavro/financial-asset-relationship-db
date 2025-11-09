@@ -18,7 +18,9 @@ export const api = {
   },
 
   // Assets
-  getAssets: async (params?: { asset_class?: string; sector?: string }): Promise<Asset[]> => {
+  getAssets: async (
+    params?: { asset_class?: string; sector?: string; page?: number; per_page?: number }
+  ): Promise<Asset[] | { items: Asset[]; total: number; page: number; per_page: number }> => {
     const response = await apiClient.get('/api/assets', { params });
     return response.data;
   },

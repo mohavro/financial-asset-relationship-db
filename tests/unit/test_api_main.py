@@ -4,20 +4,25 @@ This module tests all API endpoints, error handling, CORS configuration,
 lazy graph initialization with thread-safe double-check locking, and response models.
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from fastapi.testclient import TestClient
 import os
+from unittest.mock import Mock, patch
 
+import pytest
+from fastapi.testclient import TestClient
+
+import api.main as api_main
 from api.main import (
+    AssetResponse,
+    MetricsResponse,
+    RelationshipResponse,
+    VisualizationDataResponse,
     app,
     validate_origin,
-    AssetResponse,
-    RelationshipResponse,
-    MetricsResponse,
-    VisualizationDataResponse,
 )
-from src.models.financial_models import AssetClass
+from src.data.sample_data import create_sample_database
+from src.data.real_data_fetcher import _save_to_cache
+from src.logic.asset_graph import AssetRelationshipGraph
+from src.models.financial_models import AssetClass, Equity
 
 
 class TestValidateOrigin:
@@ -79,6 +84,7 @@ class TestGraphInitialization:
         """Test graph is initialized via get_graph()."""
         import api.main
 
+        api.main.reset_graph()
         graph = api.main.get_graph()
         assert graph is not None
         assert hasattr(graph, "assets")
@@ -88,10 +94,46 @@ class TestGraphInitialization:
         """Test graph is a singleton instance via get_graph()."""
         import api.main
 
+        api.main.reset_graph()
         graph1 = api.main.get_graph()
         graph2 = api.main.get_graph()
         # Multiple calls should return the same instance
         assert graph1 is graph2
+
+    def test_graph_uses_cache_when_configured(self, tmp_path, monkeypatch):
+        """Graph initialization should load from cached dataset when provided."""
+        import api.main
+
+        cache_path = tmp_path / "graph_snapshot.json"
+        reference_graph = create_sample_database()
+        _save_to_cache(reference_graph, cache_path)
+
+        monkeypatch.setenv("GRAPH_CACHE_PATH", str(cache_path))
+        api.main.reset_graph()
+
+        graph = api.main.get_graph()
+
+    def test_graph_fallback_on_corrupted_cache(self, tmp_path, monkeypatch):
+        """Graph initialization should fallback when cache is corrupted or invalid."""
+        import api.main
+
+        cache_path = tmp_path / "graph_snapshot.json"
+        # Write invalid/corrupted data to the cache file
+        cache_path.write_text("not a valid json or graph data")
+
+        monkeypatch.setenv("GRAPH_CACHE_PATH", str(cache_path))
+        api.main.reset_graph()
+
+        # Should not raise, and should return a valid graph object
+        graph = api.main.get_graph()
+        assert graph is not None
+        assert hasattr(graph, "assets")
+
+        assert graph is not None
+        assert len(graph.assets) == len(reference_graph.assets)
+
+        api.main.reset_graph()
+        monkeypatch.delenv("GRAPH_CACHE_PATH", raising=False)
 
 
 class TestPydanticModels:
@@ -154,10 +196,30 @@ class TestPydanticModels:
 class TestAPIEndpoints:
     """Test all FastAPI endpoints."""
 
-    @pytest.fixture
+metrics = MetricsResponse(
+        total_assets=10,
+        total_relationships=20,
+        asset_classes={"EQUITY": 5, "BOND": 5},
+        avg_degree=2.0,
+        max_degree=5,
+        network_density=0.4,
+        relationship_density=0.5,
+    )
     def client(self):
-        """Create a test client."""
-        return TestClient(app)
+        """
+        Provide a TestClient configured with a sample graph for use in tests.
+        
+        Yields a TestClient instance for the FastAPI app after setting the application's graph to a sample database, and ensures the application's graph is reset when the fixture is torn down.
+        
+        Returns:
+            TestClient: A TestClient instance connected to the FastAPI app.
+        """
+        api_main.set_graph(create_sample_database())
+        client = TestClient(app)
+        try:
+            yield client
+        finally:
+            api_main.reset_graph()
 
     def test_root_endpoint(self, client):
         """Test the root endpoint returns API information."""
@@ -203,6 +265,86 @@ class TestAPIEndpoints:
         # All assets should be EQUITY
         for asset in assets:
             assert asset["asset_class"] == "EQUITY"
+
+    def test_get_metrics_enriched_statistics(self, client):
+        """Metrics endpoint should return populated graph statistics when relationships exist."""
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+
+        data = response.json()
+        assert data["total_assets"] > 0
+        assert data["total_relationships"] > 0
+        assert data["avg_degree"] > 0
+        assert data["max_degree"] >= data["avg_degree"]
+        assert data["network_density"] > 0
+
+    def test_get_metrics_no_assets(self, client):
+        """Metrics endpoint should handle empty graph (no assets)."""
+        api_main.set_graph(AssetRelationshipGraph(database_url="sqlite:///:memory:"))
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_assets"] == 0
+        assert data["total_relationships"] == 0
+        assert data["avg_degree"] == 0
+        assert data["max_degree"] == 0
+        assert data["network_density"] == 0
+
+    def test_get_metrics_one_asset_no_relationships(self, client):
+        """Metrics endpoint should handle graph with one asset and no relationships."""
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
+        graph.add_asset(
+            Equity(
+                id="AAPL",
+                symbol="AAPL",
+                name="Apple Inc.",
+                asset_class=AssetClass.EQUITY,
+                sector="Technology",
+                price=150.0,
+            )
+        )
+        api_main.set_graph(graph)
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_assets"] == 1
+        assert data["total_relationships"] == 0
+        assert data["avg_degree"] == 0
+        assert data["max_degree"] == 0
+        assert data["network_density"] == 0
+
+    def test_get_metrics_multiple_assets_no_relationships(self, client):
+        """Metrics endpoint should handle graph with multiple assets and no relationships."""
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
+        graph.add_asset(
+            Equity(
+                id="AAPL",
+                symbol="AAPL",
+                name="Apple Inc.",
+                asset_class=AssetClass.EQUITY,
+                sector="Technology",
+                price=150.0,
+            )
+        )
+        graph.add_asset(
+            Equity(
+                id="GOOG",
+                symbol="GOOG",
+                name="Alphabet Inc.",
+                asset_class=AssetClass.EQUITY,
+                sector="Technology",
+                price=125.0,
+            )
+        )
+        api_main.set_graph(graph)
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_assets"] == 2
+        assert data["total_relationships"] == 0
+        assert data["avg_degree"] == 0
+        assert data["max_degree"] == 0
+        assert data["network_density"] == 0
 
     def test_get_assets_filter_by_sector(self, client):
         """Test filtering assets by sector."""
@@ -306,7 +448,8 @@ class TestAPIEndpoints:
         assert isinstance(metrics["asset_classes"], dict)
         assert metrics["avg_degree"] >= 0
         assert metrics["max_degree"] >= 0
-        assert 0 <= metrics["network_density"] <= 1
+        assert 0 <= metrics["network_density"] <= 100
+        assert 0 <= metrics["relationship_density"] <= 100
 
     def test_get_visualization_data(self, client):
         """Test getting 3D visualization data."""
@@ -385,9 +528,11 @@ class TestErrorHandling:
     @patch("api.main.graph")
     def test_get_assets_server_error(self, mock_graph_instance, client):
         """Test that server errors are handled gracefully."""
+
         # Make graph.assets raise exception
         def raise_database_error(self):
             raise Exception("Database error")
+
         type(mock_graph_instance).assets = property(raise_database_error)
 
         response = client.get("/api/assets")

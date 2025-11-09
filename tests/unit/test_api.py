@@ -10,12 +10,14 @@ This module tests all API endpoints including:
 - Error handling and edge cases
 """
 
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch
+
 from api.main import app, validate_origin
 from src.logic.asset_graph import AssetRelationshipGraph
-from src.models.financial_models import AssetClass, Equity, Bond, Commodity, Currency
+from src.models.financial_models import AssetClass, Bond, Commodity, Currency, Equity
 
 
 @pytest.fixture
@@ -27,7 +29,7 @@ def client():
 @pytest.fixture
 def mock_graph():
     """Create a mock graph with sample data."""
-    graph = AssetRelationshipGraph()
+    graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
 
     # Add sample equity
     equity = Equity(
@@ -529,7 +531,7 @@ class TestEdgeCases:
     @patch("api.main.graph")
     def test_empty_graph(self, mock_graph_instance, client):
         """Test handling of empty graph."""
-        empty_graph = AssetRelationshipGraph()
+        empty_graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
         # Configure empty graph attributes
         mock_graph_instance.assets = empty_graph.assets
         mock_graph_instance.relationships = empty_graph.relationships
@@ -708,8 +710,9 @@ class TestRealDataFetcherFallback:
     @patch("src.data.real_data_fetcher.yf.Ticker")
     def test_real_data_fetcher_empty_history_graceful_handling(self, mock_ticker):
         """Test RealDataFetcher handles empty ticker history gracefully."""
-        from src.data.real_data_fetcher import RealDataFetcher
         import pandas as pd
+
+        from src.data.real_data_fetcher import RealDataFetcher
 
         # Mock ticker to return empty history
         mock_ticker_instance = mock_ticker.return_value
@@ -756,3 +759,18 @@ class TestRealDataFetcherFallback:
 
         # Should log errors for each failed fetch
         assert mock_logger.error.call_count > 0  # Multiple fetch attempts failed
+
+    def test_real_data_fetcher_loads_from_cache(self, tmp_path):
+        """RealDataFetcher should return cached dataset when available."""
+        from src.data.real_data_fetcher import RealDataFetcher, _save_to_cache
+        from src.data.sample_data import create_sample_database
+
+        cache_path = tmp_path / "cached_dataset.json"
+        reference_graph = create_sample_database()
+        _save_to_cache(reference_graph, cache_path)
+
+        fetcher = RealDataFetcher(cache_path=str(cache_path), enable_network=False)
+        graph = fetcher.create_real_database()
+
+        assert len(graph.assets) == len(reference_graph.assets)
+        assert set(graph.relationships.keys()) == set(reference_graph.relationships.keys())

@@ -1520,7 +1520,6 @@ Dependencies:
 - src.models.financial_models
 - Asset
 - Yahoo
-- starting.
 - the
 
 ### \api\auth.py

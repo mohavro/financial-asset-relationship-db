@@ -1,8 +1,10 @@
+import math
+from typing import Any, Dict
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from typing import Dict, Any
+
 from src.analysis.formulaic_analysis import Formula
-import math
 
 
 class FormulaicVisualizer:

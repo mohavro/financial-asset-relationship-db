@@ -1,0 +1,233 @@
+# PR Agent Configuration
+# Defines behavior and settings for the automated PR management agent
+
+agent:
+  name: "Financial DB PR Agent"
+  version: "1.0.0"
+  enabled: true
+  
+# Monitoring settings
+monitoring:
+  check_interval: 1800  # 30 minutes in seconds
+  max_retries: 3
+  timeout: 300  # 5 minutes
+  
+# Comment parsing configuration
+comment_parsing:
+  triggers:
+    - "@copilot"
+    - "@pr-agent"
+    - "fix this"
+    - "address review"
+    - "update tests"
+    - "check ci"
+  
+  ignore_patterns:
+    - "<!-- "
+    - "```"
+    - "http://"
+    - "https://"
+  
+  priority_keywords:
+    high:
+      - "breaking"
+      - "security"
+      - "critical"
+      - "urgent"
+    medium:
+      - "bug"
+      - "error"
+      - "fix"
+      - "issue"
+    low:
+      - "style"
+      - "format"
+      - "typo"
+      - "suggestion"
+
+# Automated actions configuration
+actions:
+  auto_acknowledge: true
+  auto_implement: true
+  auto_test: true
+  auto_commit: true
+  auto_request_review: true
+  
+  # Safety limits
+  max_changes_per_pr: 10
+  max_files_per_commit: 5
+  require_approval_for:
+    - "package.json"
+    - "requirements.txt"
+    - "pyproject.toml"
+    - "Dockerfile"
+    - ".github/workflows/"
+    - ".github/pr-agent-config.yml"
+    - "database/"
+    - "*.env*"
+
+# Code quality standards
+quality:
+  python:
+    linter: "flake8"
+    formatter: "black"
+    type_checker: "mypy"
+    test_runner: "pytest"
+    min_coverage: 80
+    
+  typescript:
+    linter: "eslint"
+    formatter: "prettier"
+    type_checker: "tsc"
+    test_runner: "jest"
+    min_coverage: 75
+    
+  general:
+    max_line_length: 88
+    require_tests: true
+    require_docs: false
+    conventional_commits: true
+
+# Git workflow settings
+git:
+  branch_strategy: "update_existing"
+  commit_style: "conventional"
+  squash_commits: false
+  auto_rebase: true
+  
+  commit_templates:
+    fix: "fix: {description}"
+    feat: "feat: {description}"
+    docs: "docs: {description}"
+    test: "test: {description}"
+    refactor: "refactor: {description}"
+    style: "style: {description}"
+
+# CI/CD integration
+ci:
+  wait_for_checks: true
+  retry_failed_checks: true
+  max_check_retries: 2
+  
+  required_checks:
+    - "frontend-lint"
+    - "frontend-build" 
+    - "python-lint"
+    - "python-test"
+    - "ci/circleci"
+  
+  optional_checks:
+    - "netlify"
+    - "vercel"
+    - "CodeRabbit"
+
+# Notification settings
+notifications:
+  slack_webhook: null  # Configure if needed
+  email_alerts: false
+  github_comments: true
+  
+  templates:
+    acknowledgment: |
+      👋 Thanks for the review! I'm analyzing the feedback and will implement the requested changes.
+      
+      **Action Items Identified:**
+      {action_items}
+      
+      I'll update this PR shortly with the changes and request a re-review.
+    
+    completion: |
+      ✅ **Changes Implemented**
+      
+      I've addressed the review feedback with the following changes:
+      {changes_summary}
+      
+      **Files Modified:**
+      {modified_files}
+      
+      Please re-review when convenient. All CI checks should pass shortly.
+    
+    error: |
+      ⚠️ **Issue Encountered**
+      
+      I encountered an issue while implementing the requested changes:
+      {error_message}
+      
+      This may require human intervention. Please review and assist.
+
+# Learning and improvement
+learning:
+  track_success_rate: true
+  save_failed_attempts: true
+  analyze_patterns: true
+  
+  feedback_sources:
+    - reviewer_comments
+    - ci_results
+    - merge_success
+    - post_merge_issues
+
+# Security and permissions
+security:
+  allowed_file_patterns:
+    - "src/**/*.py"
+    - "api/**/*.py"
+    - "frontend/**/*.ts"
+    - "frontend/**/*.tsx"
+    - "frontend/**/*.js"
+    - "frontend/**/*.jsx"
+    - "tests/**/*"
+    - "**/*.md"
+    - "**/*.yml"
+    - "**/*.yaml"
+    - "**/*.json"
+  
+  forbidden_patterns:
+    - "**/*.env"
+    - "**/secrets/**"
+    - "**/private/**"
+    - "**/*.key"
+    - "**/*.pem"
+  
+  require_human_approval:
+    - security_related: true
+    - breaking_changes: true
+    - dependency_updates: false
+    - config_changes: true
+
+# Repository-specific settings
+repository:
+  name: "financial-asset-relationship-db"
+  primary_language: "python"
+  framework: "fastapi"
+  frontend_framework: "nextjs"
+  
+  key_files:
+    - "main.py"
+    - "api/main.py"
+    - "src/logic/asset_graph.py"
+    - "src/data/database.py"
+    - "frontend/app/page.tsx"
+  
+  test_directories:
+    - "tests/"
+    - "frontend/__tests__/"
+  
+  documentation:
+    - "README.md"
+    - "ARCHITECTURE.md"
+    - "API_DOCS.md"
+
+# Performance and resource limits
+limits:
+  max_execution_time: 600  # 10 minutes
+  max_memory_usage: "1GB"
+  max_concurrent_prs: 5
+  rate_limit_requests: 100  # per hour
+  
+# Debugging and logging
+debug:
+  enabled: false
+  log_level: "INFO"
+  save_logs: true
+  log_retention_days: 30

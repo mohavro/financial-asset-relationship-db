@@ -32,6 +32,17 @@ describe('NetworkVisualization Component', () => {
         color: '#1f77b4',
         size: 10,
       },
+      {
+        id: 'ASSET_2',
+        name: 'Microsoft Corp.',
+        symbol: 'MSFT',
+        asset_class: 'EQUITY',
+        x: 2.5,
+        y: 3.3,
+        z: 1.2,
+        color: '#ff7f0e',
+        size: 12,
+      },
     ],
     edges: [
       {
@@ -43,9 +54,9 @@ describe('NetworkVisualization Component', () => {
     ],
   };
 
-  it('should show loading message for empty data', () => {
+  it('should show empty data message when nodes or edges are missing', () => {
     render(<NetworkVisualization data={{ nodes: [], edges: [] }} />);
-    expect(screen.getByText('Loading visualization...')).toBeInTheDocument();
+    expect(screen.getByText('Visualization data is missing nodes or edges.')).toBeInTheDocument();
   });
 
   it('should render plot with data', async () => {
@@ -68,12 +79,12 @@ describe('NetworkVisualization Component', () => {
 
   it('should handle null data gracefully', () => {
     render(<NetworkVisualization data={null as any} />);
-    expect(screen.getByText('Loading visualization...')).toBeInTheDocument();
+    expect(screen.getByText('No visualization data available.')).toBeInTheDocument();
   });
 
   it('should update when data changes', async () => {
     const { rerender } = render(<NetworkVisualization data={mockData} />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('mock-plot')).toBeInTheDocument();
     });
@@ -84,6 +95,34 @@ describe('NetworkVisualization Component', () => {
     };
 
     rerender(<NetworkVisualization data={newData} />);
-    expect(screen.getByText('Loading visualization...')).toBeInTheDocument();
+    expect(screen.getByText('Visualization data is missing nodes or edges.')).toBeInTheDocument();
+  });
+
+  it('should show a helpful message when dataset is too large', () => {
+    const bigData: VisualizationData = {
+      nodes: Array.from({ length: 600 }, (_, index) => ({
+        id: `NODE_${index}`,
+        name: `Node ${index}`,
+        symbol: `SYM${index}`,
+        asset_class: 'EQUITY',
+        x: Math.random(),
+        y: Math.random(),
+        z: Math.random(),
+        color: '#000000',
+        size: 5,
+      })),
+      edges: Array.from({ length: 2001 }, (_, index) => ({
+        source: 'NODE_0',
+        target: `NODE_${index % 599 + 1}`,
+        relationship_type: 'TEST',
+        strength: 0.5,
+      })),
+    };
+
+    render(<NetworkVisualization data={bigData} />);
+
+    expect(
+      screen.getByText(/Visualization is unavailable because the dataset is too large/)
+    ).toBeInTheDocument();
   });
 });
