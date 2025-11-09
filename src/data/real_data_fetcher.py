@@ -511,20 +511,19 @@ def _deserialize_graph(payload: Dict[str, Any]) -> AssetRelationshipGraph:
         asset = _deserialize_asset(dict(asset_data))
         graph.add_asset(asset)
 
-    graph.regulatory_events = [_deserialize_event(event) for event in payload.get("regulatory_events", [])]
+    for event_data in payload.get("regulatory_events", []):
+        graph.add_regulatory_event(_deserialize_event(event_data))
 
     relationships_payload = payload.get("relationships", {})
-    incoming_payload = payload.get("incoming_relationships", {})
-
-    graph.relationships = {
-        source: [(item["target"], item["relationship_type"], float(item["strength"])) for item in rels]
-        for source, rels in relationships_payload.items()
-    }
-
-    graph.incoming_relationships = {
-        target: [(item["source"], item["relationship_type"], float(item["strength"])) for item in rels]
-        for target, rels in incoming_payload.items()
-    }
+    for source, rels in relationships_payload.items():
+        for item in rels:
+            graph.add_relationship(
+                source,
+                item["target"],
+                item["relationship_type"],
+                float(item["strength"]),
+                bidirectional=False,
+            )
 
     return graph
 
