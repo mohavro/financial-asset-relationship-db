@@ -491,7 +491,7 @@ class TestDocumentationRealisticContent:
 
             check_path = Path(unix_path)
             # Only assert for files that should clearly exist
-            if not any(x in unix_path for x in ["...", "test_", "__tests__"]):
+            if any(x in unix_path for x in ["...", "test_", "__tests__"]):
                 continue
 
             assert check_path.exists() or "..." in file_path, \
