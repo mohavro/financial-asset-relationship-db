@@ -79,7 +79,9 @@ def get_connection() -> Iterator[sqlite3.Connection]:
             connection.close()
 
 
-def execute(query: str, parameters: tuple | list | None = None) -> None:
+def fetch_value(query: str, parameters: tuple | list | None = None):
+    row = fetch_one(query, parameters)
+    return row[0] if row is not None else None
     """Execute a write query within a managed connection."""
 
     with get_connection() as connection:
