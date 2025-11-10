@@ -23,7 +23,7 @@ from src.data.real_data_fetcher import RealDataFetcher
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import AssetClass
 
-from .auth import Token, authenticate_user, create_access_token
+from .auth import Token, User, authenticate_user, create_access_token, get_current_active_user
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -181,13 +181,20 @@ ENV = os.getenv("ENV", "development").lower()
 @app.post("/token", response_model=Token)
 @limiter.limit("5/minute")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    """Generate JWT token for authenticated users"""
-    from .auth import fake_users_db  # Import here to avoid circular imports
-
+    """
+    Generate a JWT access token for a user authenticated with username and password.
+    
+    Parameters:
+        request (Request): Required for slowapi's rate limiter dependency injection; not otherwise used.
+        form_data (OAuth2PasswordRequestForm): Credentials submitted by the client.
+    
+    Returns:
+        dict: Mapping containing `access_token` (JWT string) and `token_type` set to `'bearer'`.
+    """
     # The `request` parameter is required by slowapi's limiter for dependency injection.
     _ = request
 
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -199,19 +206,35 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+@app.get("/api/users/me", response_model=User)
+@limiter.limit("10/minute")
+async def read_users_me(request: Request, current_user: User = Depends(get_current_active_user)):
+    """
+    Get the currently authenticated user.
+    
+    Parameters:
+        request (Request): Required for slowapi's rate-limiter dependency injection; parameter is unused.
+        current_user (User): The authenticated user injected by the dependency.
+    
+    Returns:
+        User: The currently authenticated user.
+    """
+
+    # The `request` parameter is required by slowapi's limiter for dependency injection.
+    _ = request
+
+    return current_user
+
+
 def validate_origin(origin: str) -> bool:
     """
     Determine whether an HTTP origin is permitted by the application's CORS rules.
-
-    The check respects an explicit ALLOWED_ORIGINS environment list and allows:
-    - HTTPS origins with a valid domain,
-    - Vercel preview deployment hostnames,
-    - HTTPS localhost/127.0.0.1 on any environment,
-    - HTTP localhost/127.0.0.1 when ENV is set to "development".
-
+    
+    Allows origins that are explicitly listed via the ALLOWED_ORIGINS environment variable, HTTPS origins with a valid domain, Vercel preview hostnames, HTTPS localhost/127.0.0.1 in any environment, and HTTP localhost/127.0.0.1 when ENV is "development".
+    
     Parameters:
-        origin (str): The origin URL to validate (e.g. "https://example.com" or "http://localhost:3000").
-
+        origin (str): The origin URL to validate (for example "https://example.com" or "http://localhost:3000").
+    
     Returns:
         bool: `True` if the origin is allowed, `False` otherwise.
     """

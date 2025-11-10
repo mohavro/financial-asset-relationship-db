@@ -7,6 +7,8 @@ This module tests the full API integration including:
 - Performance benchmarks
 """
 
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -182,6 +184,36 @@ class TestPerformance:
 
         # All requests should succeed
         assert all(status == 200 for status in results)
+
+
+class TestAuthenticationFlow:
+    """Test authentication and token validation against the backing store."""
+
+    def test_token_issuance_and_validation(self, client):
+        """A valid credential should yield a token that authorizes protected endpoints."""
+
+        credentials = {
+            "username": os.environ["ADMIN_USERNAME"],
+            "password": os.environ["ADMIN_PASSWORD"],
+        }
+        token_response = client.post(
+            "/token",
+            data=credentials,
+            headers={"content-type": "application/x-www-form-urlencoded"},
+        )
+        assert token_response.status_code == 200
+        token = token_response.json()["access_token"]
+
+        me_response = client.get("/api/users/me", headers={"Authorization": f"Bearer {token}"})
+        assert me_response.status_code == 200
+        payload = me_response.json()
+        assert payload["username"] == credentials["username"]
+        assert payload["email"] == os.environ["ADMIN_EMAIL"]
+        assert payload["full_name"] == os.environ["ADMIN_FULL_NAME"]
+        assert payload["disabled"] is False
+
+        invalid_response = client.get("/api/users/me", headers={"Authorization": "Bearer invalid-token"})
+        assert invalid_response.status_code == 401
 
 
 class TestErrorRecovery:
