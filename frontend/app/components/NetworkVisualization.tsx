@@ -14,6 +14,20 @@ interface NetworkVisualizationProps {
   data: VisualizationData;
 }
 
+type EdgeTrace = {
+  type: 'scatter3d';
+  mode: 'lines';
+  x: number[];
+  y: number[];
+  z: number[];
+  line: {
+    color: string;
+    width: number;
+  };
+  hoverinfo: 'none';
+  showlegend: false;
+};
+
 /**
  * Renders a 3D asset relationship network using the provided visualization data.
  *
@@ -37,23 +51,51 @@ interface NetworkVisualizationProps {
  */
 export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
   const [plotData, setPlotData] = useState<any[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'tooLarge'>('loading');
+  const [message, setMessage] = useState('Loading visualization...');
 
   useEffect(() => {
-    if (!data || !data.nodes || !data.edges) return;
+    if (!data) {
+      setPlotData([]);
+      setStatus('empty');
+      setMessage('No visualization data available.');
+      return;
+    }
+
+    const nodes = Array.isArray(data.nodes) ? data.nodes : [];
+    const edges = Array.isArray(data.edges) ? data.edges : [];
+
+    if (nodes.length === 0 || edges.length === 0) {
+      setPlotData([]);
+      setStatus('empty');
+      setMessage('Visualization data is missing nodes or edges.');
+      return;
+    }
+
+    const MAX_NODES = 500;
+    const MAX_EDGES = 2000;
+    if (nodes.length > MAX_NODES || edges.length > MAX_EDGES) {
+      setPlotData([]);
+      setStatus('tooLarge');
+      setMessage(
+        `Visualization is unavailable because the dataset is too large (${nodes.length} nodes, ${edges.length} edges).`
+      );
+      return;
+    }
 
     // Create node trace
     const nodeTrace = {
       type: 'scatter3d',
       mode: 'markers+text',
-      x: data.nodes.map(n => n.x),
-      y: data.nodes.map(n => n.y),
-      z: data.nodes.map(n => n.z),
-      text: data.nodes.map(n => n.symbol),
-      hovertext: data.nodes.map(n => `${n.name} (${n.symbol})<br>Class: ${n.asset_class}`),
+      x: nodes.map(n => n.x),
+      y: nodes.map(n => n.y),
+      z: nodes.map(n => n.z),
+      text: nodes.map(n => n.symbol),
+      hovertext: nodes.map(n => `${n.name} (${n.symbol})<br>Class: ${n.asset_class}`),
       hoverinfo: 'text',
       marker: {
-        size: data.nodes.map(n => n.size),
-        color: data.nodes.map(n => n.color),
+        size: nodes.map(n => n.size),
+        color: nodes.map(n => n.color),
         line: {
           color: 'white',
           width: 0.5
@@ -66,40 +108,45 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
     };
 
     // Create node lookup map for O(1) access
-    const nodeMap = new Map(data.nodes.map(node => [node.id, node]));
+    const nodeMap = new Map(nodes.map(node => [node.id, node]));
 
     // Create edge traces with type predicate to filter nulls
-    const edgeTraces = data.edges
-      .map(edge => {
-        const sourceNode = nodeMap.get(edge.source);
-        const targetNode = nodeMap.get(edge.target);
-        
-        // Validate that both nodes exist before accessing their properties
-        if (!sourceNode || !targetNode) return null;
-        // Validate that both nodes exist before accessing their properties
-        if (!sourceNode || !targetNode) return null;
+    const edgeTraces = edges.reduce<EdgeTrace[]>((acc, edge) => {
+      const sourceNode = nodeMap.get(edge.source);
+      const targetNode = nodeMap.get(edge.target);
 
-        return {
-          type: 'scatter3d' as const,
-          mode: 'lines' as const,
-          x: [sourceNode.x, targetNode.x],
-          y: [sourceNode.y, targetNode.y],
-          z: [sourceNode.z, targetNode.z],
-          line: {
-            color: `rgba(125, 125, 125, ${edge.strength})`,
-            width: edge.strength * 3
-          },
-          hoverinfo: 'none' as const,
-          showlegend: false
-        };
-      })
-      .filter((trace): trace is NonNullable<typeof trace> => trace !== null);
+      if (!sourceNode || !targetNode) {
+        return acc;
+      }
+
+      acc.push({
+        type: 'scatter3d',
+        mode: 'lines',
+        x: [sourceNode.x, targetNode.x],
+        y: [sourceNode.y, targetNode.y],
+        z: [sourceNode.z, targetNode.z],
+        line: {
+          color: `rgba(125, 125, 125, ${edge.strength})`,
+          width: edge.strength * 3
+        },
+        hoverinfo: 'none',
+        showlegend: false
+      });
+
+      return acc;
+    }, []);
 
     setPlotData([...edgeTraces, nodeTrace]);
+    setStatus('ready');
+    setMessage('');
   }, [data]);
 
-  if (!plotData || plotData.length === 0) {
-    return <div className="text-center p-8">Loading visualization...</div>;
+  if (status !== 'ready') {
+    return (
+      <div className="text-center p-8 text-gray-600" role={status === 'tooLarge' ? 'alert' : 'status'}>
+        {message}
+      </div>
+    );
   }
 
   return (
