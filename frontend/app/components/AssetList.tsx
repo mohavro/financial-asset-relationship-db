@@ -188,14 +188,17 @@ const canGoNext = !loading && totalPages !== null && page < totalPages;
     updateQueryParams({ per_page: String(nextSize), page: '1' });
   };
 
-  const goToPage = (nextPage: number) => {
-    if (
-      nextPage < 1 ||
-      (totalPages !== null && nextPage > totalPages) ||
-      nextPage === page
-    ) return;
-    setPage(nextPage);
-    updateQueryParams({ page: String(nextPage) });
+  const goToPage = (requestedPage: number) => {
+    const lowerBounded = Math.max(1, requestedPage);
+    const bounded =
+      totalPages !== null ? Math.min(lowerBounded, totalPages) : lowerBounded;
+
+    if (bounded === page) {
+      return;
+    }
+
+    setPage(bounded);
+    updateQueryParams({ page: String(bounded) });
   };
 
   return (
