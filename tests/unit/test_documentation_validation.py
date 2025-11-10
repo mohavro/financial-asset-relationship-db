@@ -381,6 +381,9 @@ class TestDocumentationConsistency:
                      for count, file_type in re.findall(dm_pattern, dependency_matrix_content)}
 
         # Extract file counts from system manifest (first occurrence in Project Structure)
+        # Extract file counts from system manifest (first occurrence in Project Structure)
+        assert "## Project Structure" in system_manifest_content, \
+            "## Project Structure section not found in system manifest"
         sm_content = system_manifest_content.split("## Project Structure")[1].split("##")[0]
         sm_counts = {file_type: int(count)
                      for count, file_type in re.findall(dm_pattern, sm_content)}
