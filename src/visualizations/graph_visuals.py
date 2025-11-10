@@ -1,6 +1,8 @@
-import plotly.graph_objects as go
+from typing import List
+
 import numpy as np
-from typing import Tuple, List, Dict
+import plotly.graph_objects as go
+
 from src.logic.asset_graph import AssetRelationshipGraph
 
 

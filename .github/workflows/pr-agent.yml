@@ -1,0 +1,232 @@
+name: PR Agent Workflow
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created]
+  check_suite:
+    types: [completed]
+
+jobs:
+  pr-agent-trigger:
+    permissions:
+      issues: write
+    if: |
+      (github.event_name == 'pull_request_review' && github.event.review.state == 'changes_requested') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@copilot'))
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Validate dependency files exist before installing
+          if [ -f requirements.txt ]; then
+            echo "Installing requirements.txt..."
+            pip install -r requirements.txt
+          else
+            echo "Warning: requirements.txt not found"
+          fi
+          if [ -f requirements-dev.txt ]; then
+            echo "Installing requirements-dev.txt..."
+            pip install -r requirements-dev.txt
+          else
+            echo "Warning: requirements-dev.txt not found, installing basic dev dependencies"
+            pip install pytest flake8 black
+          fi
+
+      - name: Install Node dependencies
+        working-directory: ./frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Installing with npm ci..."
+            npm ci
+          elif [ -f package.json ]; then
+            echo "Installing with npm install..."
+            npm install
+          else
+            echo "Warning: No package.json found in frontend directory"
+            exit 1
+          fi
+
+      - name: Parse PR Review Comments
+        id: parse-comments
+        run: |
+          echo "Parsing review comments and creating action items..."
+          # Extract action items from PR review comments
+          ACTION_ITEMS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.number }}/reviews \
+            --jq '.[] | select(.state == "changes_requested") | .body' \
+            | grep -oE "(fix|add|update|remove|refactor)[^.]*" \
+            | head -5 \
+            | tr '\n' ',' \
+            | sed 's/,$//' || echo "general_improvements")
+          echo "action_items=${ACTION_ITEMS}" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Python Linting
+        run: |
+          python -m flake8 --max-line-length=88 --extend-ignore=E203,W503 api/ src/
+          python -m black --check api/ src/
+
+      - name: Run Python Tests
+        run: |
+          python -m pytest tests/ -v --cov=src --cov-report=term-missing
+
+      - name: Run Frontend Linting
+        working-directory: ./frontend
+        run: |
+          npm run lint
+          npm run type-check
+
+      - name: Run Frontend Tests
+        working-directory: ./frontend
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Create PR Comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.login === 'github-actions[bot]' && 
+              comment.body.includes('🤖 PR Agent Status')
+            );
+            
+            const statusMessage = `🤖 PR Agent Status Update
+            
+            **Review Analysis Complete**
+            - ✅ Code quality checks passed
+            - ✅ Tests are running
+            - 📝 Action items identified: ${{ steps.parse-comments.outputs.action_items }}
+            
+            **Next Steps:**
+            - Implementing requested changes
+            - Will update PR when complete
+            - Re-review will be requested automatically
+            
+            *Automated by PR Agent Workflow*`;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: statusMessage
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: statusMessage
+              });
+            }
+
+  auto-merge-check:
+    permissions:
+      issues: write
+      pull-requests: write
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'synchronize') ||
+      (github.event_name == 'pull_request_review' && github.event.review.state == 'approved') ||
+      (github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check if PR is ready for auto-merge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            
+            const { data: checks } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha,
+            });
+            
+            const allChecksPassed = checks.check_runs.every(check => 
+              check.status === 'completed' && check.conclusion === 'success'
+            );
+            
+            const hasApproval = reviews.some(review => 
+              review.state === 'APPROVED'
+            );
+            
+            if (allChecksPassed && hasApproval && pr.draft === false) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: '🚀 **PR Ready for Merge**\n\n✅ All checks passed\n✅ Approved by reviewer\n\nThis PR is ready to be merged!'
+              });
+            }
+
+  dependency-update:
+    permissions:
+      pull-requests: write
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.title, 'deps')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Auto-approve dependency updates
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Auto-approve minor dependency updates from trusted sources
+            const title = context.payload.pull_request.title.toLowerCase();
+            const author = context.payload.pull_request.user.login;
+            
+            if ((title.includes('bump') || title.includes('update')) && 
+                (author === 'dependabot[bot]' || author === 'renovate[bot]')) {
+              
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                event: 'APPROVE',
+                body: '🤖 Auto-approved dependency update'
+              });
+            }

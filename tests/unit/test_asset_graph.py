@@ -11,8 +11,9 @@ This module contains comprehensive unit tests for the asset relationship graph i
 """
 
 import numpy as np
+
 from src.logic.asset_graph import AssetRelationshipGraph
-from src.models.financial_models import AssetClass, Equity, Bond
+from src.models.financial_models import AssetClass, Bond, Equity
 
 
 class TestAssetRelationshipGraph:
@@ -116,7 +117,7 @@ class TestAssetRelationshipGraph:
 
     def test_same_sector_relationship(self):
         """Test that assets in the same sector are linked."""
-        graph = AssetRelationshipGraph()
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
 
         equity1 = Equity(
             id="TECH1",
@@ -146,7 +147,7 @@ class TestAssetRelationshipGraph:
 
     def test_corporate_bond_relationship(self):
         """Test that corporate bonds are linked to their issuing equity."""
-        graph = AssetRelationshipGraph()
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
 
         equity = Equity(
             id="CORP_EQUITY",

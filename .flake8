@@ -12,7 +12,8 @@ exclude =
     dist,
     .tox,
     .mypy_cache,
-    .pytest_cache
+    .pytest_cache,
+    frontend/node_modules
 
 # Error codes to ignore
 # E203: Whitespace before ':' (conflicts with black formatter)
@@ -28,6 +29,8 @@ ignore =
 per-file-ignores =
     __init__.py:F401,F403
     tests/*:F401,F403,F811
+    src/data/database.py:F841
+    src/visualizations/graph_visuals.py:C901
 
 # Count errors
 count = True

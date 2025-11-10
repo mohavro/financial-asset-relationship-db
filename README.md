@@ -5,7 +5,7 @@ A comprehensive 3D visualization system for interconnected financial assets acro
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.10+
 - Node.js 18+ (for Next.js frontend)
 - Virtual environment (recommended)
 

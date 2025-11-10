@@ -5,7 +5,9 @@ Provides 2D layout algorithms and visualization functions
 
 import math
 from typing import Dict, List, Tuple
+
 import plotly.graph_objects as go
+
 from src.logic.asset_graph import AssetRelationshipGraph
 
 
@@ -167,7 +169,7 @@ def _create_spring_layout_2d(
     positions = {}
 
     for asset_id in asset_ids:
-        x3d, y3d, z3d = positions_3d[asset_id]
+        x3d, y3d, _ = positions_3d[asset_id]
         # Project to 2D by ignoring z-coordinate and normalizing
         positions[asset_id] = (x3d, y3d)
 
@@ -177,7 +179,7 @@ def _create_spring_layout_2d(
 def _create_2d_relationship_traces(
     graph: AssetRelationshipGraph,
     positions: Dict[str, Tuple[float, float]],
-    asset_ids: List[str],
+    _asset_ids: List[str],
     show_same_sector: bool,
     show_market_cap: bool,
     show_correlation: bool,
