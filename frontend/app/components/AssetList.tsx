@@ -19,7 +19,13 @@ const isPaginatedResponse = (value: unknown): value is PaginatedAssetsResponse =
     typeof value === 'object' &&
     value !== null &&
     'items' in value &&
-    Array.isArray((value as PaginatedAssetsResponse).items)
+    'total' in value &&
+    'page' in value &&
+    'per_page' in value &&
+    Array.isArray((value as PaginatedAssetsResponse).items) &&
+    typeof (value as PaginatedAssetsResponse).total === 'number' &&
+    typeof (value as PaginatedAssetsResponse).page === 'number' &&
+    typeof (value as PaginatedAssetsResponse).per_page === 'number'
   );
 };
 
