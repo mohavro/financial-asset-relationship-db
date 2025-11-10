@@ -72,16 +72,8 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
       return;
     }
 
-    const MAX_NODES = 500;
-    const MAX_EDGES = 2000;
-    if (nodes.length > MAX_NODES || edges.length > MAX_EDGES) {
-      setPlotData([]);
-      setStatus('tooLarge');
-      setMessage(
-        `Visualization is unavailable because the dataset is too large (${nodes.length} nodes, ${edges.length} edges).`
-      );
-      return;
-    }
+const MAX_NODES = process.env.NEXT_PUBLIC_MAX_NODES || 500;
+const MAX_EDGES = process.env.NEXT_PUBLIC_MAX_EDGES || 2000;
 
     // Create node trace
     const nodeTrace = {
