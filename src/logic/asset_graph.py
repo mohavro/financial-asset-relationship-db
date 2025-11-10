@@ -393,13 +393,12 @@ class AssetRelationshipGraph:
         if isinstance(asset1, Commodity) and isinstance(asset2, Equity) and self._is_commodity_related(asset1, asset2):
             relationships.append(("commodity_exposure", 0.6, False))
 
-        if isinstance(asset1, Equity) and isinstance(asset2, Bond):
-            if asset1.dividend_yield is not None and asset2.yield_to_maturity is not None:
-                eps = 1e-6
-                num = abs(asset1.dividend_yield - asset2.yield_to_maturity)
-                den = abs(asset1.dividend_yield) + abs(asset2.yield_to_maturity) + eps
-                strength = max(0.0, 1.0 - num / den)
-                relationships.append(("income_comparison", strength, True))
+        if isinstance(asset1, Equity) and isinstance(asset2, Bond) and (asset1.dividend_yield is not None and asset2.yield_to_maturity is not None):
+            eps = 1e-6
+            num = abs(asset1.dividend_yield - asset2.yield_to_maturity)
+            den = abs(asset1.dividend_yield) + abs(asset2.yield_to_maturity) + eps
+            strength = max(0.0, 1.0 - num / den)
+            relationships.append(("income_comparison", strength, True))
 
         return relationships
 
