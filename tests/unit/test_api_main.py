@@ -286,6 +286,8 @@ metrics = MetricsResponse(
         assert data["avg_degree"] > 0
         assert data["max_degree"] >= data["avg_degree"]
         assert data["network_density"] > 0
+        assert "relationship_density" in data
+        assert data["relationship_density"] > 0
 
     def test_get_metrics_no_assets(self, client):
         """Metrics endpoint should handle empty graph (no assets)."""
