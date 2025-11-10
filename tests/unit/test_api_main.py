@@ -113,6 +113,15 @@ class TestGraphInitialization:
 
         graph = api.main.get_graph()
 
+        # Assert that the loaded graph's assets and relationships match the reference graph
+        assert hasattr(graph, "assets")
+        assert hasattr(reference_graph, "assets")
+        assert graph.assets == reference_graph.assets
+
+        # If relationships is a property of the graph, also check it
+        if hasattr(graph, "relationships") and hasattr(reference_graph, "relationships"):
+            assert graph.relationships == reference_graph.relationships
+
     def test_graph_fallback_on_corrupted_cache(self, tmp_path, monkeypatch):
         """Graph initialization should fallback when cache is corrupted or invalid."""
         import api.main
