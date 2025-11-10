@@ -242,7 +242,7 @@ const canGoNext = !loading && totalPages !== null && page < totalPages;
             }`}
             role={error ? 'alert' : 'status'}
           >
-            {error ? error : `Loading results for ${querySummary}...`}
+            {error || `Loading results for ${querySummary}...`}
           </div>
         )}
         <div className="overflow-x-auto">
