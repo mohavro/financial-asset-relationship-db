@@ -346,7 +346,7 @@ class TestSystemManifest:
         """Test basic markdown formatting rules."""
         for i, line in enumerate(system_manifest_lines[:500]):  # Check first 500 lines
             # Check heading formatting
-            if line.startswith("#") and not line.startswith("###"):
+            if line.startswith("#"):
                 # Headings should have space after #
                 heading_match = re.match(r"^(#+)(.+)", line)
                 if heading_match:
