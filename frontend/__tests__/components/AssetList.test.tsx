@@ -11,6 +11,18 @@ import { api } from '../../app/lib/api';
 jest.mock('../../app/lib/api');
 const mockedApi = api as jest.Mocked<typeof api>;
 
+const mockRouterReplace = jest.fn((url: string) => {
+  const queryString = url.split('?')[1] ?? '';
+  mockSearch = queryString;
+});
+let mockSearch = '';
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: mockRouterReplace }),
+  useSearchParams: () => new URLSearchParams(mockSearch),
+  usePathname: () => '/assets',
+}));
+
 describe('AssetList Component', () => {
   const mockAssets = [
     {
@@ -36,7 +48,18 @@ describe('AssetList Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedApi.getAssets.mockResolvedValue(mockAssets);
+    mockRouterReplace.mockClear();
+    mockRouterReplace.mockImplementation((url: string) => {
+      const queryString = url.split('?')[1] ?? '';
+      mockSearch = queryString;
+    });
+    mockSearch = '';
+    mockedApi.getAssets.mockResolvedValue({
+      items: mockAssets,
+      total: mockAssets.length,
+      page: 1,
+      per_page: 20,
+    });
     mockedApi.getAssetClasses.mockResolvedValue(mockAssetClasses);
     mockedApi.getSectors.mockResolvedValue(mockSectors);
   });
@@ -51,7 +74,7 @@ describe('AssetList Component', () => {
 
   it('should load and display assets', async () => {
     render(<AssetList />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('AAPL')).toBeInTheDocument();
       expect(screen.getByText('Apple Inc.')).toBeInTheDocument();
@@ -66,22 +89,33 @@ describe('AssetList Component', () => {
     });
 
     const assetClassSelect = screen.getByLabelText(/Asset Class/i);
+    mockedApi.getAssets.mockResolvedValue({
+      items: mockAssets,
+      total: mockAssets.length,
+      page: 1,
+      per_page: 20,
+    });
+
     fireEvent.change(assetClassSelect, { target: { value: 'EQUITY' } });
 
     await waitFor(() => {
-      expect(mockedApi.getAssets).toHaveBeenCalledWith({ asset_class: 'EQUITY' });
+      expect(mockedApi.getAssets).toHaveBeenLastCalledWith({
+        asset_class: 'EQUITY',
+        page: 1,
+        per_page: 20,
+      });
     });
   });
 
   it('should display loading state', () => {
     render(<AssetList />);
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText(/Loading results for page 1/)).toBeInTheDocument();
   });
 
   it('should handle empty assets', async () => {
-    mockedApi.getAssets.mockResolvedValue([]);
+    mockedApi.getAssets.mockResolvedValue({ items: [], total: 0, page: 1, per_page: 20 });
     render(<AssetList />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('No assets found')).toBeInTheDocument();
     });
@@ -92,11 +126,44 @@ describe('AssetList Component', () => {
     mockedApi.getAssets.mockRejectedValue(new Error('API Error'));
 
     render(<AssetList />);
-    
+
     await waitFor(() => {
       expect(consoleError).toHaveBeenCalled();
+      expect(screen.getByRole('alert')).toHaveTextContent('Unable to load assets for page 1, 20 per page. Please try again.');
     });
 
     consoleError.mockRestore();
+  });
+
+  it('should request next page when pagination control is used', async () => {
+    mockedApi.getAssets
+      .mockResolvedValueOnce({ items: mockAssets, total: 40, page: 1, per_page: 20 })
+      .mockResolvedValueOnce({ items: mockAssets, total: 40, page: 2, per_page: 20 });
+
+    render(<AssetList />);
+
+    await waitFor(() => {
+      expect(mockedApi.getAssets).toHaveBeenCalled();
+    });
+
+    const nextButton = await screen.findByRole('button', { name: /Next/i });
+    fireEvent.click(nextButton);
+
+    await waitFor(() => {
+      expect(mockedApi.getAssets).toHaveBeenLastCalledWith({ page: 2, per_page: 20 });
+    });
+  });
+
+  it('should respect existing query params on mount', async () => {
+    mockSearch = 'page=3&per_page=50&asset_class=EQUITY';
+    mockedApi.getAssets.mockResolvedValue({ items: mockAssets, total: 150, page: 3, per_page: 50 });
+
+    render(<AssetList />);
+
+    await waitFor(() => {
+      expect(mockedApi.getAssets).toHaveBeenCalledWith({ asset_class: 'EQUITY', page: 3, per_page: 50 });
+      expect(screen.getByDisplayValue('EQUITY')).toBeInTheDocument();
+      expect(screen.getByText(/Page 3 of 3/)).toBeInTheDocument();
+    });
   });
 });
