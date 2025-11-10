@@ -289,13 +289,8 @@ class TestSystemManifest:
             structure_section = system_manifest_content.split("## Project Directory Structure")[1]
             structure_section = structure_section.split("##")[0]  # Get until next section
 
-            # Should have folder emoji 📂 for directories
-            if "📂" in structure_section:
-                assert True  # Has folder emoji
-            # Should have file emoji 📄 for files
-            if "📄" in structure_section:
-                assert True  # Has file emoji
-
+            assert "📂" in structure_section, "Directory entries should include the 📂 emoji"
+            assert "📄" in structure_section, "File entries should include the 📄 emoji"
     def test_system_manifest_has_language_dependency_sections(self, system_manifest_content):
         """Test that systemManifest.md has language-specific dependency sections."""
         expected_sections = ["## PY Dependencies", "## JS Dependencies",
