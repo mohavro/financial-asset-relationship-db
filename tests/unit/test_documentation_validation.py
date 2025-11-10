@@ -533,3 +533,391 @@ class TestDocumentationRealisticContent:
                     # Valid package name format
                     assert re.match(r"^[@\w\.\-/]+$", dep), \
                         f"Dependency '{dep}' doesn't look like a valid package name"
+
+
+class TestDocumentationEdgeCases:
+    """Test edge cases and boundary conditions in documentation files."""
+
+    @pytest.fixture
+    def dependency_matrix_path(self):
+        """Path to dependency matrix file."""
+        return Path(".elastic-copilot/memory/dependencyMatrix.md")
+
+    @pytest.fixture
+    def system_manifest_path(self):
+        """Path to system manifest file."""
+        return Path(".elastic-copilot/memory/systemManifest.md")
+
+    def test_documentation_files_are_utf8_encoded(self, dependency_matrix_path, system_manifest_path):
+        """Test that documentation files use UTF-8 encoding."""
+        for path in [dependency_matrix_path, system_manifest_path]:
+            try:
+                with open(path, encoding="utf-8") as f:
+                    f.read()
+            except UnicodeDecodeError:
+                pytest.fail(f"File {path} is not valid UTF-8")
+
+    def test_documentation_has_no_trailing_whitespace(self, dependency_matrix_path, system_manifest_path):
+        """Test that documentation lines don't have trailing whitespace."""
+        for path in [dependency_matrix_path, system_manifest_path]:
+            with open(path, encoding="utf-8") as f:
+                lines = f.readlines()
+            
+            problematic_lines = []
+            for i, line in enumerate(lines[:200], 1):  # Check first 200 lines
+                if line.rstrip() != line.rstrip("\n").rstrip("\r"):
+                    problematic_lines.append(i)
+            
+            assert len(problematic_lines) < 10, \
+                f"Too many lines with trailing whitespace in {path.name}: {problematic_lines[:5]}"
+
+    def test_documentation_line_endings_consistent(self, dependency_matrix_path, system_manifest_path):
+        """Test that documentation files use consistent line endings."""
+        for path in [dependency_matrix_path, system_manifest_path]:
+            with open(path, "rb") as f:
+                content = f.read()
+            
+            crlf_count = content.count(b"\r\n")
+            lf_count = content.count(b"\n") - crlf_count
+            
+            # Should predominantly use one style
+            total = crlf_count + lf_count
+            if total > 0:
+                dominant = max(crlf_count, lf_count)
+                assert dominant / total > 0.95, \
+                    f"Mixed line endings in {path.name}: {crlf_count} CRLF, {lf_count} LF"
+
+    def test_documentation_has_reasonable_line_length(self, dependency_matrix_path, system_manifest_path):
+        """Test that documentation lines aren't excessively long."""
+        max_reasonable_length = 500  # Characters
+        
+        for path in [dependency_matrix_path, system_manifest_path]:
+            with open(path, encoding="utf-8") as f:
+                lines = f.readlines()
+            
+            long_lines = [(i+1, len(line)) for i, line in enumerate(lines) 
+                         if len(line) > max_reasonable_length]
+            
+            # Allow some long lines, but not too many
+            assert len(long_lines) < 20, \
+                f"Too many excessively long lines in {path.name}: {long_lines[:3]}"
+
+    def test_timestamp_not_in_future(self):
+        """Test that timestamps in documentation are not in the future."""
+        path = Path(".elastic-copilot/memory/dependencyMatrix.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        timestamp_pattern = r"\*Generated: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)\*"
+        match = re.search(timestamp_pattern, content)
+        
+        if match:
+            timestamp_str = match.group(1)
+            timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+            now = datetime.now(timezone.utc)
+            
+            assert timestamp <= now + timedelta(minutes=5), \
+                "Timestamp is in the future (allowing 5 min clock skew)"
+
+    def test_file_counts_are_positive_integers(self):
+        """Test that all file counts are positive integers."""
+        path = Path(".elastic-copilot/memory/dependencyMatrix.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Extract all numeric values after "files"
+        pattern = r"(\d+)\s+\w+\s+files"
+        matches = re.findall(pattern, content)
+        
+        for count_str in matches:
+            count = int(count_str)
+            assert count > 0, f"File count should be positive: {count}"
+            assert count < 100000, f"File count seems unrealistic: {count}"
+
+    def test_dependency_bullets_properly_indented(self):
+        """Test that dependency bullets are consistently indented."""
+        path = Path(".elastic-copilot/memory/dependencyMatrix.md")
+        with open(path, encoding="utf-8") as f:
+            lines = f.readlines()
+        
+        # Find lines that should be bullets
+        bullet_lines = [line for line in lines if line.strip().startswith("-")]
+        
+        # Check that they start with "- " (dash space)
+        for line in bullet_lines[:50]:  # Check first 50
+            if line.strip().startswith("-"):
+                stripped = line.lstrip()
+                assert stripped.startswith("- ") or stripped == "-\n", \
+                    f"Bullet should have space after dash: {line!r}"
+
+    def test_no_consecutive_blank_lines_excessive(self):
+        """Test that there aren't excessive consecutive blank lines."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        with open(path, encoding="utf-8") as f:
+            lines = f.readlines()
+        
+        max_consecutive_blanks = 0
+        current_blanks = 0
+        
+        for line in lines:
+            if line.strip() == "":
+                current_blanks += 1
+                max_consecutive_blanks = max(max_consecutive_blanks, current_blanks)
+            else:
+                current_blanks = 0
+        
+        # Allow some blank lines but not excessive
+        assert max_consecutive_blanks < 5, \
+            f"Too many consecutive blank lines: {max_consecutive_blanks}"
+
+    def test_heading_hierarchy_logical(self):
+        """Test that markdown heading hierarchy is logical (no skipping levels)."""
+        path = Path(".elastic-copilot/memory/dependencyMatrix.md")
+        with open(path, encoding="utf-8") as f:
+            lines = f.readlines()
+        
+        heading_levels = []
+        for line in lines:
+            if line.startswith("#"):
+                match = re.match(r"^(#+)\s", line)
+                if match:
+                    level = len(match.group(1))
+                    heading_levels.append(level)
+        
+        # Check that we don't skip levels (e.g., # then ###)
+        for i in range(1, len(heading_levels)):
+            diff = heading_levels[i] - heading_levels[i-1]
+            # Allow going deeper by 1, or back up any amount
+            if diff > 1:
+                pytest.fail(f"Heading hierarchy skips level at position {i}: "
+                          f"level {heading_levels[i-1]} to {heading_levels[i]}")
+
+
+class TestDocumentationPerformance:
+    """Test performance characteristics of documentation files."""
+
+    def test_documentation_parse_time_reasonable(self):
+        """Test that documentation can be parsed quickly."""
+        import time
+        
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        
+        start = time.time()
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+            lines = content.split("\n")
+            # Do some basic parsing
+            _ = [line for line in lines if line.startswith("#")]
+        end = time.time()
+        
+        parse_time = end - start
+        assert parse_time < 1.0, f"Parsing took too long: {parse_time:.3f}s"
+
+    def test_documentation_file_size_reasonable(self):
+        """Test that documentation files aren't excessively large."""
+        max_size_kb = 5000  # 5MB
+        
+        for filename in ["dependencyMatrix.md", "systemManifest.md"]:
+            path = Path(".elastic-copilot/memory") / filename
+            if path.exists():
+                size_kb = path.stat().st_size / 1024
+                assert size_kb < max_size_kb, \
+                    f"{filename} is too large: {size_kb:.1f}KB"
+
+    def test_documentation_line_count_manageable(self):
+        """Test that documentation has a manageable number of lines."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        with open(path, encoding="utf-8") as f:
+            line_count = sum(1 for _ in f)
+        
+        # Should be substantial but not excessive
+        assert 50 < line_count < 50000, \
+            f"Line count seems unusual: {line_count}"
+
+
+class TestDocumentationRobustness:
+    """Test robustness and error handling for documentation files."""
+
+    def test_documentation_recoverable_from_missing_sections(self):
+        """Test that missing non-critical sections don't break parsing."""
+        path = Path(".elastic-copilot/memory/dependencyMatrix.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Should still be parseable even if some sections are missing
+        # Just verify we can extract basic info
+        has_title = "# Dependency Matrix" in content or "# dependency" in content.lower()
+        has_content = len(content.strip()) > 100
+        
+        assert has_title or has_content, "Documentation is too minimal"
+
+    def test_documentation_handles_special_characters(self):
+        """Test that documentation properly handles special characters."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Check for common special characters that should be handled
+        special_chars = ["📂", "📄", "\\", "/", "-", "_", "."]
+        
+        # Should contain at least some special characters
+        found = sum(1 for char in special_chars if char in content)
+        assert found > 0, "No special characters found - might be corrupted"
+
+    def test_documentation_dependency_format_variations(self):
+        """Test that various dependency format variations are handled."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Look for dependency entries
+        if "Dependencies:" in content:
+            sections = content.split("Dependencies:")
+            
+            for section in sections[1:5]:  # Check first few
+                # Should have either bullet points or "No dependencies"
+                has_bullets = section.count("-") > 0
+                has_no_deps_msg = "No dependencies" in section
+                has_next_section = "###" in section[:200]
+                
+                assert has_bullets or has_no_deps_msg or has_next_section, \
+                    "Dependency section format unclear"
+
+    def test_documentation_path_separators_consistent(self):
+        """Test that file paths use consistent separators."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Extract file paths from ### headers
+        file_paths = re.findall(r"###\s+([\w\\/._-]+\.\w+)", content)
+        
+        if file_paths:
+            backslash_count = sum(1 for p in file_paths if "\\" in p)
+            forward_count = sum(1 for p in file_paths if "/" in p)
+            
+            total = backslash_count + forward_count
+            if total > 10:  # Only check if enough paths
+                # Should be predominantly one style
+                dominant = max(backslash_count, forward_count)
+                consistency_ratio = dominant / total if total > 0 else 1
+                
+                assert consistency_ratio > 0.8, \
+                    f"Inconsistent path separators: {backslash_count} backslash, {forward_count} forward"
+
+    def test_documentation_emoji_properly_encoded(self):
+        """Test that emojis are properly UTF-8 encoded."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        
+        try:
+            with open(path, encoding="utf-8") as f:
+                content = f.read()
+            
+            # Check for common emojis used in structure
+            emoji_count = content.count("📂") + content.count("📄")
+            
+            # Should have structure emojis if it's a directory listing
+            if "## Project Directory Structure" in content:
+                assert emoji_count > 0, "Missing structure emojis in directory section"
+        except UnicodeDecodeError:
+            pytest.fail("Emoji encoding issue detected")
+
+
+class TestDocumentationSchemaValidation:
+    """Test that documentation follows expected schema patterns."""
+
+    def test_dependency_matrix_required_fields(self):
+        """Test that dependency matrix has all required fields."""
+        path = Path(".elastic-copilot/memory/dependencyMatrix.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        required_fields = [
+            "# Dependency Matrix",
+            "Generated:",
+            "## Summary",
+            "Files analyzed:",
+            "File types:",
+        ]
+        
+        for field in required_fields:
+            assert field in content, f"Required field missing: {field}"
+
+    def test_system_manifest_required_fields(self):
+        """Test that system manifest has all required fields."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        required_fields = [
+            "# System Manifest",
+            "## Project Overview",
+            "## Current Status",
+            "## Project Structure",
+        ]
+        
+        for field in required_fields:
+            assert field in content, f"Required field missing: {field}"
+
+    def test_dependency_sections_follow_pattern(self):
+        """Test that dependency sections follow expected patterns."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Pattern: ## LANG Dependencies
+        lang_sections = re.findall(r"## (\w+) Dependencies", content)
+        
+        if lang_sections:
+            # Should be uppercase language codes
+            for lang in lang_sections[:10]:
+                assert lang.isupper() or lang.istitle(), \
+                    f"Language section should be uppercase: {lang}"
+                assert 2 <= len(lang) <= 4, \
+                    f"Language code length unusual: {lang}"
+
+    def test_file_entries_follow_pattern(self):
+        """Test that file entries follow expected patterns."""
+        path = Path(".elastic-copilot/memory/systemManifest.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Pattern: ### \path\to\file.ext
+        file_entries = re.findall(r"### (\\[\w\\/._-]+\.\w+)", content)
+        
+        for entry in file_entries[:20]:  # Check first 20
+            # Should have file extension
+            assert "." in entry, f"File entry missing extension: {entry}"
+            # Should have path separators
+            assert "\\" in entry or "/" in entry, \
+                f"File entry missing path separators: {entry}"
+
+    def test_timestamp_format_iso8601(self):
+        """Test that all timestamps follow ISO 8601 format."""
+        path = Path(".elastic-copilot/memory/dependencyMatrix.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Find all timestamp-like patterns
+        timestamps = re.findall(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z", content)
+        
+        for ts in timestamps:
+            try:
+                datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            except ValueError:
+                pytest.fail(f"Invalid ISO 8601 timestamp: {ts}")
+
+    def test_numeric_values_in_valid_ranges(self):
+        """Test that numeric values are in reasonable ranges."""
+        path = Path(".elastic-copilot/memory/dependencyMatrix.md")
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        
+        # Extract file counts
+        counts = re.findall(r"(\d+)\s+\w+\s+files", content)
+        
+        for count_str in counts:
+            count = int(count_str)
+            # Should be reasonable project size
+            assert 0 < count < 100000, \
+                f"File count out of reasonable range: {count}"
