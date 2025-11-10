@@ -206,7 +206,14 @@ metrics = MetricsResponse(
         relationship_density=0.5,
     )
     def client(self):
-        """Create a test client."""
+        """
+        Provide a TestClient configured with a sample graph for use in tests.
+        
+        Yields a TestClient instance for the FastAPI app after setting the application's graph to a sample database, and ensures the application's graph is reset when the fixture is torn down.
+        
+        Returns:
+            TestClient: A TestClient instance connected to the FastAPI app.
+        """
         api_main.set_graph(create_sample_database())
         client = TestClient(app)
         try:
@@ -273,7 +280,7 @@ metrics = MetricsResponse(
 
     def test_get_metrics_no_assets(self, client):
         """Metrics endpoint should handle empty graph (no assets)."""
-        api_main.set_graph(AssetRelationshipGraph())
+        api_main.set_graph(AssetRelationshipGraph(database_url="sqlite:///:memory:"))
         response = client.get("/api/metrics")
         assert response.status_code == 200
         data = response.json()
@@ -285,7 +292,7 @@ metrics = MetricsResponse(
 
     def test_get_metrics_one_asset_no_relationships(self, client):
         """Metrics endpoint should handle graph with one asset and no relationships."""
-        graph = AssetRelationshipGraph()
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
         graph.add_asset(
             Equity(
                 id="AAPL",
@@ -308,7 +315,7 @@ metrics = MetricsResponse(
 
     def test_get_metrics_multiple_assets_no_relationships(self, client):
         """Metrics endpoint should handle graph with multiple assets and no relationships."""
-        graph = AssetRelationshipGraph()
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
         graph.add_asset(
             Equity(
                 id="AAPL",

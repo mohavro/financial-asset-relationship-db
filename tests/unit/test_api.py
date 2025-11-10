@@ -29,7 +29,7 @@ def client():
 @pytest.fixture
 def mock_graph():
     """Create a mock graph with sample data."""
-    graph = AssetRelationshipGraph()
+    graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
 
     # Add sample equity
     equity = Equity(
@@ -531,7 +531,7 @@ class TestEdgeCases:
     @patch("api.main.graph")
     def test_empty_graph(self, mock_graph_instance, client):
         """Test handling of empty graph."""
-        empty_graph = AssetRelationshipGraph()
+        empty_graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
         # Configure empty graph attributes
         mock_graph_instance.assets = empty_graph.assets
         mock_graph_instance.relationships = empty_graph.relationships

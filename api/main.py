@@ -125,7 +125,7 @@ def _should_use_real_data_fetcher() -> bool:
     Decides whether the application should use the real data fetcher based on the `USE_REAL_DATA_FETCHER` environment variable.
 
     Returns:
-        `true` if `USE_REAL_DATA_FETCHER` is set to a truthy value (`1`, `true`, `yes`, `on`), `false` otherwise.
+        `True` if `USE_REAL_DATA_FETCHER` is set to a truthy value (`1`, `true`, `yes`, `on`), `False` otherwise.
     """
     flag = os.getenv("USE_REAL_DATA_FETCHER", "false")
     return flag.strip().lower() in {"1", "true", "yes", "on"}
@@ -220,12 +220,6 @@ def validate_origin(origin: str) -> bool:
     
     # Get allowed origins from environment variable or use default
     allowed_origins = [origin for origin in os.getenv("ALLOWED_ORIGINS", "").split(",") if origin]
-    
-    # Get current environment (check env var each time for testing)
-    current_env = os.getenv("ENV", "development").lower()
-
-    # Get allowed origins from environment variable or use default
-    allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
 
     # If origin is in explicitly allowed list, return True
     if origin in allowed_origins and origin:
