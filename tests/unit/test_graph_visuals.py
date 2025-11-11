@@ -17,7 +17,7 @@ class DummyGraph(AssetRelationshipGraph):
 
     def get_3d_visualization_data_enhanced(self):
         # Return positions (n,3), asset_ids, colors, hover_texts
-        asset_ids = sorted({k for k in self.relationships.keys()} | {t for v in self.relationships.values() for t, _, _ in v})
+        asset_ids = sorted(set(self.relationships.keys()) | {t for v in self.relationships.values() for t, _, _ in v})
         n = len(asset_ids)
         positions = np.arange(n * 3, dtype=float).reshape(n, 3)
         colors = ["#000000"] * n
