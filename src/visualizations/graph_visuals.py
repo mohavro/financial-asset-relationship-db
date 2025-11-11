@@ -396,6 +396,14 @@ def _create_directional_arrows(
             raise ValueError("Invalid positions: values must be numeric") from exc
 
     relationship_set = _build_relationship_set(graph, asset_ids)
+    if len(asset_ids) == 0:
+        return []
+    if not isinstance(asset_ids, (list, tuple, np.ndarray)):
+        raise ValueError("Invalid asset_ids: expected a sequence of strings")
+    if not all(isinstance(a, str) for a in asset_ids):
+        raise ValueError("Invalid asset_ids: all asset IDs must be strings")
+    if not np.isfinite(positions).all():
+        raise ValueError("Invalid positions: values must be finite numbers")
     # Convert to set for O(1) membership testing (optimization already applied)
     asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
