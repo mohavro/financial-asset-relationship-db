@@ -402,7 +402,7 @@ def visualize_3d_graph_with_filters(
 
 
 def _create_filtered_relationship_traces(
-    graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str], relationship_filters: dict = None
+        graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str], relationship_filters: dict = None
 ) -> List[go.Scatter3d]:
     """Create relationship traces with optional filtering"""
     if relationship_filters is None:
