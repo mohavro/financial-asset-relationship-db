@@ -130,6 +130,28 @@ def _build_relationship_set(
 
     Args:
         graph: The asset relationship graph
+def _build_relationship_index(
+    graph: AssetRelationshipGraph, asset_ids_set: Set[str]
+) -> Dict[Tuple[str, str, str], float]:
+    """Build optimized relationship index for O(1) lookups.
+
+    Args:
+        graph: The asset relationship graph
+        asset_ids_set: Set of asset IDs to include
+
+    Returns:
+        Dictionary mapping (source_id, target_id, rel_type) to strength
+    """
+    relationship_index: Dict[Tuple[str, str, str], float] = {}
+    for source_id, rels in graph.relationships.items():
+        if source_id not in asset_ids_set:
+            continue
+        for target_id, rel_type, strength in rels:
+            if target_id in asset_ids_set:
+                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+    return relationship_index
+
+
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
 
     Returns:
