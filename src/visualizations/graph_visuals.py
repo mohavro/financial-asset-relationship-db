@@ -489,6 +489,9 @@ def visualize_3d_graph_with_filters(
     show_correlation: bool = True,
     show_corporate_bond: bool = True,
     show_commodity_currency: bool = True,
+    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
+        raise ValueError('Invalid graph data provided')
+
     show_income_comparison: bool = True,
     show_regulatory: bool = True,
     show_all_relationships: bool = True,
