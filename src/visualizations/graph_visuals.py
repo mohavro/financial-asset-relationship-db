@@ -155,7 +155,6 @@ def _collect_and_group_relationships(
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = strength
 
-    bidirectional_pairs: Set[Tuple[str, str, str]] = set()
     processed_pairs: Set[Tuple[str, str, str]] = set()
     relationship_groups: Dict[Tuple[str, bool], list] = defaultdict(list)
     for (source_id, target_id, rel_type), strength in relationship_index.items():
