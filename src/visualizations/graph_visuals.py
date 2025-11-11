@@ -103,9 +103,8 @@ def _check_reverse_relationship(graph: AssetRelationshipGraph, source_id: str, t
 
 
 def _collect_relationships(
-    graph: AssetRelationshipGraph,
-    asset_ids: List[str],
-    relationship_filters: dict = None,
+        graph: AssetRelationshipGraph, asset_ids: List[str],
+        relationship_filters: dict = None
 ) -> tuple:
     """Collect all relationships with directionality info and filtering"""
     bidirectional_pairs = set()
@@ -129,9 +128,10 @@ def _collect_relationships(
 
             pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
             reverse_exists = _check_reverse_relationship(graph, source_id, target_id, rel_type)
-            is_bidirectional = reverse_exists and pair_key not in bidirectional_pairs
+            is_bidirectional = False
 
-            if is_bidirectional:
+            if reverse_exists and pair_key not in bidirectional_pairs:
+                is_bidirectional = True
                 bidirectional_pairs.add(pair_key)
 
             all_relationships.append(
@@ -146,54 +146,6 @@ def _collect_relationships(
             )
 
     return all_relationships, bidirectional_pairs
-def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
-    """Build edge coordinate lists for relationships"""
-    edges_x, edges_y, edges_z = [], [], []
-    for rel in relationships:
-        source_idx = asset_ids.index(rel["source_id"])
-        target_idx = asset_ids.index(rel["target_id"])
-        edges_x.extend([positions[source_idx, 0], positions[target_idx, 0], None])
-        edges_y.extend([positions[source_idx, 1], positions[target_idx, 1], None])
-        edges_z.extend([positions[source_idx, 2], positions[target_idx, 2], None])
-    return edges_x, edges_y, edges_z
-
-def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
-
-
-    """Build edge coordinate lists for relationships"""
-    edges_x, edges_y, edges_z = [], [], []
-    for rel in relationships:
-        source_idx = asset_ids.index(rel["source_id"])
-        target_idx = asset_ids.index(rel["target_id"])
-        edges_x.extend([positions[source_idx, 0], positions[target_idx, 0], None])
-        edges_y.extend([positions[source_idx, 1], positions[target_idx, 1], None])
-        edges_z.extend([positions[source_idx, 2], positions[target_idx, 2], None])
-    return edges_x, edges_y, edges_z
-
-
-def _collect_edge_coordinates(
-    relationships: list, positions: np.ndarray, asset_ids: List[str], is_bidirectional: bool, rel_type: str
-) -> tuple:
-    """Collect edge coordinates and hover texts for relationships"""
-    edges_x, edges_y, edges_z = [], [], []
-    hover_texts = []
-
-    for rel in relationships:
-        source_idx = asset_ids.index(rel["source_id"])
-        target_idx = asset_ids.index(rel["target_id"])
-
-        edges_x.extend([positions[source_idx, 0], positions[target_idx, 0], None])
-        edges_y.extend([positions[source_idx, 1], positions[target_idx, 1], None])
-        edges_z.extend([positions[source_idx, 2], positions[target_idx, 2], None])
-
-        direction_text = "↔" if is_bidirectional else "→"
-        hover_text = f"{rel['source_id']} {direction_text} {rel['target_id']}<br>Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
-        hover_texts.extend([hover_text, hover_text, None])
-
-    return edges_x, edges_y, edges_z, hover_texts
-
-
-def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: bool) -> list:
 
 
 def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> dict:
@@ -210,13 +162,15 @@ def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> d
         if group_key not in relationship_groups:
             relationship_groups[group_key] = []
         relationship_groups[group_key].append(rel)
-        rel_type: str, is_bidirectional: bool, relationships: list,
-        positions: np.ndarray, asset_ids: List[str]
 
     return relationship_groups
 
 
-def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
+def _build_edge_coordinates(
+    relationships: list,
+    positions: np.ndarray,
+    asset_ids: List[str]
+) -> tuple:
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
 
@@ -231,7 +185,11 @@ def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_id
     return edges_x, edges_y, edges_z
 
 
-def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: bool) -> list:
+def _build_hover_texts(
+    relationships: list,
+    rel_type: str,
+    is_bidirectional: bool
+) -> list:
     """Build hover text list for relationships"""
     hover_texts = []
     direction_text = "↔" if is_bidirectional else "→"
@@ -247,16 +205,22 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
 
 
 def _create_trace_for_group(
+    rel_type: str,
+    is_bidirectional: bool,
+    relationships: list,
+    positions: np.ndarray,
+    asset_ids: List[str]
 ) -> go.Scatter3d:
     """Create a single trace for a relationship group"""
-    edges_x, edges_y, edges_z = [], [], []
-    hover_texts = []
-
     edges_x, edges_y, edges_z = _build_edge_coordinates(relationships, positions, asset_ids)
     hover_texts = _build_hover_texts(relationships, rel_type, is_bidirectional)
 
     color = _get_relationship_color(rel_type)
-    line_style = dict(color=color, width=4 if is_bidirectional else 2, dash="solid" if is_bidirectional else "dash")
+    line_style = dict(
+        color=color,
+        width=4 if is_bidirectional else 2,
+        dash="solid" if is_bidirectional else "dash"
+    )
 
     trace_name = f"{rel_type.replace('_', ' ').title()}"
     trace_name += " (↔)" if is_bidirectional else " (→)"
@@ -276,7 +240,9 @@ def _create_trace_for_group(
 
 
 def _create_relationship_traces(
-        graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
+        graph: AssetRelationshipGraph,
+        positions: np.ndarray,
+        asset_ids: List[str]
 ) -> List[go.Scatter3d]:
     """Create separate traces for different types of relationships with enhanced visibility"""
     all_relationships, bidirectional_pairs = _collect_relationships(graph, asset_ids)
@@ -393,7 +359,9 @@ def visualize_3d_graph_with_filters(
     fig = go.Figure()
 
     # Create relationship traces with filtering
-    relationship_traces = _create_filtered_relationship_traces(graph, positions, asset_ids, relationship_filters)
+    relationship_traces = _create_filtered_relationship_traces(
+        graph, positions, asset_ids, relationship_filters
+    )
 
     # Add all relationship traces
     for trace in relationship_traces:
@@ -455,22 +423,26 @@ def visualize_3d_graph_with_filters(
 
 
 def _create_filtered_relationship_traces(
-    graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str], relationship_filters: dict = None
+    graph: AssetRelationshipGraph,
+    positions: np.ndarray,
+    asset_ids: List[str],
+    relationship_filters: dict = None
 ) -> List[go.Scatter3d]:
     """Create relationship traces with optional filtering"""
     if relationship_filters is None:
         return _create_relationship_traces(graph, positions, asset_ids)
 
     all_relationships, bidirectional_pairs = _collect_relationships(
-        graph, asset_ids, relationship_filters)
+        graph, asset_ids, relationship_filters
+    )
     relationship_groups = _group_relationships(all_relationships, bidirectional_pairs)
 
     traces = []
-    for (
-        (rel_type, is_bidirectional), relationships
-    ) in relationship_groups.items():
+    for (rel_type, is_bidirectional), relationships in relationship_groups.items():
         if relationships:
-            trace = _create_trace_for_group(rel_type, is_bidirectional, relationships, positions, asset_ids)
+            trace = _create_trace_for_group(
+                rel_type, is_bidirectional, relationships, positions, asset_ids
+            )
             traces.append(trace)
 
     return traces
