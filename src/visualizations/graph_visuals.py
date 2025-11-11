@@ -382,7 +382,9 @@ def _create_directional_arrows(
     asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
-    arrows: List[dict] = []
+    source_indices: List[int] = []
+    target_indices: List[int] = []
+    hover_texts: List[str] = []
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
     if not isinstance(positions, np.ndarray):
