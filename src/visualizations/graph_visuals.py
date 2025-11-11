@@ -381,7 +381,8 @@ def _create_filtered_relationship_traces(
     if relationship_filters is None:
         return _create_relationship_traces(graph, positions, asset_ids)
 
-    all_relationships, bidirectional_pairs = _collect_relationships(graph, asset_ids, relationship_filters)
+    all_relationships, bidirectional_pairs = _collect_relationships(
+        graph, asset_ids, relationship_filters)
     relationship_groups = _group_relationships(all_relationships, bidirectional_pairs)
 
     traces = []
