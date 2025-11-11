@@ -438,8 +438,6 @@ def _create_directional_arrows(
             asset_ids = list(asset_ids)
         except Exception as exc:
             raise ValueError("asset_ids must be an iterable of strings") from exc
-    if len(positions) != len(asset_ids):
-        raise ValueError("Invalid input data: positions and asset_ids must have the same length")
     if not np.issubdtype(positions.dtype, np.number):
         try:
             positions = positions.astype(float)
