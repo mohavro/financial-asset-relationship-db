@@ -406,9 +406,10 @@ def _create_directional_arrows(
         ValueError: If positions or asset_ids are None, have mismatched lengths,
                    contain invalid data types, or have non-finite values
 
-    Note:
-        Addresses review feedback (line 545) - validates input integrity before processing
-        to prevent runtime errors when external data sources are used.
+    Notes:
+        Implements comprehensive input validation as suggested in code review to prevent
+        runtime errors when working with external data sources. Validates that positions
+        and asset_ids are not None, have matching lengths, and contain valid data types.
     """
     if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
