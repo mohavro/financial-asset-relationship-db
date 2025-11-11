@@ -177,9 +177,12 @@ def _build_edge_coordinates(
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
 
+    # Create index mapping for O(1) lookups
+    asset_id_to_idx = {asset_id: idx for idx, asset_id in enumerate(asset_ids)}
+
     for rel in relationships:
-        source_idx = asset_ids.index(rel["source_id"])
-        target_idx = asset_ids.index(rel["target_id"])
+        source_idx = asset_id_to_idx[rel["source_id"]]
+        target_idx = asset_id_to_idx[rel["target_id"]]
 
         edges_x.extend([positions[source_idx, 0], positions[target_idx, 0], None])
         edges_y.extend([positions[source_idx, 1], positions[target_idx, 1], None])
