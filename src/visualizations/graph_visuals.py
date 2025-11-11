@@ -90,7 +90,12 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     return fig
 
 
-def _check_reverse_relationship(graph: AssetRelationshipGraph, source_id: str, target_id: str, rel_type: str) -> bool:
+def _check_reverse_relationship(
+    graph: AssetRelationshipGraph,
+    source_id: str,
+    target_id: str,
+    rel_type: str,
+) -> bool:
     """Check if a reverse relationship exists"""
     if target_id not in graph.relationships:
         return False
