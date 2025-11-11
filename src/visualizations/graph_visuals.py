@@ -155,7 +155,7 @@ def _collect_and_group_relationships(
     if relationship_filters is None:
         relationship_filters = {}
 
-    # Convert to set for O(1) membership
+    # Convert to set for O(1) membership tests (optimization for large asset lists)
     asset_ids_set = set(asset_ids)
 
     # Build optimized relationship index: (source, target, type) -> strength
