@@ -383,6 +383,23 @@ def _create_directional_arrows(
     asset_id_index = _build_asset_id_index(asset_ids)
 
     arrows: List[dict] = []
+    if positions is None or asset_ids is None:
+        raise ValueError("Invalid input data: positions and asset_ids must not be None")
+    if not isinstance(positions, np.ndarray):
+        positions = np.asarray(positions)
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid positions shape: expected (n, 3)")
+    if not isinstance(asset_ids, list):
+        asset_ids = list(asset_ids)
+    if len(positions) != len(asset_ids):
+        raise ValueError("Invalid input data: positions and asset_ids must have the same length")
+    if not np.issubdtype(positions.dtype, np.number):
+        try:
+            positions = positions.astype(float)
+        except Exception as exc:
+            raise ValueError("Invalid positions: values must be numeric") from exc
+    if not all(isinstance(a, str) for a in asset_ids):
+        raise ValueError("asset_ids must be a list of strings")
 
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
