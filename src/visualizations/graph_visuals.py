@@ -157,6 +157,8 @@ def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_id
     return edges_x, edges_y, edges_z
 
 def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
+
+
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
     for rel in relationships:
