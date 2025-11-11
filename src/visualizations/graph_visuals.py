@@ -165,7 +165,9 @@ def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> d
     return relationship_groups
 
 
-def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
+def _build_edge_coordinates(
+    relationships: list, positions: np.ndarray, asset_ids: List[str]
+) -> tuple:
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
 
