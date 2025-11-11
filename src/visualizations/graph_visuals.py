@@ -20,9 +20,6 @@ REL_TYPE_COLORS = defaultdict(
 )
 
 
-def _get_relationship_color(rel_type: str) -> str:
-    """Get color for a relationship type"""
-    return REL_TYPE_COLORS[rel_type]
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
