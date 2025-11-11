@@ -241,7 +241,10 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships"""
+    """Create arrow markers for unidirectional relationships.
+
+    Uses a pre-built relationship set for O(1) reverse relationship lookups.
+    """
     arrows = []
 
     # Find unidirectional relationships
