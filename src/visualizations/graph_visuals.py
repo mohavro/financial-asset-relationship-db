@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import numpy as np
 import plotly.graph_objects as go
@@ -98,7 +98,11 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
         showlegend=True,
         hovermode="closest",
         legend=dict(
-            x=0.02, y=0.98, bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="rgba(0, 0, 0, 0.3)", borderwidth=1,
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
         ),
     )
 
@@ -106,19 +110,18 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 
 
 def _build_relationship_set(
-    graph: AssetRelationshipGraph, asset_ids: List[str]
+    graph: AssetRelationshipGraph, asset_ids_set: Set[str]
 ) -> Set[Tuple[str, str, str]]:
     """Build a set of all relationships for O(1) reverse relationship lookups.
 
     Args:
         graph: The asset relationship graph
-        asset_ids: List of asset IDs to include
+        asset_ids_set: Set of asset IDs to include (for O(1) membership tests)
 
     Returns:
         Set of tuples (source_id, target_id, rel_type) for all relationships
     """
     relationship_set: Set[Tuple[str, str, str]] = set()
-    asset_ids_set = set(asset_ids)  # Convert to set for O(1) lookups
     for source_id, rels in graph.relationships.items():
         if source_id in asset_ids_set:
             for target_id, rel_type, _ in rels:
@@ -128,10 +131,8 @@ def _build_relationship_set(
 
 
 def _collect_and_group_relationships(
-    graph: AssetRelationshipGraph,
-    asset_ids: List[str],
-    relationship_filters: Optional[Dict[str, bool]] = None,
-) -> Dict[Tuple[str, bool], List[dict]]:
+    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
+) -> dict:
     """Collect and group relationships with directionality info and filtering.
 
     Merges collection and grouping into a single pass for better performance.
@@ -149,8 +150,8 @@ def _collect_and_group_relationships(
         relationship_filters = {}
 
     # Build relationship set once for O(1) lookups
-    relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
+    relationship_set = _build_relationship_set(graph, asset_ids_set)
 
     bidirectional_pairs: Set[Tuple[str, str, str]] = set()
     relationship_groups: Dict[Tuple[str, bool], List[dict]] = {}
@@ -202,7 +203,7 @@ def _collect_and_group_relationships(
 
 def _build_edge_coordinates_optimized(
     relationships: list, positions: np.ndarray, asset_id_index: Dict[str, int]
-) -> Tuple[List[Optional[float]], List[Optional[float]], List[Optional[float]]]:
+) -> Tuple[List[float], List[float], List[float]]:
     """Build edge coordinate lists for relationships using optimized O(1) lookups.
 
     Args:
@@ -215,9 +216,9 @@ def _build_edge_coordinates_optimized(
     """
     # Pre-allocate arrays for better performance (3 values per relationship: start, end, None)
     num_edges = len(relationships)
-    edges_x: List[Optional[float]] = [None] * (num_edges * 3)
-    edges_y: List[Optional[float]] = [None] * (num_edges * 3)
-    edges_z: List[Optional[float]] = [None] * (num_edges * 3)
+    edges_x: List[float] = [None] * (num_edges * 3)
+    edges_y: List[float] = [None] * (num_edges * 3)
+    edges_z: List[float] = [None] * (num_edges * 3)
 
     for i, rel in enumerate(relationships):
         # O(1) lookup instead of O(n) list.index()
@@ -255,7 +256,7 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
 
     # Pre-allocate array for better performance
     num_rels = len(relationships)
-    hover_texts: List[Optional[str]] = [None] * (num_rels * 3)
+    hover_texts: List[str] = [None] * (num_rels * 3)
 
     for i, rel in enumerate(relationships):
         hover_text = (
@@ -271,11 +272,11 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
 
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
     """Get line style configuration for a relationship"""
-    return {
-        "color": REL_TYPE_COLORS[rel_type],
-        "width": 4 if is_bidirectional else 2,
-        "dash": "solid" if is_bidirectional else "dash",
-    }
+    return dict(
+        color=_get_relationship_color(rel_type),
+        width=4 if is_bidirectional else 2,
+        dash="solid" if is_bidirectional else "dash",
+    )
 
 
 def _format_trace_name(rel_type: str, is_bidirectional: bool) -> str:
@@ -327,7 +328,7 @@ def _create_relationship_traces(
     graph: AssetRelationshipGraph,
     positions: np.ndarray,
     asset_ids: List[str],
-    relationship_filters: Optional[Dict[str, bool]] = None,
+    relationship_filters: dict = None,
 ) -> List[go.Scatter3d]:
     """Create separate traces for different types of relationships with enhanced visibility.
 
@@ -373,19 +374,18 @@ def _create_directional_arrows(
     Uses a pre-built relationship set for O(1) reverse relationship lookups
     and asset ID index for O(1) position lookups.
     """
-    # Build relationship set once for O(1) lookups
-    relationship_set = _build_relationship_set(graph, asset_ids)
+    relationship_set = _build_relationship_set(graph, set(asset_ids))
     asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
-    arrows: List[dict] = []
+    arrows = []
 
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids_set:
             continue
 
-        for target_id, rel_type, _strength in rels:
+        for target_id, rel_type, strength in rels:
             if target_id not in asset_ids_set:
                 continue
 
@@ -452,7 +452,7 @@ def visualize_3d_graph_with_filters(
 
     if not show_all_relationships:
         # Filter which relationship types to show
-        relationship_filters: Dict[str, bool] = {
+        relationship_filters = {
             "same_sector": show_same_sector,
             "market_cap_similar": show_market_cap,
             "correlation": show_correlation,
@@ -510,8 +510,7 @@ def visualize_3d_graph_with_filters(
 
     # Count visible relationships
     visible_relationships = (
-        sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x"))
-        // 3
+        sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x")) // 3
     )
 
     fig.update_layout(
