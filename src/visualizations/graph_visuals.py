@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 import plotly.graph_objects as go
@@ -98,11 +98,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
         showlegend=True,
         hovermode="closest",
         legend=dict(
-            x=0.02,
-            y=0.98,
-            bgcolor="rgba(255, 255, 255, 0.8)",
-            bordercolor="rgba(0, 0, 0, 0.3)",
-            borderwidth=1,
+            x=0.02, y=0.98, bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="rgba(0, 0, 0, 0.3)", borderwidth=1,
         ),
     )
 
@@ -132,7 +128,9 @@ def _build_relationship_set(
 
 
 def _collect_and_group_relationships(
-    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: Dict[str, bool] | None = None
+    graph: AssetRelationshipGraph,
+    asset_ids: List[str],
+    relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> Dict[Tuple[str, bool], List[dict]]:
     """Collect and group relationships with directionality info and filtering.
 
@@ -166,20 +164,23 @@ def _collect_and_group_relationships(
                 continue
 
             # Skip if this relationship type is filtered out
-            if rel_type in relationship_filters and not relationship_filters[rel_type]:
+            if (
+                relationship_filters
+                and rel_type in relationship_filters
+                and not relationship_filters[rel_type]
+            ):
                 continue
 
             pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
-
-            # O(1) lookup for reverse relationship; ensure we only add one entry for bidirectional pairs
+            # O(1) lookup instead of O(n) iteration
             reverse_exists = (target_id, source_id, rel_type) in relationship_set
-            if reverse_exists:
+            is_bidirectional = reverse_exists and pair_key not in bidirectional_pairs
+
+            # Skip duplicate bidirectional relationships
+            if is_bidirectional:
                 if pair_key in bidirectional_pairs:
                     continue
                 bidirectional_pairs.add(pair_key)
-                is_bidirectional = True
-            else:
-                is_bidirectional = False
 
             # Group relationships directly
             group_key = (rel_type, is_bidirectional)
@@ -200,8 +201,8 @@ def _collect_and_group_relationships(
 
 
 def _build_edge_coordinates_optimized(
-    relationships: List[dict], positions: np.ndarray, asset_id_index: Dict[str, int]
-) -> Tuple[List[float], List[float], List[float]]:
+    relationships: list, positions: np.ndarray, asset_id_index: Dict[str, int]
+) -> Tuple[List[Optional[float]], List[Optional[float]], List[Optional[float]]]:
     """Build edge coordinate lists for relationships using optimized O(1) lookups.
 
     Args:
@@ -214,9 +215,9 @@ def _build_edge_coordinates_optimized(
     """
     # Pre-allocate arrays for better performance (3 values per relationship: start, end, None)
     num_edges = len(relationships)
-    edges_x: List[float] = [None] * (num_edges * 3)
-    edges_y: List[float] = [None] * (num_edges * 3)
-    edges_z: List[float] = [None] * (num_edges * 3)
+    edges_x: List[Optional[float]] = [None] * (num_edges * 3)
+    edges_y: List[Optional[float]] = [None] * (num_edges * 3)
+    edges_z: List[Optional[float]] = [None] * (num_edges * 3)
 
     for i, rel in enumerate(relationships):
         # O(1) lookup instead of O(n) list.index()
@@ -227,19 +228,19 @@ def _build_edge_coordinates_optimized(
         base_idx = i * 3
 
         # Set coordinates
-        edges_x[base_idx] = float(positions[source_idx, 0])
-        edges_x[base_idx + 1] = float(positions[target_idx, 0])
+        edges_x[base_idx] = positions[source_idx, 0]
+        edges_x[base_idx + 1] = positions[target_idx, 0]
 
-        edges_y[base_idx] = float(positions[source_idx, 1])
-        edges_y[base_idx + 1] = float(positions[target_idx, 1])
+        edges_y[base_idx] = positions[source_idx, 1]
+        edges_y[base_idx + 1] = positions[target_idx, 1]
 
-        edges_z[base_idx] = float(positions[source_idx, 2])
-        edges_z[base_idx + 1] = float(positions[target_idx, 2])
+        edges_z[base_idx] = positions[source_idx, 2]
+        edges_z[base_idx + 1] = positions[target_idx, 2]
 
     return edges_x, edges_y, edges_z
 
 
-def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectional: bool) -> List[str]:
+def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: bool) -> list:
     """Build hover text list for relationships with pre-allocation for performance.
 
     Args:
@@ -254,7 +255,7 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
 
     # Pre-allocate array for better performance
     num_rels = len(relationships)
-    hover_texts: List[str] = [None] * (num_rels * 3)
+    hover_texts: List[Optional[str]] = [None] * (num_rels * 3)
 
     for i, rel in enumerate(relationships):
         hover_text = (
@@ -287,7 +288,7 @@ def _format_trace_name(rel_type: str, is_bidirectional: bool) -> str:
 def _create_trace_for_group(
     rel_type: str,
     is_bidirectional: bool,
-    relationships: List[dict],
+    relationships: list,
     positions: np.ndarray,
     asset_id_index: Dict[str, int],
 ) -> go.Scatter3d:
@@ -326,7 +327,7 @@ def _create_relationship_traces(
     graph: AssetRelationshipGraph,
     positions: np.ndarray,
     asset_ids: List[str],
-    relationship_filters: Dict[str, bool] | None = None,
+    relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> List[go.Scatter3d]:
     """Create separate traces for different types of relationships with enhanced visibility.
 
@@ -384,7 +385,7 @@ def _create_directional_arrows(
         if source_id not in asset_ids_set:
             continue
 
-        for target_id, rel_type, strength in rels:
+        for target_id, rel_type, _strength in rels:
             if target_id not in asset_ids_set:
                 continue
 
@@ -409,9 +410,9 @@ def _create_directional_arrows(
 
     # Create arrow trace
     if arrows:
-        arrow_x = [float(arrow["pos"][0]) for arrow in arrows]
-        arrow_y = [float(arrow["pos"][1]) for arrow in arrows]
-        arrow_z = [float(arrow["pos"][2]) for arrow in arrows]
+        arrow_x = [arrow["pos"][0] for arrow in arrows]
+        arrow_y = [arrow["pos"][1] for arrow in arrows]
+        arrow_z = [arrow["pos"][2] for arrow in arrows]
         arrow_hovers = [arrow["hover"] for arrow in arrows]
 
         arrow_trace = go.Scatter3d(
@@ -451,7 +452,7 @@ def visualize_3d_graph_with_filters(
 
     if not show_all_relationships:
         # Filter which relationship types to show
-        relationship_filters = {
+        relationship_filters: Dict[str, bool] = {
             "same_sector": show_same_sector,
             "market_cap_similar": show_market_cap,
             "correlation": show_correlation,
@@ -509,7 +510,8 @@ def visualize_3d_graph_with_filters(
 
     # Count visible relationships
     visible_relationships = (
-        sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
+        sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x"))
+        // 3
     )
 
     fig.update_layout(
