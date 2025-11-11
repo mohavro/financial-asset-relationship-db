@@ -101,12 +101,12 @@ def _connect() -> sqlite3.Connection:
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Provide a context-managed SQLite connection for the configured database.
+    Provide a context manager that yields a SQLite connection for the configured database.
     
-    Yields a `sqlite3.Connection` for use inside a with-statement. For file-backed databases the connection is closed when the context exits; for an in-memory database the shared connection is left open.
-     
+    Yields a sqlite3.Connection for use inside a with-statement. For file-backed databases the connection is closed when the context exits; for in-memory databases the shared connection is left open.
+    
     Returns:
-        sqlite3.Connection: The database connection to use within the context.
+        sqlite3.Connection: The connection object yielded to the context; closed on exit for file-backed databases, kept open for in-memory databases.
     """
     is_memory = DATABASE_PATH == ":memory:" or (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
     
@@ -120,11 +120,11 @@ def get_connection() -> Iterator[sqlite3.Connection]:
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
-    Execute and commit a write SQL query using a managed SQLite connection.
+    Execute and commit a write SQL statement using a managed SQLite connection.
     
     Parameters:
         query (str): SQL statement to execute.
-        parameters (tuple | list | None): Sequence of values to bind to the query; pass None or an empty sequence if there are no parameters.
+        parameters (tuple | list | None): Sequence of values to bind to the statement; pass `None` or an empty sequence if there are no parameters.
     """
 
     with get_connection() as connection:

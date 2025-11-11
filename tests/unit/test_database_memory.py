@@ -14,9 +14,9 @@ import api.database as database
 @pytest.fixture()
 def restore_database_module(monkeypatch) -> Iterator[None]:
     """
-    Fixture that yields to a test, then restores the api.database module and DATABASE_URL environment.
+    Preserve and restore api.database state and the DATABASE_URL environment variable around a test.
     
-    After the test completes it closes and clears any in-memory SQLite connection created on api.database, restores the original DATABASE_URL environment variable (or removes it if none was set), and reloads the api.database module to reset its state.
+    Yields to the test; after the test completes it closes and clears any in-memory SQLite connection on api.database, restores DATABASE_URL to its original value (or removes it if it was not set), and reloads the api.database module to reset its state.
     """
 
     original_url = os.environ.get("DATABASE_URL")
@@ -37,7 +37,11 @@ def restore_database_module(monkeypatch) -> Iterator[None]:
 
 
 def test_in_memory_database_persists_schema_and_data(monkeypatch, restore_database_module):
-    """In-memory configuration should reuse a single connection for all helpers."""
+    """
+    Verify an in-memory SQLite configuration reuses a single connection instance and preserves schema and data across operations.
+    
+    Sets DATABASE_URL to use an in-memory SQLite database, reloads the database module and initialises the schema, inserts a user row using one connection, then reads it using a second connection. Asserts the inserted row is present and that both context-managed connections are the same object.
+    """
 
     monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
 
