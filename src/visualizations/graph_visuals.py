@@ -5,10 +5,7 @@ import numpy as np
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
-# Color and style mapping for relationship types (shared constant).
-# Using defaultdict with lambda eliminates the need for .get() calls with default parameters.
-# Any non-existent relationship type will automatically return the default gray color (#888888).
-# This approach enhances both readability and efficiency by avoiding explicit default checks.
+# Color and style mapping for relationship types (shared constant)
 REL_TYPE_COLORS = defaultdict(
     lambda: "#888888",
     {
@@ -21,6 +18,11 @@ REL_TYPE_COLORS = defaultdict(
         "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
     },
 )
+
+
+def _get_relationship_color(rel_type: str) -> str:
+    """Get color for a relationship type"""
+    return REL_TYPE_COLORS[rel_type]
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
@@ -38,7 +40,7 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def _build_relationship_index(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups (Performance Optimization).
+    """Build optimized relationship index for O(1) lookups.
 
     This function consolidates relationship data into a single index structure
     that can be efficiently queried for:
@@ -271,7 +273,7 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
     """Get line style configuration for a relationship"""
     return dict(
-        color=REL_TYPE_COLORS[rel_type],
+        color=_get_relationship_color(rel_type),
         width=4 if is_bidirectional else 2,
         dash="solid" if is_bidirectional else "dash",
     )
@@ -380,36 +382,40 @@ def _create_directional_arrows(
 ) -> List[go.Scatter3d]:
     """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
 
-    Uses a pre-built relationship index for O(1) lookups and computes arrow positions
-    in a single vectorized step for performance.
+    Validates positions and asset_ids for shape, type, and length compatibility to
+    prevent runtime errors when external data sources are used.
     """
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
     if positions is None or asset_ids is None:
-        raise ValueError("Invalid input data: positions and asset_ids must not be None")
+        raise ValueError("Invalid input data for positions or asset_ids: None provided")
+
+    # Coerce positions to numpy float array and validate
     if not isinstance(positions, np.ndarray):
-        positions = np.asarray(positions)
+        try:
+            positions = np.asarray(positions, dtype=float)
+        except Exception as exc:  # pylint: disable=broad-except
+            raise ValueError("Invalid positions: must be a numeric (n, 3) array") from exc
     if positions.ndim != 2 or positions.shape[1] != 3:
         raise ValueError("Invalid positions shape: expected (n, 3)")
-    if len(positions) != len(asset_ids):
-        raise ValueError("Invalid input data: positions and asset_ids must have the same length")
-    if not np.issubdtype(positions.dtype, np.number):
-        try:
-            positions = positions.astype(float)
-        except Exception as exc:
-            raise ValueError("Invalid positions: values must be numeric") from exc
-    # Validate asset_ids contents and numeric validity of positions
-    if not isinstance(asset_ids, (list, tuple)):
-        try:
-            asset_ids = list(asset_ids)
-        except Exception as exc:
-            raise ValueError("asset_ids must be an iterable of strings") from exc
-    if not all(isinstance(a, str) and a for a in asset_ids):
-        raise ValueError("asset_ids must contain non-empty strings")
     if not np.isfinite(positions).all():
         raise ValueError("Invalid positions: values must be finite numbers")
 
-    # Build relationship index once for O(1) lookups (optimization per review comment)
+    # Normalize asset_ids to list of non-empty strings and validate length
+    if not isinstance(asset_ids, (list, tuple)):
+        try:
+            asset_ids = list(asset_ids)
+        except Exception as exc:  # pylint: disable=broad-except
+            raise ValueError("Invalid asset_ids: must be an iterable of strings") from exc
+    if not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("Invalid asset_ids: must contain non-empty strings")
+    if len(positions) != len(asset_ids):
+        raise ValueError("Invalid input data for positions or asset_ids: length mismatch")
+
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
+    if not hasattr(graph, "relationships") or graph.relationships is None:
+        raise ValueError("Invalid graph data provided: missing relationships")
+
+    # Build relationship index once for O(1) lookups
     relationship_index = _build_relationship_index(graph, asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
@@ -430,19 +436,12 @@ def _create_directional_arrows(
     if not source_indices:
         return []
 
-    # Performance optimization: Use vectorized NumPy operations for arrow position calculation.
-    # Instead of calculating positions in a loop, we compute all arrow positions at once using
-    # array operations, which is significantly faster for large graphs (vectorized operations
-    # leverage optimized C code and SIMD instructions vs. interpreted Python loops).
+    # Vectorized computation places arrows at 70% along each edge towards the target
     src_idx_arr = np.asarray(source_indices, dtype=int)
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
-    # Vectorized computation places arrows at 70% along each edge towards the target
-    # Formula: arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
-    # This vectorized approach is significantly faster than looping: O(1) array operations
-    # vs O(n) loop iterations, especially beneficial for large graphs with many relationships
 
     arrow_trace = go.Scatter3d(
         x=arrow_positions[:, 0].tolist(),
@@ -462,6 +461,7 @@ def _create_directional_arrows(
         showlegend=False,
     )
     return [arrow_trace]
+
 
 
 def visualize_3d_graph_with_filters(
