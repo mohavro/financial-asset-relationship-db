@@ -427,6 +427,8 @@ def _create_directional_arrows(
         raise ValueError("Invalid input data: graph must have a relationships dictionary")
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
+    if len(positions) != len(asset_ids):
+        raise ValueError('Invalid input data for positions or asset_ids')
     if not isinstance(positions, np.ndarray):
         positions = np.asarray(positions)
     if positions.ndim != 2 or positions.shape[1] != 3:
