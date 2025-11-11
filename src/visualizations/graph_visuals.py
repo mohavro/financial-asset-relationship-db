@@ -121,7 +121,11 @@ def _collect_relationships(
     relationship_set = _build_relationship_set(graph, asset_ids)
 
     bidirectional_pairs = set()
-    all_relationships = []
+    # Pre-allocate list capacity to reduce dynamic resizing overhead
+    # Python optimization: create list with estimated size then clear to reserve internal capacity
+    estimated_size = len(relationship_set)
+    all_relationships = [None] * estimated_size
+    all_relationships.clear()  # Clear but keep allocated capacity
 
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids:
