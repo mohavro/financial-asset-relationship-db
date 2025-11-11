@@ -277,6 +277,17 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
     return hover_texts
 
 
+def _get_relationship_color(rel_type: str) -> str:
+    """Get color for a relationship type from the color mapping.
+
+    Args:
+        rel_type: Type of relationship
+
+    Returns:
+        Hex color code string
+    """
+    return REL_TYPE_COLORS[rel_type]
+
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
     """Get line style configuration for a relationship"""
     return dict(
