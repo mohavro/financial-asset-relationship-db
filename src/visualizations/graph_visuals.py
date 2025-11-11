@@ -107,7 +107,11 @@ def _collect_relationships(
                 continue
 
             # Skip if this relationship type is filtered out
-            if relationship_filters and rel_type in relationship_filters and not relationship_filters[rel_type]:
+            if (
+                relationship_filters
+                and rel_type in relationship_filters
+                and not relationship_filters[rel_type]
+            ):
                 continue
 
             # Check if reverse relationship exists
