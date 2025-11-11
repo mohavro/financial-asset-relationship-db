@@ -123,11 +123,10 @@ def _build_relationship_set(
     """
     asset_ids_set = set(asset_ids)
     relationship_set: Set[Tuple[str, str, str]] = set()
-    for source_id, rels in graph.relationships.items():
-        if source_id in asset_ids_set:
-            for target_id, rel_type, _ in rels:
-                if target_id in asset_ids_set:
-                    relationship_set.add((source_id, target_id, rel_type))
+    for source_id in asset_ids_set.intersection(graph.relationships.keys()):
+        for target_id, rel_type, _ in graph.relationships[source_id]:
+            if target_id in asset_ids_set:
+                relationship_set.add((source_id, target_id, rel_type))
     return relationship_set
 
 
