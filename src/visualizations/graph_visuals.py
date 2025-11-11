@@ -351,6 +351,16 @@ def _create_relationship_traces(
     - Efficient set-based bidirectional relationship detection
 
     Args:
+    # Validate input parameters
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise ValueError('Invalid input data: graph must be an AssetRelationshipGraph instance')
+    if not hasattr(graph, 'relationships') or not isinstance(graph.relationships, dict):
+        raise ValueError('Invalid input data: graph must have a relationships dictionary')
+    if not isinstance(positions, np.ndarray):
+        raise ValueError('Invalid input data: positions must be a numpy array')
+    if len(positions) != len(asset_ids):
+        raise ValueError('Invalid input data: positions array length must match asset_ids length')
+
         graph: The asset relationship graph
         positions: Node positions array
         asset_ids: List of asset IDs
