@@ -127,10 +127,18 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
 def _collect_and_group_relationships(
     graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: Optional[Dict[str, bool]] = None
 ) -> dict:
-    """Collect and group relationships with directionality info and filtering.
+    """Collect and group relationships with directionality info and filtering (optimized for large datasets).
 
-    Merges collection and grouping into a single pass for better performance.
-    Uses a pre-built relationship index for O(1) reverse relationship lookups.
+    Performance optimizations for handling large volumes of relationships:
+    - Single-pass collection and grouping (eliminates redundant iterations)
+    - O(1) reverse relationship lookups via pre-built relationship set
+    - O(1) asset membership tests using set data structure
+    - defaultdict for automatic group initialization (eliminates conditional checks)
+    - Set-based bidirectional pair tracking to avoid duplicate processing
+    - Early filtering to reduce processing overhead
+
+    Time Complexity: O(R) where R is the number of relationships
+    Space Complexity: O(R + A) where A is the number of assets
 
     Args:
         graph: The asset relationship graph
