@@ -35,11 +35,6 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     Args:
         asset_ids: List of asset IDs
 
-    """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
-    Returns:
-        Dictionary mapping asset_id to its index in the list
-    """
-    return {asset_id: idx for idx, asset_id in enumerate(asset_ids)}
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
