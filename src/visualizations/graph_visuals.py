@@ -146,7 +146,7 @@ def _collect_and_group_relationships(
     # Convert to set for O(1) membership
     asset_ids_set = set(asset_ids)
 
-    # Build optimized relationship index: (source, target, type) -> strength
+    # Build optimized relationship index with filtering: (source, target, type) -> strength
     relationship_index: Dict[Tuple[str, str, str], float] = {}
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids_set:
