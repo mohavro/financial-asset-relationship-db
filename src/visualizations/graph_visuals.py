@@ -142,7 +142,7 @@ def _collect_and_group_relationships(
     Args:
         graph: The asset relationship graph
         asset_ids: List of asset IDs to include
-        relationship_filters: Optional dict to filter relationship types
+        relationship_filters: Optional dict to filter relationship types (defaults to empty dict if None)
 
     Returns:
         Dictionary mapping (rel_type, is_bidirectional) to list of relationships
