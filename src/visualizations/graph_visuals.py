@@ -383,6 +383,8 @@ def _create_directional_arrows(
     This function includes extensive input validation (lines 386-410) to address review feedback
     regarding error handling for positions and asset_ids. All inputs are validated before any
     calculations proceed to prevent runtime errors from malformed data.
+    if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
+        raise ValueError("Invalid input data: graph must have a relationships dictionary")
 
     Validates positions and asset_ids for shape, type, and length compatibility to
     prevent runtime errors when external data sources are used.
