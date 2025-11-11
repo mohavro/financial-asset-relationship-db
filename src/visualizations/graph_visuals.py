@@ -441,11 +441,15 @@ def _create_directional_arrows(
     if not source_indices:
         return []
 
-    # Vectorized computation places arrows at 70% along each edge towards the target
+    # Performance optimization: Use numpy's vectorized operations to calculate all arrow
+    # positions at once (as suggested in code review). This approach significantly enhances
+    # performance with large datasets by avoiding manual calculations within loops.
+    # Formula: arrow_position = source + 0.7 * (target - source)
     src_idx_arr = np.asarray(source_indices, dtype=int)
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
+    # Vectorized calculation: compute all arrow positions in a single numpy operation
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
 
     arrow_trace = go.Scatter3d(
