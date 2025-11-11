@@ -350,17 +350,19 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships.
+    """Create arrow markers for unidirectional relationships using vectorized operations.
 
-    Uses a pre-built relationship set for O(1) reverse relationship lookups
-    and asset ID index for O(1) position lookups.
+    Uses vectorized NumPy operations for efficient computation of arrow positions,
+    especially beneficial for large graphs with many relationships.
     """
     # Build relationship set and indices once for O(1) lookups
     relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
-    arrows: List[dict] = []
+    source_indices: List[int] = []
+    target_indices: List[int] = []
+    hover_texts: List[str] = []
 
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
@@ -373,45 +375,30 @@ def _create_directional_arrows(
 
             # Check if this is truly unidirectional using O(1) lookup
             if (target_id, source_id, rel_type) not in relationship_set:
-                # O(1) lookup instead of O(n) list.index()
-                source_idx = asset_id_index[source_id]
-                target_idx = asset_id_index[target_id]
+                source_indices.append(asset_id_index[source_id])
+                target_indices.append(asset_id_index[target_id])
+                hover_texts.append(f"Direction: {source_id} → {target_id}<br>Type: {rel_type}")
 
-                # Calculate arrow position (70% along the edge towards target)
-                arrow_pos = positions[source_idx] + 0.7 * (positions[target_idx] - positions[source_idx])
+    if not source_indices:
+        return []
 
-                arrows.append({
-                    "pos": arrow_pos,
-                    "hover": f"Direction: {source_id} → {target_id}<br>Type: {rel_type}",
-                    "rel_type": rel_type,
-                })
+    # Vectorized position computation: 70% along the edge towards target
+    source_positions = positions[np.array(source_indices)]
+    target_positions = positions[np.array(target_indices)]
+    arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
 
-    # Create arrow trace
-    if arrows:
-        arrow_x = [arrow["pos"][0] for arrow in arrows]
-        arrow_y = [arrow["pos"][1] for arrow in arrows]
-        arrow_z = [arrow["pos"][2] for arrow in arrows]
-        arrow_hovers = [arrow["hover"] for arrow in arrows]
-
-        arrow_trace = go.Scatter3d(
-            x=arrow_x,
-            y=arrow_y,
-            z=arrow_z,
-            mode="markers",
-            marker=dict(
-                symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
-                size=8,
-                color="rgba(255, 0, 0, 0.8)",
-                line=dict(color="red", width=1),
-            ),
-            hovertext=arrow_hovers,
-            hoverinfo="text",
-            name="Direction Arrows",
-            visible=True,
-            showlegend=False,
-        )
-        return [arrow_trace]
-    return []
+    arrow_trace = go.Scatter3d(
+        x=arrow_positions[:, 0].tolist(),
+        y=arrow_positions[:, 1].tolist(),
+        z=arrow_positions[:, 2].tolist(),
+        mode="markers",
+        marker=dict(
+            symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
+            size=8,
+            color="rgba(255, 0, 0, 0.8)",
+            line=dict(color="red", width=1),
+        ),
+        hovertext=hover_texts,
 
 
 def visualize_3d_graph_with_filters(
