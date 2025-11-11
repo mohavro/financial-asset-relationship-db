@@ -283,4 +283,50 @@ The review suggestion has been fully implemented. The arrow position calculation
 
 ---
 
+## Review Comment #3: Relationship Lookup Performance (O(n) → O(1))
+
+**Review Comment:**
+> "The function `_build_relationship_set` iterates through all relationships for a given source ID to check if both source and target IDs are in `asset_ids`. This approach has a time complexity of O(n) for each call, which can be inefficient if the number of relationships is large. A more efficient approach would be to use a set or a dictionary to store relationships, allowing for O(1) complexity for checking the existence of a reverse relationship."
+
+### Implementation Status: ✅ **ALREADY IMPLEMENTED**
+
+The code already implements the exact optimization suggested in the review comment.
+
+### 1. Relationship Index Function (`_build_relationship_index`, lines 35-63):
+
+This function creates a dictionary mapping `(source_id, target_id, rel_type)` tuples to strength values, enabling:
+- **O(1) lookups** for relationship existence and strength
+- **O(1) reverse lookups** for bidirectional relationship detection
+- Uses a set for asset_ids to ensure O(1) membership tests
+
+### 2. Usage in `_collect_and_group_relationships` (lines 144-197):
+
+The function builds the relationship index once, then uses O(1) dictionary lookups to check for bidirectional relationships:
+
+```python
+relationship_index = _build_relationship_index(graph, asset_ids)  # Build once
+is_bidirectional = (target_id, source_id, rel_type) in relationship_index  # O(1) lookup
+```
+
+**Performance Improvement:**
+- **Before:** O(n) iteration through all relationships for each reverse lookup check
+- **After:** O(1) dictionary lookup for each reverse relationship check
+- **Overall Complexity:** Reduced from O(n²) to O(n) for processing all relationships
+
+### 3. Usage in `_create_directional_arrows` (lines 410-454):
+
+Similarly uses the pre-built relationship index for O(1) reverse relationship checks when identifying unidirectional relationships for arrow placement.
+
+### Performance Impact:
+
+| Operation | Before | After | Improvement |
+|-----------|--------|-------|-------------|
+| Single reverse lookup | O(n) | O(1) | n× faster |
+| Processing all relationships | O(n²) | O(n) | n× faster |
+| Large graph (1000 relationships) | ~1,000,000 ops | ~1,000 ops | 1000× faster |
+
+### Conclusion:
+
+The optimization suggested in the review comment was **already fully implemented** in the refactored code. The implementation uses a dictionary/set structure for O(1) lookups, builds the index once and reuses it, eliminates O(n) iterations for relationship checks, and includes comprehensive documentation explaining the optimization.
+
 **All review comments have been addressed successfully.**
