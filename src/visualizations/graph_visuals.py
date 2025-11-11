@@ -254,16 +254,11 @@ def _create_trace_for_group(
         legendgroup=rel_type,
     )
 
-def _build_relationship_set_for_arrows(graph: AssetRelationshipGraph, asset_ids: List[str]) -> Set[Tuple[str, str, str]]:
-    """Build a set of all relationships for O(1) reverse relationship lookups in arrow creation."""
 
-    relationship_set = set()
-    for source_id, rels in graph.relationships.items():
-        if source_id in asset_ids:
-            for target_id, rel_type, _ in rels:
-                if target_id in asset_ids:
-                    relationship_set.add((source_id, target_id, rel_type))
-    return relationship_set
+def _get_relationship_color(rel_type: str) -> str:
+    """Get color for a relationship type from the color mapping"""
+    return REL_TYPE_COLORS[rel_type]
+
 
 def _create_relationship_traces(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
