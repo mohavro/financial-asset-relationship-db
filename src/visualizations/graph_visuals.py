@@ -131,8 +131,8 @@ def _build_relationship_set(
 
 
 def _collect_and_group_relationships(
-    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
-) -> dict:
+    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: Dict[str, bool] = None
+) -> Dict[Tuple[str, bool], List[dict]]:
     """Collect and group relationships with directionality info and filtering.
 
     Merges collection and grouping into a single pass for better performance.
