@@ -21,7 +21,7 @@ REL_TYPE_COLORS = defaultdict(
 
 
 def _get_relationship_color(rel_type: str) -> str:
-    """Get color for a relationship type"""
+    """Get color for a relationship type; falls back to default via REL_TYPE_COLORS"""
     return REL_TYPE_COLORS[rel_type]
 
 
