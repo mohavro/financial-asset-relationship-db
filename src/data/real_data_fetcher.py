@@ -48,6 +48,7 @@ class RealDataFetcher:
     def create_real_database(self) -> AssetRelationshipGraph:
         """
         Create an AssetRelationshipGraph populated with real financial data.
+        Attempts to load a cached graph when a cache path is configured, uses a provided fallback dataset if network access is disabled or if fetching fails, and persists a freshly built graph to cache when possible.
 
         Attempts to load a cached graph when a cache path is configured, uses a provided fallback dataset if network access is disabled or if fetching fails, and persists a freshly built graph to cache when possible.
 
@@ -117,6 +118,7 @@ class RealDataFetcher:
     def _fallback(self) -> AssetRelationshipGraph:
         """
         Selects a fallback AssetRelationshipGraph to use when real data cannot be fetched.
+        If a `fallback_factory` was provided to the instance, this calls it and returns its result; otherwise it constructs and returns the built-in sample database.
 
         If a `fallback_factory` was provided to the instance, this calls it and returns its result; otherwise it constructs and returns the built-in sample database.
 
@@ -369,6 +371,8 @@ def create_real_database() -> AssetRelationshipGraph:
 def _enum_to_value(value: Any) -> Any:
     """
     Convert an Enum instance to its underlying value; return the input unchanged otherwise.
+    Parameters:
+        value (Any): The value to normalise. If `value` is an `Enum` member its `.value` is returned.
 
     Parameters:
         value (Any): The value to normalise. If `value` is an `Enum` member its `.value` is returned.
@@ -384,6 +388,8 @@ def _enum_to_value(value: Any) -> Any:
 def _serialize_dataclass(obj: Any) -> Dict[str, Any]:
     """
     Serialize a dataclass instance into a JSON-friendly dictionary with enum values converted.
+    Parameters:
+        obj (Any): A dataclass instance (e.g. Asset or subclass) to serialize.
 
     Parameters:
         obj (Any): A dataclass instance (e.g. Asset or subclass) to serialize.
@@ -400,13 +406,17 @@ def _serialize_dataclass(obj: Any) -> Dict[str, Any]:
 
 def _serialize_graph(graph: AssetRelationshipGraph) -> Dict[str, Any]:
     """
-    Serialize an AssetRelationshipGraph into a JSON-friendly dictionary structure.
+    Serialize an AssetRelationshipGraph into a JSON-serialisable dictionary.
 
     Parameters:
-        graph (AssetRelationshipGraph): The graph to serialize.
+        graph (AssetRelationshipGraph): Graph to serialize.
 
     Returns:
-        Dict[str, Any]: A dictionary containing serialized assets, regulatory events, relationships and incoming relationships.
+        Dict[str, Any]: Dictionary containing:
+            - "assets": list of serialized asset objects
+            - "regulatory_events": list of serialized regulatory event objects
+            - "relationships": mapping from source id to a list of outgoing relationships, each with `target`, `relationship_type` and `strength`
+            - "incoming_relationships": mapping from target id to a list of incoming relationships, each with `source`, `relationship_type` and `strength`
     """
     return {
         "assets": [_serialize_dataclass(asset) for asset in graph.assets.values()],
@@ -457,6 +467,12 @@ def _deserialize_asset(data: Dict[str, Any]) -> Asset:
 
 def _deserialize_event(data: Dict[str, Any]) -> RegulatoryEvent:
     """
+    Reconstructs a RegulatoryEvent from its serialized dictionary representation.
+    The input dictionary is copied and its "event_type" field is converted to the RegulatoryActivity enum before creating the RegulatoryEvent instance.
+    Parameters:
+        data (Dict[str, Any]): Serialized event payload — must include an "event_type" value compatible with RegulatoryActivity and the remaining fields accepted by RegulatoryEvent.
+    Returns:
+        RegulatoryEvent: The deserialized RegulatoryEvent instance.
     Deserialize a dictionary representation of a regulatory event back into a RegulatoryEvent instance.
 
     Parameters:
@@ -472,6 +488,16 @@ def _deserialize_event(data: Dict[str, Any]) -> RegulatoryEvent:
 
 def _deserialize_graph(payload: Dict[str, Any]) -> AssetRelationshipGraph:
     """
+    Reconstructs an AssetRelationshipGraph from a serialized payload.
+    The payload is expected to be a dictionary produced by _serialize_graph and may contain:
+    - "assets": iterable of serialized asset dictionaries.
+    - "regulatory_events": iterable of serialized regulatory event dictionaries.
+    - "relationships": mapping of source asset id to a list of objects with keys "target", "relationship_type", and "strength".
+    - "incoming_relationships": mapping of target asset id to a list of objects with keys "source", "relationship_type", and "strength".
+    Parameters:
+        payload (Dict[str, Any]): Serialized graph payload.
+    Returns:
+        AssetRelationshipGraph: Graph reconstructed from the payload.
     Deserialize a dictionary representation of an AssetRelationshipGraph back into a graph instance.
 
     Parameters:
@@ -485,26 +511,30 @@ def _deserialize_graph(payload: Dict[str, Any]) -> AssetRelationshipGraph:
         asset = _deserialize_asset(dict(asset_data))
         graph.add_asset(asset)
 
-    graph.regulatory_events = [_deserialize_event(event) for event in payload.get("regulatory_events", [])]
+    for event_data in payload.get("regulatory_events", []):
+        graph.add_regulatory_event(_deserialize_event(event_data))
 
     relationships_payload = payload.get("relationships", {})
-    incoming_payload = payload.get("incoming_relationships", {})
-
-    graph.relationships = {
-        source: [(item["target"], item["relationship_type"], float(item["strength"])) for item in rels]
-        for source, rels in relationships_payload.items()
-    }
-
-    graph.incoming_relationships = {
-        target: [(item["source"], item["relationship_type"], float(item["strength"])) for item in rels]
-        for target, rels in incoming_payload.items()
-    }
+    for source, rels in relationships_payload.items():
+        for item in rels:
+            graph.add_relationship(
+                source,
+                item["target"],
+                item["relationship_type"],
+                float(item["strength"]),
+                bidirectional=False,
+            )
 
     return graph
 
 
 def _load_from_cache(path: Path) -> AssetRelationshipGraph:
     """
+    Load an AssetRelationshipGraph from a JSON cache file.
+    Parameters:
+        path (Path): Filesystem path to the cache JSON file to read.
+    Returns:
+        AssetRelationshipGraph: The graph reconstructed from the JSON payload.
     Load a previously cached AssetRelationshipGraph from a JSON file.
 
     Parameters:
@@ -520,11 +550,14 @@ def _load_from_cache(path: Path) -> AssetRelationshipGraph:
 
 def _save_to_cache(graph: AssetRelationshipGraph, path: Path) -> None:
     """
-    Persist an AssetRelationshipGraph to a JSON cache file.
+    Persist an AssetRelationshipGraph to a JSON file at the given filesystem path.
+
+    The function serialises the provided graph to JSON (UTF-8, pretty-printed with two-space indentation),
+    creates parent directories if necessary, and overwrites any existing file at the path.
 
     Parameters:
-        graph (AssetRelationshipGraph): The graph to serialize and save.
-        path (Path): Path where the JSON cache file should be written.
+        graph (AssetRelationshipGraph): The graph to persist.
+        path (Path): Filesystem path where the JSON representation will be written.
     """
     payload = _serialize_graph(graph)
     path.parent.mkdir(parents=True, exist_ok=True)

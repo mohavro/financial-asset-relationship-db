@@ -117,7 +117,7 @@ class TestAssetRelationshipGraph:
 
     def test_same_sector_relationship(self):
         """Test that assets in the same sector are linked."""
-        graph = AssetRelationshipGraph()
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
 
         equity1 = Equity(
             id="TECH1",
@@ -147,7 +147,7 @@ class TestAssetRelationshipGraph:
 
     def test_corporate_bond_relationship(self):
         """Test that corporate bonds are linked to their issuing equity."""
-        graph = AssetRelationshipGraph()
+        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
 
         equity = Equity(
             id="CORP_EQUITY",

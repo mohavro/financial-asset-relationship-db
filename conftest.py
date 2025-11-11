@@ -17,10 +17,10 @@ from typing import List
 
 def _cov_plugin_available() -> bool:
     """
-    Determine whether the pytest-cov plugin is importable.
+    Check whether the pytest-cov plugin is importable.
     
     Returns:
-        bool: `True` if the `pytest-cov` plugin can be imported, `False` otherwise.
+        `True` if the pytest-cov plugin is importable, `False` otherwise.
     """
 
     return importlib.util.find_spec("pytest_cov") is not None
@@ -28,12 +28,12 @@ def _cov_plugin_available() -> bool:
 
 def pytest_load_initial_conftests(args: List[str], early_config, parser) -> None:  # pragma: no cover - exercised via pytest
     """
-    Remove coverage-related pytest command-line options from the provided argument list when the `pytest-cov` plugin is not available.
+    Remove pytest-cov related command-line options from the provided argument list when the pytest-cov plugin is not available.
     
-    If the `pytest-cov` plugin is present the function returns immediately. Otherwise it mutates `args` in place to remove `--cov` and `--cov-report` options, their following values (e.g. `--cov file`), and inline forms (`--cov=...`, `--cov-report=...`), preserving all other arguments.
-     
+    If the plugin is present the argument list is left unchanged. Otherwise, remove occurrences of --cov and --cov-report together with their following parameters, and any inline forms starting with --cov= or --cov-report=. The original `args` list is updated in-place.
+    
     Parameters:
-        args (List[str]): The initial pytest argument list; mutated in place to remove coverage options.
+        args (List[str]): Mutable list of command-line arguments; coverage-related options are removed from this list in-place.
     """
 
     if _cov_plugin_available():
@@ -51,7 +51,7 @@ def pytest_load_initial_conftests(args: List[str], early_config, parser) -> None
             skip_next = True
             continue
 
-        if arg.startswith("--cov=") or arg.startswith("--cov-report="):
+        if arg.startswith(("--cov=", "--cov-report=")):
             continue
 
         filtered_args.append(arg)
