@@ -462,7 +462,7 @@ def _create_directional_arrows(
     # leverage optimized C code and SIMD instructions vs. interpreted Python loops).
     src_idx_arr = np.asarray(source_indices, dtype=int)
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
-    # Vectorized computation places arrows at 70% along each edge towards the target
+    # Vectorized computation places markers at 70% along each edge towards the target
     # Formula: arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
