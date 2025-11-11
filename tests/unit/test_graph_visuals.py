@@ -59,8 +59,8 @@ def test_create_relationship_traces_basic():
     traces = _create_relationship_traces(graph, positions, asset_ids)
     # There should be two groups: correlation (bidirectional) and same_sector (unidirectional)
     names = {t.name for t in traces}
-    assert any("Correlation (↔)" == name for name in names)
-    assert any("Same Sector (→)" == name for name in names)
+    assert any(name == "Correlation (↔)" for name in names)
+    assert any(name == "Same Sector (→)" for name in names)
 
     # Lines should carry color directly from REL_TYPE_COLORS via direct indexing
     corr_trace = next(t for t in traces if t.legendgroup == "correlation")
