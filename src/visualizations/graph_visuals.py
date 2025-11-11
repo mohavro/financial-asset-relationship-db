@@ -83,6 +83,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
         title={
             "text": "Financial Asset Relationship Network - Enhanced 3D Visualization",
             "x": 0.5,
+    # Avoid mutable default argument by using None and initializing here
             "xanchor": "center",
             "font": {"size": 16},
         },
