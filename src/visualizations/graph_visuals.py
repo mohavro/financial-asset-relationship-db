@@ -126,6 +126,9 @@ def _collect_and_group_relationships(
     Returns:
         Dictionary mapping (rel_type, is_bidirectional) to list of relationships
     """
+    if relationship_filters is None:
+        relationship_filters = {}
+
     # Build relationship set once for O(1) lookups
     relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
