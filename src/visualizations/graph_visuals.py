@@ -226,7 +226,7 @@ def _create_trace_for_group(
 
 
 def _create_relationship_traces(
-    graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
+        graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
     """Create separate traces for different types of relationships with enhanced visibility"""
     all_relationships, bidirectional_pairs = _collect_relationships(graph, asset_ids)
