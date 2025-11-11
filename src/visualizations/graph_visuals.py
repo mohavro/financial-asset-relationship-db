@@ -148,12 +148,15 @@ def _collect_and_group_relationships(
     asset_ids: Iterable[str],
     relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> Dict[Tuple[str, bool], List[dict]]:
-    """Collect and group relationships with directionality info in a single pass.
+    """Collect and group relationships with directionality info (Performance Optimized).
 
-    Optimized to avoid nested loops and intermediate lists by:
-    - Building a relationship index once for O(1) lookups
-    - Detecting bidirectionality via reverse-key checks
-    - Using a processed-pairs set to avoid double-counting
+    This function addresses the performance concern raised in code review by using
+    a pre-built relationship index for O(1) lookups instead of O(n) iterations.
+
+    Optimization strategy:
+    - Building a relationship index once for O(1) lookups (avoids repeated O(n) scans)
+    - Detecting bidirectionality via O(1) reverse-key dictionary checks
+    - Using a processed-pairs set to avoid double-counting bidirectional edges
 
     Args:
         graph: The asset relationship graph
