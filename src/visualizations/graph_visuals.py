@@ -379,6 +379,37 @@ def _create_relationship_traces(
 
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
+    # Validate visualization data to prevent runtime errors
+    if positions is None or asset_ids is None or colors is None or hover_texts is None:
+        raise ValueError("Invalid graph data provided: visualization data contains None values")
+    if not isinstance(positions, np.ndarray):
+        try:
+            positions = np.asarray(positions, dtype=float)
+        except Exception as exc:
+            raise ValueError("Invalid positions: must be a numeric (n, 3) array") from exc
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid positions shape: expected (n, 3)")
+    if not np.isfinite(positions).all():
+        raise ValueError("Invalid positions: values must be finite numbers")
+    if not isinstance(asset_ids, (list, tuple)):
+        try:
+            asset_ids = list(asset_ids)
+        except Exception as exc:
+            raise ValueError("Invalid asset_ids: must be an iterable of strings") from exc
+    if not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("Invalid asset_ids: must contain non-empty strings")
+    if len(positions) != len(asset_ids):
+        raise ValueError("Invalid graph data: positions and asset_ids length mismatch")
+    if not isinstance(colors, (list, tuple, np.ndarray)) or len(colors) != len(asset_ids):
+        raise ValueError("Invalid colors: length must match asset_ids")
+    if not isinstance(hover_texts, (list, tuple, np.ndarray)) or len(hover_texts) != len(asset_ids):
+        raise ValueError("Invalid hover_texts: length must match asset_ids")
+    if not hasattr(graph, "relationships") or graph.relationships is None:
+        raise ValueError("Invalid graph data provided: missing relationships")
+    if not isinstance(graph.relationships, dict):
+        try:
+            dict(graph.relationships)
+        except Exception as exc:
 ) -> List[go.Scatter3d]:
     """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
 
