@@ -19,7 +19,7 @@ def pytest_addoption(parser: "Parser") -> None:
     """
 
     try:
-        import pytest_cov  # type: ignore  # noqa: F401
+        import pytest_cov  # type: ignore
     except Exception:  # pragma: no cover - this branch only runs without pytest-cov
         group = parser.getgroup("cov")
         group.addoption(
