@@ -120,7 +120,7 @@ def _collect_relationships(
     all_relationships = []
 
     for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
+        if source_id not in asset_ids:
             continue
 
         for target_id, rel_type, strength in rels:
