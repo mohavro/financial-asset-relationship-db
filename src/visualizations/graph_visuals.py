@@ -197,6 +197,8 @@ def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> d
         if group_key not in relationship_groups:
             relationship_groups[group_key] = []
         relationship_groups[group_key].append(rel)
+        rel_type: str, is_bidirectional: bool, relationships: list,
+        positions: np.ndarray, asset_ids: List[str]
 
     return relationship_groups
 
@@ -232,7 +234,6 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
 
 
 def _create_trace_for_group(
-    rel_type: str, is_bidirectional: bool, relationships: list, positions: np.ndarray, asset_ids: List[str]
 ) -> go.Scatter3d:
     """Create a single trace for a relationship group"""
     edges_x, edges_y, edges_z = [], [], []
