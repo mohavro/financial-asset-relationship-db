@@ -201,6 +201,11 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
         hover_text = (
             f"{rel['source_id']} {direction_text} {rel['target_id']}<br>"
             f"Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
+
+def _get_relationship_color(rel_type: str) -> str:
+    """Get color for a relationship type from the color mapping"""
+    return REL_TYPE_COLORS[rel_type]
+
         )
         hover_texts.extend([hover_text, hover_text, None])
 
