@@ -271,6 +271,9 @@ def _create_directional_arrows(
     """Create arrow markers for unidirectional relationships"""
     arrows = []
 
+    # Create index mapping for O(1) lookups
+    asset_id_to_idx = {asset_id: idx for idx, asset_id in enumerate(asset_ids)}
+
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids:
@@ -289,8 +292,8 @@ def _create_directional_arrows(
                         break
 
             if is_unidirectional:
-                source_idx = asset_ids.index(source_id)
-                target_idx = asset_ids.index(target_id)
+                source_idx = asset_id_to_idx[source_id]
+                target_idx = asset_id_to_idx[target_id]
 
                 # Calculate arrow position (70% along the edge towards target)
                 arrow_pos = positions[source_idx] + 0.7 * (positions[target_idx] - positions[source_idx])
