@@ -275,6 +275,9 @@ def _create_directional_arrows(
     """
     arrows = []
 
+    # Build relationship set once for O(1) lookups
+    relationship_set = _build_relationship_set(graph)
+
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids:
@@ -285,16 +288,8 @@ def _create_directional_arrows(
                 continue
 
             # Check if this is truly unidirectional
-            is_unidirectional = True
-            if target_id in graph.relationships:
-                for reverse_target, reverse_rel_type, reverse_strength in graph.relationships[target_id]:
-                    if reverse_target == source_id and reverse_rel_type == rel_type:
-                        is_unidirectional = False
-                        break
-
-            if is_unidirectional:
-                source_idx = asset_ids.index(source_id)
-                target_idx = asset_ids.index(target_id)
+            if (target_id, source_id, rel_type) not in relationship_set:
+                source_idx, target_idx = asset_ids.index(source_id), asset_ids.index(target_id)
 
                 # Calculate arrow position (70% along the edge towards target)
                 arrow_pos = positions[source_idx] + 0.7 * (positions[target_idx] - positions[source_idx])
