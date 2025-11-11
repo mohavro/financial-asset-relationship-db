@@ -107,6 +107,22 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
     return relationship_set
 
 
+def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str]) -> set:
+    """Build a set of all relationships for O(1) lookup.
+
+    Returns a set of tuples (source_id, target_id, rel_type) for efficient
+    reverse relationship checking.
+    """
+    relationship_set = set()
+    for source_id, rels in graph.relationships.items():
+        if source_id not in asset_ids:
+            continue
+        for target_id, rel_type, _ in rels:
+            if target_id not in asset_ids:
+                continue
+            relationship_set.add((source_id, target_id, rel_type))
+    return relationship_set
+
 def _collect_relationships(
     graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
 ) -> tuple:
