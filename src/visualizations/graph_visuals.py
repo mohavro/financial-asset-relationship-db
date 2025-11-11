@@ -140,9 +140,9 @@ def _collect_relationships(
 
             pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
             reverse_exists = _check_reverse_relationship(graph, source_id, target_id, rel_type)
+            is_bidirectional = reverse_exists and pair_key not in bidirectional_pairs
 
-            if reverse_exists and pair_key not in bidirectional_pairs:
-                is_bidirectional = True
+            if is_bidirectional:
                 bidirectional_pairs.add(pair_key)
 
             all_relationships.append(
