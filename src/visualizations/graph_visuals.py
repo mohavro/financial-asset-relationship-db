@@ -422,9 +422,9 @@ def _create_directional_arrows(
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
 
     arrow_trace = go.Scatter3d(
-        x=arrow_positions[:, 0],
-        y=arrow_positions[:, 1],
-        z=arrow_positions[:, 2],
+        x=arrow_positions[:, 0].tolist(),
+        y=arrow_positions[:, 1].tolist(),
+        z=arrow_positions[:, 2].tolist(),
         mode="markers",
         marker=dict(
             symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
