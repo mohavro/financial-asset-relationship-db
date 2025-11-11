@@ -20,7 +20,6 @@ REL_TYPE_COLORS = defaultdict(
 )
 
 
-
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
 
@@ -380,48 +379,24 @@ def _create_directional_arrows(
 
     Uses a pre-built relationship index for O(1) lookups and computes arrow positions
     in a single vectorized step for performance.
-
-    NOTE: This function implements comprehensive input validation to address review feedback
-    regarding error handling. All parameters are validated before processing to prevent
-    runtime errors from improperly formatted or mismatched data.
-
-    Args:
-        graph: AssetRelationshipGraph instance containing relationship data
-        positions: NumPy array of shape (n, 3) with node positions
-        asset_ids: List of n asset ID strings matching positions length
-
-    Returns:
-        List containing a single Scatter3d trace with arrow markers, or empty list
-
-    Raises:
-        TypeError: If graph is not an AssetRelationshipGraph instance
-        ValueError: If inputs are None, mismatched lengths, invalid shapes, or non-numeric
     """
-    # === CONSOLIDATED INPUT VALIDATION (addressing review feedback) ===
-    # Validate basic requirements before any processing
     if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
-
-    # Check for None values and length mismatch upfront (per review comment)
+    if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
+        raise ValueError("Invalid input data: graph must have a relationships dictionary")
     if positions is None or asset_ids is None:
-        raise ValueError("Invalid input data: positions and asset_ids must not be None")
-    if len(positions) != len(asset_ids):
-        raise ValueError("Invalid input data: positions and asset_ids must have the same length")
-
-    # Validate asset_ids format and contents
+        raise ValueError("Invalid input data for positions or asset_ids")
+    if not isinstance(positions, np.ndarray):
+        positions = np.asarray(positions)
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid positions shape: expected (n, 3)")
     if not isinstance(asset_ids, (list, tuple)):
         try:
             asset_ids = list(asset_ids)
         except Exception as exc:
             raise ValueError("asset_ids must be an iterable of strings") from exc
-    if not all(isinstance(a, str) and a for a in asset_ids):
-        raise ValueError("asset_ids must contain non-empty strings")
-
-    # Validate positions array structure and numeric data
-    if not isinstance(positions, np.ndarray):
-        positions = np.asarray(positions)
-    if positions.ndim != 2 or positions.shape[1] != 3:
-        raise ValueError("Invalid positions shape: expected (n, 3)")
+    if len(positions) != len(asset_ids):
+        raise ValueError("Invalid input data: positions and asset_ids must have the same length")
     if not np.issubdtype(positions.dtype, np.number):
         try:
             positions = positions.astype(float)
@@ -429,6 +404,8 @@ def _create_directional_arrows(
             raise ValueError("Invalid positions: values must be numeric") from exc
     if not np.isfinite(positions).all():
         raise ValueError("Invalid positions: values must be finite numbers")
+    if not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("asset_ids must contain non-empty strings")
 
     # Build relationship index once for O(1) lookups (optimization per review comment)
     relationship_index = _build_relationship_index(graph, asset_ids)
@@ -436,7 +413,7 @@ def _create_directional_arrows(
 
     source_indices: List[int] = []
     target_indices: List[int] = []
-    rel_types: List[str] = []
+    hover_texts: List[str] = []
 
     # Gather unidirectional relationships using the pre-built index
     for (source_id, target_id, rel_type), _ in relationship_index.items():
@@ -446,7 +423,7 @@ def _create_directional_arrows(
             # This is a unidirectional relationship
             source_indices.append(asset_id_index[source_id])
             target_indices.append(asset_id_index[target_id])
-            rel_types.append(rel_type)
+            hover_texts.append(f"Direction: {source_id} → {target_id}<br>Type: {rel_type}")
 
     if not source_indices:
         return []
@@ -462,12 +439,6 @@ def _create_directional_arrows(
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
-
-    hover_texts: List[str] = [
-        f"Direction: {asset_ids[s]} → {asset_ids[t]}<br>Type: {rt}"
-        for s, t, rt in zip(source_indices, target_indices, rel_types)
-    ]
-
     # This vectorized approach is significantly faster than looping: O(1) array operations
     # vs O(n) loop iterations, especially beneficial for large graphs with many relationships
 
