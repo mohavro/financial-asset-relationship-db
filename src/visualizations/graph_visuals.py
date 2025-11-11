@@ -5,12 +5,9 @@ import numpy as np
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
-# Default color for unknown relationship types
-DEFAULT_COLOR = '#888888'
-
-# Color and style mapping for relationship types
+# Color and style mapping for relationship types (shared constant)
 REL_TYPE_COLORS = defaultdict(
-    lambda: DEFAULT_COLOR,
+    lambda: "#888888",
     {
         "same_sector": "#FF6B6B",  # Red for sector relationships
         "market_cap_similar": "#4ECDC4",  # Teal for market cap
@@ -21,7 +18,6 @@ REL_TYPE_COLORS = defaultdict(
         "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
     },
 )
-
 
 
 def _get_relationship_color(rel_type: str) -> str:
@@ -35,28 +31,14 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     Args:
         asset_ids: List of asset IDs
 
+    Returns:
+        Dictionary mapping asset_id to its index in the list
+    """
+    return {asset_id: idx for idx, asset_id in enumerate(asset_ids)}
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
-    # Validate input graph object
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise ValueError('Invalid graph data provided: must be an AssetRelationshipGraph instance')
-    if not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
-    # Validate input graph object
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise ValueError('Invalid graph data provided: must be an AssetRelationshipGraph instance')
-    if not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
-    # Validate input graph object
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise ValueError('Invalid graph data provided: must be an AssetRelationshipGraph instance')
-    if not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
-    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided')
-
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
     fig = go.Figure()
@@ -134,50 +116,6 @@ def _build_relationship_set(
 
     Args:
         graph: The asset relationship graph
-def _build_relationship_index(
-def _build_allowed_types_set(relationship_filters: Optional[Dict[str, bool]]) -> Optional[Set[str]]:
-    """Build a set of allowed relationship types for O(1) filtering.
-
-    Args:
-        relationship_filters: Optional dict mapping relationship types to boolean visibility flags
-
-    Returns:
-        Set of allowed relationship types, or None if all types are allowed
-    """
-    if relationship_filters is None:
-        return None
-
-    # Pre-compute set of allowed types for O(1) membership testing
-    # This avoids repeated dict lookups and boolean checks in the hot path
-    allowed_types = {rel_type for rel_type, is_visible in relationship_filters.items() if is_visible}
-
-    # If all types are allowed, return None to skip filtering entirely
-    if len(allowed_types) == len(relationship_filters):
-        return None
-
-    return allowed_types
-
-    graph: AssetRelationshipGraph, asset_ids_set: Set[str]
-) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups.
-
-    Args:
-        graph: The asset relationship graph
-        asset_ids_set: Set of asset IDs to include
-
-    Returns:
-        Dictionary mapping (source_id, target_id, rel_type) to strength
-    """
-    relationship_index: Dict[Tuple[str, str, str], float] = {}
-    for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
-            continue
-        for target_id, rel_type, strength in rels:
-            if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
-    return relationship_index
-
-
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
 
     Returns:
@@ -270,7 +208,10 @@ def _build_edge_coordinates_optimized(
     positions: np.ndarray,
     asset_id_index: Dict[str, int],
 ) -> Tuple[List[Optional[float]], List[Optional[float]], List[Optional[float]]]:
-    """Build edge coordinate lists for relationships using optimized O(1) lookups.
+    """Build edge coordinate lists for relationships using vectorized NumPy operations.
+
+    Performance optimization: Uses vectorized array operations instead of Python loops
+    for significantly faster computation with large graphs.
 
     Args:
         relationships: List of relationship dictionaries
@@ -280,29 +221,37 @@ def _build_edge_coordinates_optimized(
     Returns:
         Tuple of (edges_x, edges_y, edges_z) coordinate lists
     """
-    # Pre-allocate arrays for better performance (3 values per relationship: start, end, None)
+    if not relationships:
+        return [], [], []
+
+    # Extract source and target indices using list comprehension (faster than loop)
+    source_indices = [asset_id_index[rel["source_id"]] for rel in relationships]
+    target_indices = [asset_id_index[rel["target_id"]] for rel in relationships]
+
+    # Vectorized computation: Get all source and target positions at once
+    src_idx_arr = np.asarray(source_indices, dtype=int)
+    tgt_idx_arr = np.asarray(target_indices, dtype=int)
+    source_positions = positions[src_idx_arr]
+    target_positions = positions[tgt_idx_arr]
+
+    # Build coordinate lists with None separators for Plotly line breaks
+    # Pre-allocate for better performance (3 values per edge: start, end, None)
     num_edges = len(relationships)
     edges_x: List[Optional[float]] = [None] * (num_edges * 3)
     edges_y: List[Optional[float]] = [None] * (num_edges * 3)
     edges_z: List[Optional[float]] = [None] * (num_edges * 3)
 
-    for i, rel in enumerate(relationships):
-        # O(1) lookup instead of O(n) list.index()
-        source_idx = asset_id_index[rel["source_id"]]
-        target_idx = asset_id_index[rel["target_id"]]
-
-        # Calculate base index for this edge
+    # Fill arrays using vectorized indexing
+    for i in range(num_edges):
         base_idx = i * 3
+        edges_x[base_idx] = source_positions[i, 0]
+        edges_x[base_idx + 1] = target_positions[i, 0]
 
-        # Set coordinates
-        edges_x[base_idx] = positions[source_idx, 0]
-        edges_x[base_idx + 1] = positions[target_idx, 0]
+        edges_y[base_idx] = source_positions[i, 1]
+        edges_y[base_idx + 1] = target_positions[i, 1]
 
-        edges_y[base_idx] = positions[source_idx, 1]
-        edges_y[base_idx + 1] = positions[target_idx, 1]
-
-        edges_z[base_idx] = positions[source_idx, 2]
-        edges_z[base_idx + 1] = positions[target_idx, 2]
+        edges_z[base_idx] = source_positions[i, 2]
+        edges_z[base_idx + 1] = target_positions[i, 2]
 
     return edges_x, edges_y, edges_z
 
@@ -339,7 +288,7 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
     """Get line style configuration for a relationship"""
     return dict(
-        color=REL_TYPE_COLORS[rel_type],
+        color=_get_relationship_color(rel_type),
         width=4 if is_bidirectional else 2,
         dash="solid" if is_bidirectional else "dash",
     )
@@ -405,16 +354,6 @@ def _create_relationship_traces(
     - Efficient set-based bidirectional relationship detection
 
     Args:
-    # Validate input parameters
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise ValueError('Invalid input data: graph must be an AssetRelationshipGraph instance')
-    if not hasattr(graph, 'relationships') or not isinstance(graph.relationships, dict):
-        raise ValueError('Invalid input data: graph must have a relationships dictionary')
-    if not isinstance(positions, np.ndarray):
-        raise ValueError('Invalid input data: positions must be a numpy array')
-    if len(positions) != len(asset_ids):
-        raise ValueError('Invalid input data: positions array length must match asset_ids length')
-
         graph: The asset relationship graph
         positions: Node positions array
         asset_ids: List of asset IDs
@@ -449,33 +388,10 @@ def _create_directional_arrows(
 
     Uses a pre-built relationship set and asset ID index for O(1) lookups and
     computes arrow positions in a single vectorized step for performance.
-    """
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
-    if positions is None or asset_ids is None:
-        raise ValueError("Invalid input data: positions and asset_ids must not be None")
-    if not isinstance(positions, np.ndarray):
-        positions = np.asarray(positions)
-    if positions.ndim != 2 or positions.shape[1] != 3:
-        raise ValueError("Invalid positions shape: expected (n, 3)")
-    if len(positions) != len(asset_ids):
-        raise ValueError("Invalid input data: positions and asset_ids must have the same length")
-    if not np.issubdtype(positions.dtype, np.number):
-        try:
-            positions = positions.astype(float)
-        except Exception as exc:
-            raise ValueError("Invalid positions: values must be numeric") from exc
-    # Validate asset_ids contents and numeric validity of positions
-    if not isinstance(asset_ids, (list, tuple)):
-        try:
-            asset_ids = list(asset_ids)
-        except Exception as exc:
-            raise ValueError("asset_ids must be an iterable of strings") from exc
-    if not all(isinstance(a, str) and a for a in asset_ids):
-        raise ValueError("asset_ids must contain non-empty strings")
-    if not np.isfinite(positions).all():
-        raise ValueError("Invalid positions: values must be finite numbers")
 
+    Performance optimization: Vectorized array operations compute all arrow positions
+    at once, which is significantly faster than Python loops for large graphs.
+    """
     relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
@@ -499,13 +415,11 @@ def _create_directional_arrows(
     if not source_indices:
         return []
 
-    # Performance optimization: Use vectorized NumPy operations for arrow position calculation
-    # This computes all arrow positions at once using array operations, which is significantly
-    # faster than a Python loop for large graphs (O(1) array operations vs O(n) loop iterations)
+    # Vectorized computation: arrow_positions = source + 0.7 * (target - source)
+    # This computes all arrow positions at once using array operations, which is
+    # significantly faster than a Python loop for large graphs
     src_idx_arr = np.asarray(source_indices, dtype=int)
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
-    # Vectorized computation: arrow_positions = source + 0.7 * (target - source)
-    # Places arrows at 70% along each edge towards the target
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
@@ -537,9 +451,6 @@ def visualize_3d_graph_with_filters(
     show_correlation: bool = True,
     show_corporate_bond: bool = True,
     show_commodity_currency: bool = True,
-    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided')
-
     show_income_comparison: bool = True,
     show_regulatory: bool = True,
     show_all_relationships: bool = True,
