@@ -422,7 +422,8 @@ def _create_directional_arrows(
     if not hasattr(graph, "relationships") or graph.relationships is None:
         raise ValueError("Invalid graph data provided: missing relationships")
 
-    # Build relationship index once for O(1) lookups
+    # Build relationship index once for O(1) lookups (optimization per review comment)
+    # This avoids O(n) iteration through relationships for each bidirectional check
     relationship_index = _build_relationship_index(graph, asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
