@@ -1,3 +1,31 @@
+# Performance Optimization Summary
+
+## Overview
+This document summarizes the performance optimizations applied to `src/visualizations/graph_visuals.py` in response to code review feedback regarding nested loops and computational complexity.
+
+## Key Optimizations
+
+### 1. O(1) Asset ID Lookups
+- **Problem**: `list.index()` was called repeatedly for each relationship, resulting in O(n) lookups
+- **Solution**: Introduced `_build_asset_id_index()` to create a dictionary mapping asset_id → index for O(1) lookups
+- **Impact**: Reduced time complexity from O(n*m) to O(m) where n=assets, m=relationships
+
+### 2. Pre-allocated Arrays
+- **Problem**: Using `list.extend()` repeatedly caused multiple memory reallocations
+- **Solution**: Pre-allocate arrays with exact size needed (3 values per relationship: start, end, None)
+- **Impact**: Reduced memory allocations and improved cache locality
+
+### 3. Optimized Edge Coordinate Building
+- **Function**: `_build_edge_coordinates_optimized()`
+- **Changes**: Uses asset_id_index for O(1) lookups and pre-allocated arrays
+- **Impact**: Significantly faster for large graphs with many relationships
+
+### 4. Enhanced Documentation
+- Added comprehensive docstrings explaining optimization strategies
+- Documented time complexity improvements in function comments
+- Added type hints for better code clarity and IDE support
+
+## Result
 # Refactoring Summary: graph_visuals.py
 
 ## Date: 2025-11-11
