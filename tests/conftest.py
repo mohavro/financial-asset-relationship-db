@@ -1,6 +1,45 @@
 """Pytest configuration and fixtures for the financial asset relationship database tests."""
 
+from typing import TYPE_CHECKING
+
 import pytest
+
+if TYPE_CHECKING:
+    from _pytest.config.argparsing import Parser
+
+
+def pytest_addoption(parser: "Parser") -> None:
+    """Register dummy coverage options when ``pytest-cov`` isn't installed.
+
+    The repository's pytest configuration includes ``--cov`` and ``--cov-report``
+    flags by default. In environments where the ``pytest-cov`` plugin is not
+    available those arguments would normally cause pytest to exit with an
+    ``unrecognized arguments`` error. To keep the default configuration working
+    everywhere we register lightweight stand-ins for those options when the real
+    plugin cannot be imported. The options are accepted but ignored, which
+    mirrors the behaviour of simply running the tests without coverage enabled.
+    """
+
+    try:
+        import pytest_cov  # type: ignore  # noqa: F401
+    except Exception:  # pragma: no cover - this branch only runs without pytest-cov
+        group = parser.getgroup("cov")
+        group.addoption(
+            "--cov",
+            action="append",
+            dest="cov",
+            default=[],
+            metavar="path",
+            help="Dummy option registered when pytest-cov is unavailable.",
+        )
+        group.addoption(
+            "--cov-report",
+            action="append",
+            dest="cov_report",
+            default=[],
+            metavar="type",
+            help="Dummy option registered when pytest-cov is unavailable.",
+        )
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import (
