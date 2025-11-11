@@ -63,25 +63,6 @@ def _resolve_sqlite_path(url: str) -> str:
 
     return str(resolved_path)
 
-    parsed = urlparse(url)
-    if parsed.scheme != "sqlite":
-        raise ValueError("Only sqlite URLs are supported for DATABASE_URL")
-
-    if parsed.path in {"", "/"} and parsed.netloc:
-        path = f"/{parsed.netloc}"
-    else:
-        path = parsed.path
-
-# Handle three-slash relative paths (sqlite:///path.db)
-if parsed.netloc == "" and path.startswith("/") and path != "/:memory:":
-    relative_path = path[1:]  # Remove leading slash
-    resolved = Path(relative_path)
-else:
-    resolved = Path(path).expanduser().resolve()
-resolved.parent.mkdir(parents=True, exist_ok=True)
-return str(resolved)
-    return str(resolved)
-
 
 DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
