@@ -156,7 +156,7 @@ def _collect_and_group_relationships(
     relationship_set = _build_relationship_set(graph, asset_ids_set)
 
     bidirectional_pairs: Set[Tuple[str, str, str]] = set()
-    relationship_groups: Dict[Tuple[str, bool], List[dict]] = {}
+    relationship_groups: Dict[Tuple[str, bool], List[dict]] = defaultdict(list)
 
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids_set:
