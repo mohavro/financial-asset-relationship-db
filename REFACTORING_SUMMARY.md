@@ -1,118 +1,42 @@
-# Performance Optimization Summary
+# Refactoring Summary for `graph_visuals.py`
 
-## Overview
-This document summarizes the performance optimizations applied to `src/visualizations/graph_visuals.py` in response to code review feedback regarding nested loops and computational complexity.
+## Performance Improvements
 
-## Key Optimizations
+### Reduced Computational Complexity
 
-### 1. O(1) Asset ID Lookups
-- **Problem**: `list.index()` was called repeatedly for each relationship, resulting in O(n) lookups
-- **Solution**: Introduced `_build_asset_id_index()` to create a dictionary mapping asset_id → index for O(1) lookups
-- **Impact**: Reduced time complexity from O(n*m) to O(m) where n=assets, m=relationships
+1. **Combined Data Processing Pipeline**:
+   - Merged `_collect_relationships` and `_group_relationships` into a single `_collect_and_group_relationships` function
+   - Eliminated redundant passes through the relationship data
+   - Reduced memory overhead by avoiding intermediate data structures
 
-### 2. Pre-allocated Arrays
-- **Problem**: Using `list.extend()` repeatedly caused multiple memory reallocations
-- **Solution**: Pre-allocate arrays with exact size needed (3 values per relationship: start, end, None)
-- **Impact**: Reduced memory allocations and improved cache locality
+2. **Optimized Lookups**:
+   - Created `asset_id_to_idx` mapping once and reused it across functions
+   - Passed the mapping as a parameter to avoid recreating it in each function call
+   - Used set-based lookups consistently for O(1) membership testing
 
-### 3. Optimized Edge Coordinate Building
-- **Function**: `_build_edge_coordinates_optimized()`
-- **Changes**: Uses asset_id_index for O(1) lookups and pre-allocated arrays
-- **Impact**: Significantly faster for large graphs with many relationships
+3. **Improved Directional Arrow Detection**:
+   - Replaced nested loops with set-based lookups for detecting unidirectional relationships
+   - Pre-built relationship sets for faster reverse relationship detection
 
-### 4. Enhanced Documentation
-- Added comprehensive docstrings explaining optimization strategies
-- Documented time complexity improvements in function comments
-- Added type hints for better code clarity and IDE support
+### Code Structure Improvements
 
-## Result
-# Refactoring Summary: graph_visuals.py
+1. **Enhanced Type Annotations**:
+   - Added proper type hints for all functions
+   - Used Optional and Dict types for better code clarity
 
-## Date: 2025-11-11
+2. **Improved Function Signatures**:
+   - Added optional parameters to avoid redundant computations
+   - Standardized parameter ordering and naming
 
-## Overview
-Fixed 4 duplication issues and 2 complexity issues in `src/visualizations/graph_visuals.py` by extracting common code into reusable helper functions and reducing cyclomatic complexity.
+3. **Better Documentation**:
+   - Added detailed docstrings explaining function purpose and parameters
+   - Included performance considerations in comments
 
-## Issues Fixed
+## Addressing CodeFactor Issues
 
-### Duplication Issues (4)
+1. **Duplication Removal**:
+   - Consolidated duplicated styling and formatting logic into helper functions
 
-1. **Duplicate relationship collection logic** (Lines 89-123 and 375-413)
-   - **Solution**: Extracted into `_collect_relationships()` helper function
-   - **Benefit**: Single source of truth for relationship collection logic
-
-2. **Duplicate relationship grouping logic** (Lines 126-140 and 416-430)
-   - **Solution**: Extracted into `_group_relationships()` helper function
-   - **Benefit**: Consistent grouping behavior across all visualization functions
-
-3. **Duplicate color mapping dictionaries** (Lines 141-150 and 431-440)
-   - **Solution**: Created module-level constant `REL_TYPE_COLORS` and helper function `_get_relationship_color()`
-   - **Benefit**: Single color scheme definition, easier to maintain and update
-
-4. **Duplicate trace creation logic** (Lines 154-194 and 443-483)
-   - **Solution**: Extracted into `_create_trace_for_group()` helper function
-   - **Benefit**: Consistent trace styling and hover text formatting
-
-### Complexity Issues (2)
-
-1. **High complexity in `_create_relationship_traces()`** (Lines 77-195)
-   - **Original Cyclomatic Complexity**: ~15-20
-   - **Solution**: Decomposed into smaller functions:
-     - `_collect_relationships()` - handles relationship collection
-     - `_group_relationships()` - handles grouping by type
-     - `_create_trace_for_group()` - handles trace creation
-   - **New Cyclomatic Complexity**: ~5-7 per function
-   - **Benefit**: Each function has a single responsibility, easier to test and maintain
-
-2. **High complexity in `_create_filtered_relationship_traces()`** (Lines 359-484)
-   - **Original Cyclomatic Complexity**: ~15-20
-   - **Solution**: Refactored to reuse the same helper functions as `_create_relationship_traces()`
-   - **New Cyclomatic Complexity**: ~3-4
-   - **Benefit**: Minimal code, delegates to existing helper functions
-
-## Refactoring Approach
-
-### Extract Method Pattern
-Applied the "Extract Method" refactoring pattern to break down complex functions into smaller, focused helper functions:
-
-- `_get_relationship_color(rel_type: str) -> str`
-- `_collect_relationships(graph, asset_ids, relationship_filters=None) -> tuple`
-- `_group_relationships(all_relationships, bidirectional_pairs) -> dict`
-- `_create_trace_for_group(rel_type, is_bidirectional, relationships, positions, asset_ids) -> go.Scatter3d`
-
-### Single Responsibility Principle
-Each helper function now has a single, well-defined responsibility:
-
-- **Color management**: `_get_relationship_color()` and `REL_TYPE_COLORS`
-- **Data collection**: `_collect_relationships()`
-- **Data organization**: `_group_relationships()`
-- **Visualization**: `_create_trace_for_group()`
-
-### DRY (Don't Repeat Yourself)
-Eliminated all code duplication by:
-- Creating shared constants for color mappings
-- Reusing helper functions across both filtered and unfiltered visualization functions
-- Making `_create_filtered_relationship_traces()` delegate to the same helpers as `_create_relationship_traces()`
-
-## Code Metrics Improvement
-
-### Before Refactoring
-- **Total Lines**: ~484
-- **Duplicate Code Blocks**: 4 major duplications
-- **Average Function Complexity**: 15-20 (high)
-- **Maintainability Index**: Low
-
-### After Refactoring
-- **Total Lines**: ~400 (17% reduction)
-- **Duplicate Code Blocks**: 0
-- **Average Function Complexity**: 5-7 (low to moderate)
-- **Maintainability Index**: High
-
-## Testing
-All existing unit tests in `tests/unit/test_graph_visuals.py` remain compatible with the refactored code:
-- 40+ test cases covering various scenarios
-- No changes required to test suite
-- All tests should pass without modification
-
-## Backward Compatibility
-✅ All public API functions maintain the same signatures and behavior
+2. **Complexity Reduction**:
+   - Decomposed complex functions into smaller, single-purpose functions
+   - Simplified conditional logic by using data structures more effectively
