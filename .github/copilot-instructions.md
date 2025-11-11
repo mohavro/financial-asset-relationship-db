@@ -65,7 +65,6 @@ This repository includes an automated PR management agent configured in `.github
 - `@copilot check ci` - Investigate CI failures
 
 The agent configuration is in `.github/pr-agent-config.yml` and includes safety limits, quality standards, and automated workflows.
-
 If anything here is unclear or you'd like me to merge content from a specific file (or prefer different run commands), tell me which parts to adjust and I will iterate.
 
 -- End of instructions
