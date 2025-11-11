@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 import numpy as np
 import plotly.graph_objects as go
