@@ -7,7 +7,6 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
-from urllib.parse import urlparse
 
 
 def _get_database_url() -> str:
@@ -66,33 +65,20 @@ def _resolve_sqlite_path(url: str) -> str:
 
     return str(resolved_path)
 
-    parsed = urlparse(url)
-    if parsed.scheme != "sqlite":
-        raise ValueError("Only sqlite URLs are supported for DATABASE_URL")
-
-    if parsed.path in {"", "/"} and parsed.netloc:
-        path = f"/{parsed.netloc}"
-    else:
-        path = parsed.path
-
-# Handle three-slash relative paths (sqlite:///path.db)
-if parsed.netloc == "" and path.startswith("/") and path != "/:memory:":
-    relative_path = path[1:]  # Remove leading slash
-    resolved = Path(relative_path)
-else:
-    resolved = Path(path).expanduser().resolve()
-resolved.parent.mkdir(parents=True, exist_ok=True)
-return str(resolved)
-    return str(resolved)
-
 
 DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
+
+# Module-level shared in-memory connection
+_MEMORY_CONNECTION: sqlite3.Connection | None = None
 
 
 def _connect() -> sqlite3.Connection:
     """
     Open a configured SQLite connection for the module's database path.
+    
+    For in-memory databases, returns a shared connection. For file-based databases,
+    creates a new connection each time.
     
     The returned connection has type detection enabled, allows use from multiple threads, and yields rows as sqlite3.Row.
     
@@ -100,6 +86,15 @@ def _connect() -> sqlite3.Connection:
         sqlite3.Connection: A connection to DATABASE_PATH with the module's preferred settings.
     """
 
+    global _MEMORY_CONNECTION
+    
+    if DATABASE_PATH == ":memory:":
+        if _MEMORY_CONNECTION is None:
+            _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+            _MEMORY_CONNECTION.row_factory = sqlite3.Row
+        return _MEMORY_CONNECTION
+    
+    # For file-backed databases, create a new connection each time
     connection = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
     connection.row_factory = sqlite3.Row
     return connection
