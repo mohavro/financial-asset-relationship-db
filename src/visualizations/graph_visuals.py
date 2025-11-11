@@ -414,6 +414,8 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     )
 
     fig.update_layout(
+    if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
+        raise ValueError("Invalid graph data: missing relationships dictionary")
         title={
             "text": "Financial Asset Relationship Network - Enhanced 3D Visualization",
             "x": 0.5,
