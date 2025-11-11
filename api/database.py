@@ -146,7 +146,6 @@ def fetch_value(query: str, parameters: tuple | list | None = None) -> Any | Non
     """
     row = fetch_one(query, parameters)
     return row[0] if row is not None else None
-    """Execute a write query within a managed connection."""
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
     Execute and commit a write SQL query using a managed SQLite connection.
