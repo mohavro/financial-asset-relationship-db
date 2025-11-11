@@ -22,19 +22,43 @@ class TestDependencyMatrix:
 
     @pytest.fixture
     def dependency_matrix_path(self):
-        """Path to dependency matrix file."""
+        """
+        Get the path to the dependency matrix Markdown file.
+        
+        Returns:
+            Path: Path to ".elastic-copilot/memory/dependencyMatrix.md".
+        """
         return Path(".elastic-copilot/memory/dependencyMatrix.md")
 
     @pytest.fixture
     def dependency_matrix_content(self, dependency_matrix_path):
-        """Load dependency matrix content."""
+        """
+        Read and return the full text of the dependencyMatrix.md file.
+        
+        Parameters:
+            dependency_matrix_path (Path | str): Path to the dependencyMatrix.md file.
+        
+        Returns:
+            content (str): The file contents decoded as UTF-8.
+        
+        Raises:
+            AssertionError: If `dependency_matrix_path` does not exist.
+        """
         assert dependency_matrix_path.exists(), "dependencyMatrix.md not found"
         with open(dependency_matrix_path, encoding="utf-8") as f:
             return f.read()
 
     @pytest.fixture
     def dependency_matrix_lines(self, dependency_matrix_content):
-        """Get dependency matrix as lines."""
+        """
+        Split the dependency matrix content into a list of lines.
+        
+        Parameters:
+            dependency_matrix_content (str): Raw text content of the dependency matrix file.
+        
+        Returns:
+            list[str]: Lines obtained by splitting the content at newline characters.
+        """
         return dependency_matrix_content.split("\n")
 
     def test_dependency_matrix_exists(self, dependency_matrix_path):
@@ -98,7 +122,11 @@ class TestDependencyMatrix:
         assert "## File Type Distribution" in dependency_matrix_content
 
     def test_dependency_matrix_file_counts_match(self, dependency_matrix_content):
-        """Test that total files count matches sum of individual file type counts."""
+        """
+        Verify that the reported total files analysed equals the sum of the per-file-type counts.
+        
+        Asserts that the integer parsed from "- Files analyzed: N" matches the sum of all integers parsed from lines like "- X <type> files".
+        """
         # Extract total files analyzed
         total_pattern = r"- Files analyzed: (\d+)"
         total_match = re.search(total_pattern, dependency_matrix_content)
@@ -118,7 +146,15 @@ class TestDependencyMatrix:
         assert "## Key Dependencies by Type" in dependency_matrix_content
 
     def test_dependency_matrix_language_sections_exist(self, dependency_matrix_content):
-        """Test that dependency sections for major languages exist."""
+        """
+        Check that the dependency matrix contains at least one major language section.
+        
+        Verifies the document includes at least one of the language headings: "### PY", "### JS", "### TS" or "### TSX".
+        Fails the test if none of these sections are present.
+        
+        Parameters:
+            dependency_matrix_content (str): The full text content of the dependencyMatrix.md file.
+        """
         # Check for at least some of the main language sections
         language_sections = ["### PY", "### JS", "### TS", "### TSX"]
 
@@ -128,7 +164,14 @@ class TestDependencyMatrix:
         assert len(found_sections) > 0, "No language dependency sections found"
 
     def test_dependency_matrix_dependency_format(self, dependency_matrix_content):
-        """Test that dependencies are properly formatted as bullet points."""
+        """
+        Validate that dependency lists in the dependency matrix are formatted as bullet points.
+        
+        For each "Top dependencies:" section in the provided document, ensures the section content (up to the next "###" heading) either contains the message "No common dependencies found" or consists of non-empty lines that start with a dash (`-`).
+        
+        Parameters:
+            dependency_matrix_content (str): Full text content of the dependencyMatrix.md file.
+        """
         # After "Top dependencies:" there should be bullet points
         sections = dependency_matrix_content.split("Top dependencies:")
 
@@ -172,19 +215,43 @@ class TestSystemManifest:
 
     @pytest.fixture
     def system_manifest_path(self):
-        """Path to system manifest file."""
+        """
+        Return the path to the system manifest file in the repository's .elastic-copilot memory directory.
+        
+        Returns:
+            Path: Path to '.elastic-copilot/memory/systemManifest.md'.
+        """
         return Path(".elastic-copilot/memory/systemManifest.md")
 
     @pytest.fixture
     def system_manifest_content(self, system_manifest_path):
-        """Load system manifest content."""
+        """
+        Load and return the contents of the system manifest file.
+        
+        Parameters:
+            system_manifest_path (Path): Path to the expected systemManifest.md file.
+        
+        Returns:
+            content (str): UTF-8 decoded contents of the file.
+        
+        Raises:
+            AssertionError: If `system_manifest_path` does not exist.
+        """
         assert system_manifest_path.exists(), "systemManifest.md not found"
         with open(system_manifest_path, encoding="utf-8") as f:
             return f.read()
 
     @pytest.fixture
     def system_manifest_lines(self, system_manifest_content):
-        """Get system manifest as lines."""
+        """
+        Split the system manifest content into a list of lines.
+        
+        Parameters:
+            system_manifest_content (str): Raw content of the system manifest file.
+        
+        Returns:
+            list[str]: Lines extracted from the input content by splitting on newline characters.
+        """
         return system_manifest_content.split("\n")
 
     def test_system_manifest_exists(self, system_manifest_path):
@@ -239,7 +306,14 @@ class TestSystemManifest:
         assert "## Current Status" in system_manifest_content
 
     def test_system_manifest_has_current_phase(self, system_manifest_content):
-        """Test that systemManifest.md specifies current phase."""
+        """
+        Assert that the System Manifest declares a current project phase.
+        
+        Raises an assertion error if no line matching "- Current Phase: <value>" is present in the provided System Manifest content.
+        
+        Parameters:
+            system_manifest_content (str): Full text of the systemManifest.md file to inspect.
+        """
         pattern = r"- Current Phase: (.+)"
         match = re.search(pattern, system_manifest_content)
 
@@ -275,7 +349,9 @@ class TestSystemManifest:
             assert count >= 0, f"File count for {file_type} should be non-negative"
 
     def test_system_manifest_has_dependencies_section(self, system_manifest_content):
-        """Test that systemManifest.md has Dependencies section."""
+        """
+        Verify that systemManifest.md contains the "## Dependencies" section.
+        """
         assert "## Dependencies" in system_manifest_content
 
     def test_system_manifest_has_directory_structure(self, system_manifest_content):
@@ -343,7 +419,14 @@ class TestSystemManifest:
             assert count < 10, f"Section '{section}' appears too many times ({count})"
 
     def test_system_manifest_markdown_formatting(self, system_manifest_lines):
-        """Test basic markdown formatting rules."""
+        """
+        Validate that Markdown headings in the system manifest have a space after leading hash characters.
+        
+        Checks up to the first 500 lines of the provided document and asserts that any line beginning with "#" has a single space following the block of leading "#" characters (e.g. "# Heading"). The test fails with an assertion error if a heading omits the required space.
+        
+        Parameters:
+            system_manifest_lines (list[str]): Lines of the system manifest file to be inspected.
+        """
         for i, line in enumerate(system_manifest_lines[:500]):  # Check first 500 lines
             # Check heading formatting
             if line.startswith("#"):
@@ -361,14 +444,24 @@ class TestDocumentationConsistency:
 
     @pytest.fixture
     def dependency_matrix_content(self):
-        """Load dependency matrix content."""
+        """
+        Load and return the contents of .elastic-copilot/memory/dependencyMatrix.md.
+        
+        Returns:
+            content (str): The file content as a Unicode string.
+        """
         path = Path(".elastic-copilot/memory/dependencyMatrix.md")
         with open(path, encoding="utf-8") as f:
             return f.read()
 
     @pytest.fixture
     def system_manifest_content(self):
-        """Load system manifest content."""
+        """
+        Retrieve the contents of the system manifest file from .elastic-copilot/memory.
+        
+        Returns:
+            content (str): UTF-8 decoded text of systemManifest.md.
+        """
         path = Path(".elastic-copilot/memory/systemManifest.md")
         with open(path, encoding="utf-8") as f:
             return f.read()
@@ -397,7 +490,16 @@ class TestDocumentationConsistency:
                      f"systemManifest={sm_counts[file_type]}")
 
     def test_file_types_match_between_documents(self, dependency_matrix_content, system_manifest_content):
-        """Test that file types are consistent between documents."""
+        """
+        Verify that the set of file types listed in dependencyMatrix.md matches the file types reported in the System Manifest Project Structure.
+        
+        Parameters:
+            dependency_matrix_content (str): Full text content of dependencyMatrix.md.
+            system_manifest_content (str): Full text content of systemManifest.md.
+        
+        Raises:
+            AssertionError: If the extracted file type sets differ between the two documents.
+        """
         # Extract file types from dependency matrix
         dm_types_match = re.search(r"- File types: (.+)", dependency_matrix_content)
         assert dm_types_match is not None
@@ -413,7 +515,11 @@ class TestDocumentationConsistency:
             f"File types mismatch: dependencyMatrix={dm_types}, systemManifest={sm_types}"
 
     def test_timestamps_are_recent(self, dependency_matrix_content, system_manifest_content):
-        """Test that timestamps in documents are reasonably recent (within 1 year)."""
+        """
+        Assert that document timestamps are recent.
+        
+        If present, validates that the "Generated" timestamp in dependencyMatrix.md and the "Last Updated" timestamp in systemManifest.md are within one year of the current UTC time; raises an assertion if either timestamp is older than one year.
+        """
         now = datetime.now(timezone.utc)
         one_year_ago = now - timedelta(days=365)
 
@@ -511,7 +617,11 @@ class TestDocumentationRealisticContent:
             f"Total files ({total_files}) seems unrealistic"
 
     def test_documented_dependencies_are_real_packages(self):
-        """Test that documented dependencies look like real package names."""
+        """
+        Verify that dependencies listed in .elastic-copilot/memory/dependencyMatrix.md resemble valid package names.
+        
+        Reads the dependency matrix, collects bullet-point entries, ignores lines containing the tokens "files", "File types" or "analyzed", and asserts for the first 20 entries that each is either a relative path (starts with '.'), a scoped package (starts with '@'), or matches the package-name pattern `^[@\w.\-/]+$`.
+        """
         matrix_path = Path(".elastic-copilot/memory/dependencyMatrix.md")
         with open(matrix_path, encoding="utf-8") as f:
             content = f.read()
@@ -540,12 +650,22 @@ class TestDocumentationEdgeCases:
 
     @pytest.fixture
     def dependency_matrix_path(self):
-        """Path to dependency matrix file."""
+        """
+        Get the path to the dependency matrix Markdown file.
+        
+        Returns:
+            Path: Path to ".elastic-copilot/memory/dependencyMatrix.md".
+        """
         return Path(".elastic-copilot/memory/dependencyMatrix.md")
 
     @pytest.fixture
     def system_manifest_path(self):
-        """Path to system manifest file."""
+        """
+        Return the path to the system manifest file in the repository's .elastic-copilot memory directory.
+        
+        Returns:
+            Path: Path to '.elastic-copilot/memory/systemManifest.md'.
+        """
         return Path(".elastic-copilot/memory/systemManifest.md")
 
     def test_documentation_files_are_utf8_encoded(self, dependency_matrix_path, system_manifest_path):
@@ -558,7 +678,11 @@ class TestDocumentationEdgeCases:
                 pytest.fail(f"File {path} is not valid UTF-8")
 
     def test_documentation_has_no_trailing_whitespace(self, dependency_matrix_path, system_manifest_path):
-        """Test that documentation lines don't have trailing whitespace."""
+        """
+        Ensure the first 200 lines of each documentation file contain fewer than 10 lines with trailing whitespace.
+        
+        Checks both the dependency matrix and system manifest files (opened as UTF-8) and records line numbers with trailing spaces or tabs; the test fails if 10 or more problematic lines are found.
+        """
         for path in [dependency_matrix_path, system_manifest_path]:
             with open(path, encoding="utf-8") as f:
                 lines = f.readlines()
@@ -620,7 +744,11 @@ class TestDocumentationEdgeCases:
                 "Timestamp is in the future (allowing 5 min clock skew)"
 
     def test_file_counts_are_positive_integers(self):
-        """Test that all file counts are positive integers."""
+        """
+        Asserts that every file count listed in .elastic-copilot/memory/dependencyMatrix.md is an integer greater than zero and less than 100000.
+        
+        The test locates numeric file counts in the document and fails if any count is not within the valid range.
+        """
         path = Path(".elastic-copilot/memory/dependencyMatrix.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()
@@ -752,7 +880,11 @@ class TestDocumentationRobustness:
         assert has_title or has_content, "Documentation is too minimal"
 
     def test_documentation_handles_special_characters(self):
-        """Test that documentation properly handles special characters."""
+        """
+        Verify that .elastic-copilot/memory/systemManifest.md contains expected special characters.
+        
+        Checks that the manifest includes at least one of the following characters used for directory/file representation and paths: 📂, 📄, backslash (\\), forward slash (/), hyphen (-), underscore (_), or dot (.). The test fails if none of these characters are present, indicating possible corruption or encoding issues.
+        """
         path = Path(".elastic-copilot/memory/systemManifest.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()
@@ -765,7 +897,11 @@ class TestDocumentationRobustness:
         assert found > 0, "No special characters found - might be corrupted"
 
     def test_documentation_dependency_format_variations(self):
-        """Test that various dependency format variations are handled."""
+        """
+        Check that dependency sections in systemManifest.md use an acceptable format.
+        
+        Reads .elastic-copilot/memory/systemManifest.md and, if any "Dependencies:" headings exist, verifies for the first few dependency sections that each contains at least one bullet point, the phrase "No dependencies", or a subsequent section header (###) within the first 200 characters. Raises an assertion if a section does not meet any of these conditions.
+        """
         path = Path(".elastic-copilot/memory/systemManifest.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()
@@ -784,7 +920,11 @@ class TestDocumentationRobustness:
                     "Dependency section format unclear"
 
     def test_documentation_path_separators_consistent(self):
-        """Test that file paths use consistent separators."""
+        """
+        Check that file paths listed as "###" headers in .elastic-copilot/memory/systemManifest.md use a consistent separator style.
+        
+        Parses file paths from headings matching the pattern `### <path>` and, when more than 10 paths are found, asserts that at least 80% use the same separator (either backslash `\` or forward slash `/`). If no paths are found the test performs no assertion.
+        """
         path = Path(".elastic-copilot/memory/systemManifest.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()
@@ -860,7 +1000,11 @@ class TestDocumentationSchemaValidation:
             assert field in content, f"Required field missing: {field}"
 
     def test_dependency_sections_follow_pattern(self):
-        """Test that dependency sections follow expected patterns."""
+        """
+        Validate that language-specific dependency section headings in the system manifest follow the expected format.
+        
+        Reads .elastic-copilot/memory/systemManifest.md and locates headings matching the pattern "## LANG Dependencies". If such headings exist, each language token (checked up to the first 10 occurrences) must be either uppercase or title case and have a length of 2 to 4 characters; otherwise the test fails with an assertion.
+        """
         path = Path(".elastic-copilot/memory/systemManifest.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()
@@ -908,7 +1052,11 @@ class TestDocumentationSchemaValidation:
                 pytest.fail(f"Invalid ISO 8601 timestamp: {ts}")
 
     def test_numeric_values_in_valid_ranges(self):
-        """Test that numeric values are in reasonable ranges."""
+        """
+        Verify numeric file counts in .elastic-copilot/memory/dependencyMatrix.md are within expected bounds.
+        
+        Searches the document for occurrences matching the pattern `(\d+) <type> files` and asserts each extracted count is greater than 0 and less than 100000.
+        """
         path = Path(".elastic-copilot/memory/dependencyMatrix.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()

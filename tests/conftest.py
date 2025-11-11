@@ -10,12 +10,14 @@ if TYPE_CHECKING:
 
 def pytest_addoption(parser: "Parser") -> None:
     """
-    Register lightweight dummy coverage CLI options when the `pytest-cov` plugin is not available.
+    Register dummy coverage command-line options when pytest-cov is unavailable.
     
-    If `pytest-cov` can be imported this function does nothing. If the import fails it registers `--cov` and `--cov-report` as benign, appendable options so test runs that include those flags do not error; the options are accepted but ignored.
+    If the `pytest-cov` plugin cannot be imported this registers `--cov` and
+    `--cov-report` as benign, appendable options so test runs that include those
+    flags do not error. If `pytest-cov` is importable this function has no effect.
     
     Parameters:
-        parser (Parser): The pytest argument parser used to add command-line options.
+        parser (Parser): Pytest argument parser used to add the command-line options.
     """
 
     try:
