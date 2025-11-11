@@ -131,6 +131,28 @@ def _build_relationship_set(
     Args:
         graph: The asset relationship graph
 def _build_relationship_index(
+def _build_allowed_types_set(relationship_filters: Optional[Dict[str, bool]]) -> Optional[Set[str]]:
+    """Build a set of allowed relationship types for O(1) filtering.
+
+    Args:
+        relationship_filters: Optional dict mapping relationship types to boolean visibility flags
+
+    Returns:
+        Set of allowed relationship types, or None if all types are allowed
+    """
+    if relationship_filters is None:
+        return None
+
+    # Pre-compute set of allowed types for O(1) membership testing
+    # This avoids repeated dict lookups and boolean checks in the hot path
+    allowed_types = {rel_type for rel_type, is_visible in relationship_filters.items() if is_visible}
+
+    # If all types are allowed, return None to skip filtering entirely
+    if len(allowed_types) == len(relationship_filters):
+        return None
+
+    return allowed_types
+
     graph: AssetRelationshipGraph, asset_ids_set: Set[str]
 ) -> Dict[Tuple[str, str, str], float]:
     """Build optimized relationship index for O(1) lookups.
