@@ -385,7 +385,7 @@ def _create_directional_arrows(
     Uses a pre-built relationship set for O(1) reverse relationship lookups
     and asset ID index for O(1) position lookups.
     """
-    relationship_set = _build_relationship_set(graph, set(asset_ids))
+    relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
