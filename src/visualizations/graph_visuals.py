@@ -29,10 +29,13 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
+    # Create index mapping for O(1) lookups
+    asset_id_to_idx = {asset_id: idx for idx, asset_id in enumerate(asset_ids)}
+
     fig = go.Figure()
 
     # Create separate traces for different relationship types and directions
-    relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
+    relationship_traces = _create_relationship_traces(graph, positions, asset_ids, asset_id_to_idx)
 
     # Add all relationship traces
     for trace in relationship_traces:
