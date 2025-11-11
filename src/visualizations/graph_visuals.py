@@ -226,10 +226,7 @@ def _collect_and_group_relationships(
     asset_ids: List[str],
     relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> Dict[Tuple[str, bool], List[dict]]:
-    """Collect and group relationships with directionality info and filtering.
-
-    Merges collection and grouping into a single pass for better performance.
-    Uses a pre-built relationship index for O(1) reverse relationship lookups.
+    """Collect and group relationships with directionality info and filtering, optimized for large datasets via single-pass grouping with O(1) lookups and set-based bidirectional detection.
 
     Args:
         graph: The asset relationship graph
