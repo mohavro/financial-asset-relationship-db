@@ -20,7 +20,7 @@ def _cov_plugin_available() -> bool:
     Check whether the pytest-cov plugin is importable.
     
     Returns:
-        True if the pytest-cov plugin is importable, False otherwise.
+        `True` if the pytest-cov plugin is importable, `False` otherwise.
     """
 
     return importlib.util.find_spec("pytest_cov") is not None
@@ -28,12 +28,12 @@ def _cov_plugin_available() -> bool:
 
 def pytest_load_initial_conftests(args: List[str], early_config, parser) -> None:  # pragma: no cover - exercised via pytest
     """
-    Remove pytest-cov related command-line options from the provided argument list when the pytest-cov plugin is not installed.
+    Remove pytest-cov related command-line options from the provided argument list when the pytest-cov plugin is not available.
     
-    If the pytest-cov plugin is available the function does nothing. Otherwise it strips occurrences of `--cov` and `--cov-report` flags (both standalone flags with the following value and inline forms like `--cov=...` / `--cov-report=...`). The `args` list is modified in place to remove those coverage-related entries.
+    If the plugin is present the argument list is left unchanged. Otherwise, remove occurrences of --cov and --cov-report together with their following parameters, and any inline forms starting with --cov= or --cov-report=. The original `args` list is updated in-place.
     
     Parameters:
-        args (List[str]): The initial pytest command-line arguments; this list will be mutated in place to remove coverage options.
+        args (List[str]): Mutable list of command-line arguments; coverage-related options are removed from this list in-place.
     """
 
     if _cov_plugin_available():
