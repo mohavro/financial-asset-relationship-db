@@ -405,7 +405,8 @@ def visualize_3d_graph_with_filters(
 
     fig.update_layout(
         title={
-            "text": f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships",
+            "text": (
+                f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships"
             "x": 0.5,
             "xanchor": "center",
             "font": {"size": 16},
