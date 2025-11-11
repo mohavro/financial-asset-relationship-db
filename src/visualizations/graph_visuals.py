@@ -280,7 +280,7 @@ def _create_directional_arrows(
     arrows = []
 
     # Build relationship set once for O(1) lookups
-    relationship_set = _build_relationship_set(graph)
+    relationship_set = _build_relationship_set(graph, asset_ids)
 
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
