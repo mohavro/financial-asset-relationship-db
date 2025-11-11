@@ -176,7 +176,10 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
     direction_text = "↔" if is_bidirectional else "→"
 
     for rel in relationships:
-        hover_text = f"{rel['source_id']} {direction_text} {rel['target_id']}<br>Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
+        hover_text = (
+            f"{rel['source_id']} {direction_text} {rel['target_id']}<br>"
+            f"Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
+        )
         hover_texts.extend([hover_text, hover_text, None])
 
     return hover_texts
