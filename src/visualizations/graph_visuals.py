@@ -397,22 +397,18 @@ def _create_directional_arrows(
         TypeError: If graph is not an AssetRelationshipGraph instance
         ValueError: If inputs are None, mismatched lengths, invalid shapes, or non-numeric
     """
+    # === CONSOLIDATED INPUT VALIDATION (addressing review feedback) ===
+    # Validate basic requirements before any processing
     if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
+
+    # Check for None values and length mismatch upfront (per review comment)
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
-    if not isinstance(positions, np.ndarray):
-        positions = np.asarray(positions)
-    if positions.ndim != 2 or positions.shape[1] != 3:
-        raise ValueError("Invalid positions shape: expected (n, 3)")
     if len(positions) != len(asset_ids):
         raise ValueError("Invalid input data: positions and asset_ids must have the same length")
-    if not np.issubdtype(positions.dtype, np.number):
-        try:
-            positions = positions.astype(float)
-        except Exception as exc:
-            raise ValueError("Invalid positions: values must be numeric") from exc
-    # Validate asset_ids contents and numeric validity of positions
+
+    # Validate asset_ids format and contents
     if not isinstance(asset_ids, (list, tuple)):
         try:
             asset_ids = list(asset_ids)
@@ -420,6 +416,17 @@ def _create_directional_arrows(
             raise ValueError("asset_ids must be an iterable of strings") from exc
     if not all(isinstance(a, str) and a for a in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
+
+    # Validate positions array structure and numeric data
+    if not isinstance(positions, np.ndarray):
+        positions = np.asarray(positions)
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid positions shape: expected (n, 3)")
+    if not np.issubdtype(positions.dtype, np.number):
+        try:
+            positions = positions.astype(float)
+        except Exception as exc:
+            raise ValueError("Invalid positions: values must be numeric") from exc
     if not np.isfinite(positions).all():
         raise ValueError("Invalid positions: values must be finite numbers")
 
