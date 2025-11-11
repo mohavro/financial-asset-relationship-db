@@ -110,7 +110,7 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
 
 
 def _collect_relationships(
-    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
+    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: Optional[dict] = None
 ) -> tuple:
     """Collect all relationships with directionality info, filtering, and optimized list allocation.
 
