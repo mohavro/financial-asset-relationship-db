@@ -1,7 +1,7 @@
-import pytest
+from src.logic.asset_graph import AssetRelationshipGraph
 import numpy as np
 import plotly.graph_objects as go
-from src.logic.asset_graph import AssetRelationshipGraph
+import pytest
 
 from src.visualizations.graph_visuals import (REL_TYPE_COLORS,
                                               _build_asset_id_index,
