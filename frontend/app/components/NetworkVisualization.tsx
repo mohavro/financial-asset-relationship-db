@@ -33,7 +33,7 @@ type EdgeTrace = {
  *
  * @param data - Visualization payload containing `nodes` and `edges`.
  *   Nodes are objects with at least: `id`, `x`, `y`, `z`, `symbol`, `name`, `asset_class`, `size`, `color`.
- *   Edges are objects with at least: `source`, `target`, `strength`.
+ *   Edges are objects with at least: `source`, `target`, `relationship_type`, `strength`.
  * @returns A JSX element rendering the 3D network plot when data is valid, or a centred status message when data is missing, invalid or too large.
  */
 export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
