@@ -137,3 +137,81 @@ The current implementation provides **more granular and informative error messag
 - Attempting type coercion where appropriate before failing
 
 This approach makes debugging easier and provides better user experience by clearly indicating what went wrong.
+
+---
+
+# Review Response: Performance Optimization for Relationship Lookups
+
+## ✅ Review Comment Addressed
+
+**Review Comment:** "The function `_build_relationship_set` iterates through all relationships for a given source ID to check if both source and target IDs are in `asset_ids`. This approach has a time complexity of O(n) for each call, which can be inefficient if the number of relationships is large. A more efficient approach would be to use a set or a dictionary to store relationships, allowing for O(1) complexity for checking the existence of a reverse relationship."
+
+**Status:** ✅ **ALREADY IMPLEMENTED**
+
+**Date:** 2025-11-11
+**Pull Request:** Fix 4 Duplication, 2 Complexity issues in src\visualizations\graph_visuals.py
+**Issue:** #130
+
+## Review Comment Summary
+
+The reviewer suggested optimizing relationship lookups by using a set or dictionary instead of iterating through relationships, which would improve time complexity from O(n) to O(1) for checking reverse relationships.
+
+## Current Implementation Status
+
+### ✅ O(1) Relationship Index Already Implemented
+
+The code **already implements the exact optimization suggested by the reviewer**. The `_build_relationship_index` function (lines 35-63 in `src/visualizations/graph_visuals.py`) creates a dictionary-based index that provides O(1) lookups for all relationship operations.
+
+#### Implementation Details
+
+**1. Relationship Index Structure** (Lines 35-63)
+```python
+def _build_relationship_index(
+    graph: AssetRelationshipGraph, asset_ids: Iterable[str]
+) -> Dict[Tuple[str, str, str], float]:
+    """Build optimized relationship index for O(1) lookups.
+
+    This function consolidates relationship data into a single index structure
+    that can be efficiently queried for:
+    - Checking if a relationship exists (O(1) lookup)
+    - Getting relationship strength (O(1) lookup)
+    - Detecting bidirectional relationships (O(1) reverse lookup)
+    """
+    asset_ids_set = set(asset_ids)
+    relationship_index: Dict[Tuple[str, str, str], float] = {}
+
+    for source_id, rels in graph.relationships.items():
+        if source_id not in asset_ids_set:
+            continue
+        for target_id, rel_type, strength in rels:
+            if target_id in asset_ids_set:
+                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+
+    return relationship_index
+```
+
+**Key Features:**
+- **O(1) membership tests**: Uses `set(asset_ids)` for fast asset ID lookups
+- **O(1) relationship lookups**: Dictionary key is `(source_id, target_id, rel_type)`
+- **O(1) reverse relationship checks**: Can check `(target_id, source_id, rel_type)` in constant time
+
+**2. Usage in `_collect_and_group_relationships`** (Lines 144-197)
+```python
+def _collect_and_group_relationships(...):
+    # Build index once for O(1) lookups (Performance optimization per review comment)
+    relationship_index = _build_relationship_index(graph, asset_ids)
+
+    for (source_id, target_id, rel_type), strength in relationship_index.items():
+        # O(1) reverse lookup for bidirectionality
+        is_bidirectional = (target_id, source_id, rel_type) in relationship_index
+```
+
+**3. Usage in `_create_directional_arrows`** (Lines 380-463)
+```python
+def _create_directional_arrows(...):
+    # Build relationship index once for O(1) lookups (optimization per review comment)
+    relationship_index = _build_relationship_index(graph, asset_ids)
+
+    for (source_id, target_id, rel_type), _ in relationship_index.items():
+        # Check for reverse relationship using O(1) index lookup
+        reverse_key = (target_id, source_id, rel_type)
