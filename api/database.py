@@ -118,21 +118,6 @@ def get_connection() -> Iterator[sqlite3.Connection]:
             connection.close()
 
 
-from typing import Any
-
-def fetch_value(query: str, parameters: tuple | list | None = None) -> Any | None:
-    """
-    Return the first column of the first row produced by the given SQL query.
-    
-    Parameters:
-        query (str): SQL statement to execute.
-        parameters (tuple | list | None): Parameters to bind to the SQL statement.
-    
-    Returns:
-        The value of the first column of the first row, or None if the query returned no rows.
-    """
-    row = fetch_one(query, parameters)
-    return row[0] if row is not None else None
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
     Execute and commit a write SQL query using a managed SQLite connection.
