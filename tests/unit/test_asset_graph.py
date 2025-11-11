@@ -67,7 +67,7 @@ class TestGet3DVisualizationDataEnhanced:
         graph.relationships["asset2"] = [("asset3", "correlation", 0.7)]
         graph.relationships["asset3"] = [("asset1", "correlation", 0.6)]
 
-        positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+        positions, asset_ids, _, hover_texts = graph.get_3d_visualization_data_enhanced()
 
         assert positions.shape == (3, 3)
         assert len(asset_ids) == 3
