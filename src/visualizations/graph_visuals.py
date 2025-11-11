@@ -5,10 +5,9 @@ import numpy as np
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
-DEFAULT_REL_COLOR = "#888888"
 # Color and style mapping for relationship types (shared constant)
 REL_TYPE_COLORS = defaultdict(
-    lambda: DEFAULT_REL_COLOR,
+    lambda: "#888888",
     {
         "same_sector": "#FF6B6B",  # Red for sector relationships
         "market_cap_similar": "#4ECDC4",  # Teal for market cap
@@ -40,9 +39,6 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
-    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided')
-
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
     fig = go.Figure()
@@ -121,17 +117,17 @@ def _build_relationship_set(
     Args:
         graph: The asset relationship graph
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
-    # Convert asset_ids to set for O(1) membership tests (performance optimization)
 
     Returns:
         Set of tuples (source_id, target_id, rel_type) for all relationships
     """
     asset_ids_set = set(asset_ids)
     relationship_set: Set[Tuple[str, str, str]] = set()
-    for source_id in asset_ids_set.intersection(graph.relationships.keys()):
-        for target_id, rel_type, _ in graph.relationships[source_id]:
-            if target_id in asset_ids_set:
-                relationship_set.add((source_id, target_id, rel_type))
+    for source_id, rels in graph.relationships.items():
+        if source_id in asset_ids_set:
+            for target_id, rel_type, _ in rels:
+                if target_id in asset_ids_set:
+                    relationship_set.add((source_id, target_id, rel_type))
     return relationship_set
 
 
@@ -156,7 +152,7 @@ def _collect_and_group_relationships(
     if relationship_filters is None:
         relationship_filters = {}
 
-    # Convert to set for O(1) membership tests (optimization for large asset lists)
+    # Convert to set for O(1) membership
     asset_ids_set = set(asset_ids)
 
     # Build optimized relationship index: (source, target, type) -> strength
@@ -395,7 +391,6 @@ def _create_directional_arrows(
             positions = positions.astype(float)
         except Exception as exc:
             raise ValueError("Invalid positions: values must be numeric") from exc
-
     # Validate asset_ids contents and numeric validity of positions
     if not isinstance(asset_ids, (list, tuple)):
         try:
@@ -405,16 +400,9 @@ def _create_directional_arrows(
     if not all(isinstance(a, str) and a for a in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
     if not np.isfinite(positions).all():
-    relationship_set = _build_relationship_set(graph, asset_ids)
-    if len(asset_ids) == 0:
-        return []
-    if not isinstance(asset_ids, (list, tuple, np.ndarray)):
-        raise ValueError("Invalid asset_ids: expected a sequence of strings")
-    if not all(isinstance(a, str) for a in asset_ids):
-        raise ValueError("Invalid asset_ids: all asset IDs must be strings")
-    if not np.isfinite(positions).all():
         raise ValueError("Invalid positions: values must be finite numbers")
-    # Convert to set for O(1) membership testing (optimization already applied)
+
+    relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
@@ -481,9 +469,6 @@ def visualize_3d_graph_with_filters(
     toggle_arrows: bool = True,
 ) -> go.Figure:
     """Create 3D visualization with selective relationship filtering"""
-    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided')
-
 
     if not show_all_relationships:
         # Filter which relationship types to show
