@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 
 from src.visualizations.graph_visuals import (
     _create_directional_arrows,
+    _create_directional_arrows,
     visualize_3d_graph,
     visualize_3d_graph_with_filters,
 )
