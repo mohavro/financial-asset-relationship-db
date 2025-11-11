@@ -373,10 +373,10 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships.
+    """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
 
-    Uses a pre-built relationship set for O(1) reverse relationship lookups
-    and asset ID index for O(1) position lookups.
+    Uses a pre-built relationship set and asset ID index for O(1) lookups and
+    computes arrow positions in a single vectorized step for performance.
     """
     relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
@@ -385,14 +385,13 @@ def _create_directional_arrows(
     source_indices: List[int] = []
     target_indices: List[int] = []
     hover_texts: List[str] = []
+
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
     if not isinstance(positions, np.ndarray):
         positions = np.asarray(positions)
     if positions.ndim != 2 or positions.shape[1] != 3:
         raise ValueError("Invalid positions shape: expected (n, 3)")
-    if not isinstance(asset_ids, list):
-        asset_ids = list(asset_ids)
     if len(positions) != len(asset_ids):
         raise ValueError("Invalid input data: positions and asset_ids must have the same length")
     if not np.issubdtype(positions.dtype, np.number):
@@ -400,58 +399,47 @@ def _create_directional_arrows(
             positions = positions.astype(float)
         except Exception as exc:
             raise ValueError("Invalid positions: values must be numeric") from exc
-    if not all(isinstance(a, str) for a in asset_ids):
-        raise ValueError("asset_ids must be a list of strings")
 
-    # Find unidirectional relationships
+    # Gather unidirectional relationships
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids_set:
             continue
-
         for target_id, rel_type, _ in rels:
             if target_id not in asset_ids_set:
                 continue
-
-            # Check if this is truly unidirectional using O(1) lookup
             if (target_id, source_id, rel_type) not in relationship_set:
-                # O(1) lookup instead of O(n) list.index()
-                source_idx = asset_id_index[source_id]
-                target_idx = asset_id_index[target_id]
+                source_indices.append(asset_id_index[source_id])
+                target_indices.append(asset_id_index[target_id])
+                hover_texts.append(f"Direction: {source_id} → {target_id}<br>Type: {rel_type}")
 
-                # Collect indices and hover texts for vectorized arrow computation
-                hover_texts.append(
-                    f"Direction: {source_id} → {target_id}<br>Type: {rel_type}"
-                )
-                source_indices.append(source_idx)
-                target_indices.append(target_idx)
+    if not source_indices:
+        return []
 
-    # Vectorized arrow position computation and trace creation
-    if source_indices:
-        src_idx_arr = np.asarray(source_indices, dtype=int)
-        tgt_idx_arr = np.asarray(target_indices, dtype=int)
-        src_pos = positions[src_idx_arr]
-        tgt_pos = positions[tgt_idx_arr]
-        arrow_positions = src_pos + 0.7 * (tgt_pos - src_pos)
+    # Vectorized position computation: 70% along the edge towards target
+    src_idx_arr = np.asarray(source_indices, dtype=int)
+    tgt_idx_arr = np.asarray(target_indices, dtype=int)
+    source_positions = positions[src_idx_arr]
+    target_positions = positions[tgt_idx_arr]
+    arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
 
-        arrow_trace = go.Scatter3d(
-            x=arrow_positions[:, 0].tolist(),
-            y=arrow_positions[:, 1].tolist(),
-            z=arrow_positions[:, 2].tolist(),
-            mode="markers",
-            marker=dict(
-                symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
-                size=8,
-                color="rgba(255, 0, 0, 0.8)",
-                line=dict(color="red", width=1),
-            ),
-            hovertext=hover_texts,
-            hoverinfo="text",
-            name="Direction Arrows",
-            visible=True,
-            showlegend=False,
-        )
-        return [arrow_trace]
-    return []
+    arrow_trace = go.Scatter3d(
+        x=arrow_positions[:, 0].tolist(),
+        y=arrow_positions[:, 1].tolist(),
+        z=arrow_positions[:, 2].tolist(),
+        mode="markers",
+        marker=dict(
+            symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
+            size=8,
+            color="rgba(255, 0, 0, 0.8)",
+            line=dict(color="red", width=1),
+        ),
+        hovertext=hover_texts,
+        hoverinfo="text",
+        name="Direction Arrows",
+        visible=True,
+        showlegend=False,
+    )
+    return [arrow_trace]
 
 
 def visualize_3d_graph_with_filters(
