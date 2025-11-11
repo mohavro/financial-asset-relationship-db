@@ -6,15 +6,19 @@ import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 # Color and style mapping for relationship types (shared constant)
-REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
-    "same_sector": "#FF6B6B",  # Red for sector relationships
-    "market_cap_similar": "#4ECDC4",  # Teal for market cap
-    "correlation": "#45B7D1",  # Blue for correlations
-    "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
-    "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
-    "income_comparison": "#DDA0DD",  # Plum for income comparisons
-    "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
-}
+REL_TYPE_COLORS = defaultdict(
+    lambda: "#888888",
+    {
+        "default": "#888888",  # Gray for others
+        "same_sector": "#FF6B6B",  # Red for sector relationships
+        "market_cap_similar": "#4ECDC4",  # Teal for market cap
+        "correlation": "#45B7D1",  # Blue for correlations
+        "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
+        "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
+        "income_comparison": "#DDA0DD",  # Plum for income comparisons
+        "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
+    },
+)
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
@@ -85,11 +89,6 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     return fig
 
 
-def _get_relationship_color(rel_type: str) -> str:
-    """Get color for a relationship type"""
-    return REL_TYPE_COLORS.get(rel_type, REL_TYPE_COLORS["default"])
-
-
 def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str]) -> Set[Tuple[str, str, str]]:
     """Build a set of all relationships for O(1) reverse relationship lookups.
 
@@ -101,7 +100,6 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
         Set of tuples (source_id, target_id, rel_type) for all relationships
     """
     relationship_set = set()
-    asset_ids_set = set(asset_ids)  # Convert to set for O(1) lookups
     for source_id, rels in graph.relationships.items():
         if source_id in asset_ids:
             for target_id, rel_type, _ in rels:
@@ -122,9 +120,7 @@ def _collect_relationships(
     relationship_set = _build_relationship_set(graph, asset_ids)
 
     bidirectional_pairs = set()
-    # Pre-allocate list with estimated size to reduce dynamic resizing
-    # Use relationship_set size as upper bound (actual size may be smaller due to filtering)
-    all_relationships = [None] * len(relationship_set)
+    all_relationships = []
 
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids:
@@ -178,9 +174,7 @@ def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> d
     return relationship_groups
 
 
-def _build_edge_coordinates(
-    relationships: list, positions: np.ndarray, asset_ids: List[str]
-) -> tuple:
+def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
 
@@ -198,7 +192,6 @@ def _build_edge_coordinates(
 def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: bool) -> list:
     """Build hover text list for relationships"""
     hover_texts = []
-
     direction_text = "↔" if is_bidirectional else "→"
 
     for rel in relationships:
@@ -209,11 +202,6 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
         hover_texts.extend([hover_text, hover_text, None])
 
     return hover_texts
-
-
-def _get_relationship_color(rel_type: str) -> str:
-    """Get color for a relationship type"""
-    return REL_TYPE_COLORS[rel_type]
 
 
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
@@ -251,11 +239,6 @@ def _create_trace_for_group(
         visible=True,
         legendgroup=rel_type,
     )
-
-
-def _get_relationship_color(rel_type: str) -> str:
-    """Get color for a relationship type from the color mapping"""
-    return REL_TYPE_COLORS[rel_type]
 
 
 def _create_relationship_traces(
@@ -409,9 +392,7 @@ def visualize_3d_graph_with_filters(
 
     fig.update_layout(
         title={
-            "text": (
-                f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships"
-            ),
+            "text": f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships",
             "x": 0.5,
             "xanchor": "center",
             "font": {"size": 16},
