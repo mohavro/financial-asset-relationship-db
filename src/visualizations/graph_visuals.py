@@ -213,7 +213,7 @@ def _get_trace_name(rel_type: str, is_bidirectional: bool) -> str:
 
 
 def _create_trace_for_group(
-    rel_type: str, is_bidirectional: bool, relationships: list, positions: np.ndarray, asset_ids: List[str]
+        rel_type: str, is_bidirectional: bool, relationships: list, positions: np.ndarray, asset_ids: List[str]
 ) -> go.Scatter3d:
     """Create a single trace for a relationship group"""
     edges_x, edges_y, edges_z = _build_edge_coordinates(relationships, positions, asset_ids)
