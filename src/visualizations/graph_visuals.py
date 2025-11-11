@@ -133,8 +133,19 @@ def _build_relationship_set(
 def _collect_and_group_relationships(
     graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
 ) -> dict:
-    """Collect and group relationships with directionality info and filtering.
+    """Collect and group relationships with directionality info and filtering (optimized for large datasets).
 
+    Performance optimizations implemented:
+    - Single-pass collection and grouping: O(R) where R is the number of relationships
+    - Pre-built relationship set for O(1) reverse relationship lookups instead of O(R) iteration
+    - Set-based asset ID filtering for O(1) membership checks
+    - Dictionary-based grouping with pre-allocated structures
+
+    Time complexity: O(R) where R is the number of relationships
+    Space complexity: O(R) for relationship storage and indexing
+
+    For extremely large datasets (millions of relationships), consider:
+    - Using graph databases (Neo4j, ArangoDB) for native graph operations
     Merges collection and grouping into a single pass for better performance.
     Uses a pre-built relationship set for O(1) reverse relationship lookups.
 
