@@ -27,7 +27,7 @@ if positions is None or asset_ids is None or len(positions) != len(asset_ids):
 
 ### 1. Comprehensive Error Handling Added
 
-The `_create_directional_arrows` function now includes **extensive validation** (lines 400-424 in `src/visualizations/graph_visuals.py`):
+The `_create_directional_arrows` function now includes **extensive validation** (lines 413-441 in `src/visualizations/graph_visuals.py`):
 
 #### Core Validations (Requested by Reviewer):
 - ✅ **None checks** - Validates positions and asset_ids are not None
@@ -67,7 +67,7 @@ Raises:
 """
 ```
 
-#### Inline Comments (line 387):
+#### Inline Comments (line 418):
 ```python
 # REVIEW FEEDBACK: Comprehensive validation of input parameters to prevent
 # runtime errors from improperly formatted or mismatched data
@@ -108,7 +108,7 @@ Created comprehensive documentation files:
 ## Validation Code Example
 
 ```python
-# Lines 400-424 in src/visualizations/graph_visuals.py
+# Lines 413-441 in src/visualizations/graph_visuals.py
 
 # Type validation
 if not isinstance(graph, AssetRelationshipGraph):
@@ -116,7 +116,7 @@ if not isinstance(graph, AssetRelationshipGraph):
 
 # None checks (REVIEWER'S REQUEST)
 if positions is None or asset_ids is None:
-    raise ValueError("Invalid input data: positions and asset_ids must not be None")
+    raise ValueError('Invalid input data for positions or asset_ids')
 
 # Array conversion and validation
 if not isinstance(positions, np.ndarray):
@@ -126,7 +126,7 @@ if positions.ndim != 2 or positions.shape[1] != 3:
 
 # Length matching (REVIEWER'S REQUEST)
 if len(positions) != len(asset_ids):
-    raise ValueError("Invalid input data: positions and asset_ids must have the same length")
+    raise ValueError('Invalid input data for positions or asset_ids')
 
 # Numeric validation (REVIEWER'S REQUEST)
 if not np.issubdtype(positions.dtype, np.number):
@@ -155,13 +155,13 @@ if not np.isfinite(positions).all():
 
 | Validation | Reviewer Requested | Implementation Status |
 |------------|-------------------|----------------------|
-| None checks | ✅ Yes | ✅ Implemented (lines 402-403) |
-| Length matching | ✅ Yes | ✅ Implemented (lines 408-409) |
-| Numeric validation | ✅ Yes | ✅ Implemented (lines 410-414) |
-| Type validation | ❌ No | ✅ Exceeds (lines 400-401) |
-| Shape validation | ❌ No | ✅ Exceeds (lines 406-407) |
-| Finite values | ❌ No | ✅ Exceeds (lines 423-424) |
-| String validation | ❌ No | ✅ Exceeds (lines 416-422) |
+| None checks | ✅ Yes | ✅ Implemented (line 420) |
+| Length matching | ✅ Yes | ✅ Implemented (line 420) |
+| Numeric validation | ✅ Yes | ✅ Implemented (lines 433-437) |
+| Type validation | ❌ No | ✅ Exceeds (lines 413-414) |
+| Shape validation | ❌ No | ✅ Exceeds (lines 426-427) |
+| Finite values | ❌ No | ✅ Exceeds (lines 438-439) |
+| String validation | ❌ No | ✅ Exceeds (lines 440-441) |
 | Test coverage | ❌ No | ✅ Exceeds (14 tests) |
 
 ---
