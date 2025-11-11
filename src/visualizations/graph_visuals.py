@@ -6,33 +6,30 @@ import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 # Color and style mapping for relationship types (shared constant)
-REL_TYPE_COLORS = defaultdict(
-    lambda: "#888888",
-    {
-        "same_sector": "#FF6B6B",  # Red for sector relationships
-        "market_cap_similar": "#4ECDC4",  # Teal for market cap
-        "correlation": "#45B7D1",  # Blue for correlations
-        "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
-        "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
-        "income_comparison": "#DDA0DD",  # Plum for income comparisons
-        "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
-    },
-)
+REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
+    "same_sector": "#FF6B6B",  # Red for sector relationships
+    "market_cap_similar": "#4ECDC4",  # Teal for market cap
+    "correlation": "#45B7D1",  # Blue for correlations
+    "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
+    "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
+    "income_comparison": "#DDA0DD",  # Plum for income comparisons
+    "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
+})
 
 
+def _get_relationship_color(rel_type: str) -> str:
+    """Get color for a relationship type"""
+    return REL_TYPE_COLORS[rel_type]
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
-    # Create index mapping for O(1) lookups
-    asset_id_to_idx = {asset_id: idx for idx, asset_id in enumerate(asset_ids)}
-
     fig = go.Figure()
 
     # Create separate traces for different relationship types and directions
-    relationship_traces = _create_relationship_traces(graph, positions, asset_ids, asset_id_to_idx)
+    relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
 
     # Add all relationship traces
     for trace in relationship_traces:
@@ -96,28 +93,15 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str]) -> Set[Tuple[str, str, str]]:
     """Build a set of all relationships for O(1) reverse relationship lookups.
 
-    This optimization reduces the time complexity of reverse relationship checks
-    from O(n) to O(1) by pre-building a set of all relationships. This is especially
-    beneficial for graphs with a large number of relationships.
-
-    Args:
-        graph: The asset relationship graph
-        asset_ids: List of asset IDs to include
-
-    Returns:
-        Set of tuples (source_id, target_id, rel_type) for all relationships
+    Returns a set of tuples (source_id, target_id, rel_type) for efficient membership testing.
     """
     relationship_set = set()
-    asset_ids_set = set(asset_ids)  # Convert to set for O(1) membership checks
-
     for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
+        if source_id not in asset_ids:
             continue
         for target_id, rel_type, _ in rels:
-            if target_id not in asset_ids_set:
-                continue
-            relationship_set.add((source_id, target_id, rel_type))
-
+            if target_id in asset_ids:
+                relationship_set.add((source_id, target_id, rel_type))
     return relationship_set
 
 
@@ -128,14 +112,6 @@ def _collect_relationships(
 
     Uses a pre-built relationship set for O(1) reverse relationship lookups,
     significantly improving performance for graphs with many relationships.
-
-    Args:
-        graph: The asset relationship graph
-        asset_ids: List of asset IDs to include
-        relationship_filters: Optional dict to filter relationship types
-
-    Returns:
-        Tuple of (all_relationships list, bidirectional_pairs set)
     """
     # Build relationship set once for O(1) lookups
     relationship_set = _build_relationship_set(graph, asset_ids)
@@ -195,7 +171,9 @@ def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> d
     return relationship_groups
 
 
-def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
+def _build_edge_coordinates(
+    relationships: list, positions: np.ndarray, asset_ids: List[str]
+) -> tuple:
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
 
@@ -278,15 +256,8 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships.
-
-    Uses a pre-built relationship set for O(1) reverse relationship lookups,
-    improving performance compared to iterating through all relationships.
-    """
+    """Create arrow markers for unidirectional relationships"""
     arrows = []
-
-    # Build relationship set once for O(1) lookups
-    relationship_set = _build_relationship_set(graph, asset_ids)
 
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
@@ -297,8 +268,15 @@ def _create_directional_arrows(
             if target_id not in asset_ids:
                 continue
 
-            # Check if this is truly unidirectional using O(1) lookup
-            if (target_id, source_id, rel_type) not in relationship_set:
+            # Check if this is truly unidirectional
+            is_unidirectional = True
+            if target_id in graph.relationships:
+                for reverse_target, reverse_rel_type, reverse_strength in graph.relationships[target_id]:
+                    if reverse_target == source_id and reverse_rel_type == rel_type:
+                        is_unidirectional = False
+                        break
+
+            if is_unidirectional:
                 source_idx = asset_ids.index(source_id)
                 target_idx = asset_ids.index(target_id)
 
