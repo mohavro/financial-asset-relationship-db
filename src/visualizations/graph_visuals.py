@@ -85,6 +85,24 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 
     return fig
 
+def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str]) -> Set[Tuple[str, str, str]]:
+    """Build a set of all relationships for O(1) reverse relationship lookups.
+
+    Args:
+        graph: The asset relationship graph
+        asset_ids: List of asset IDs to include
+
+    Returns:
+        Set of tuples (source_id, target_id, rel_type) for all relationships
+    """
+    relationship_set = set()
+    for source_id, rels in graph.relationships.items():
+        if source_id in asset_ids:
+            for target_id, rel_type, _ in rels:
+                if target_id in asset_ids:
+                    relationship_set.add((source_id, target_id, rel_type))
+    return relationship_set
+
 
 
 def _collect_relationships(
