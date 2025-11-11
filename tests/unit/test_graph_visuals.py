@@ -607,7 +607,7 @@ class TestCreateDirectionalArrowsErrorHandling:
 
 
 @pytest.mark.unit
-class TestCreateDirectionalArrows:
+class TestCreateDirectionalArrowsErrorHandling:
     """Test suite for _create_directional_arrows function error handling."""
 
     def test_create_directional_arrows_with_none_positions(self, populated_graph):
