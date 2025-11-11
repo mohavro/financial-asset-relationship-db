@@ -90,27 +90,34 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     return fig
 
 
-def _check_reverse_relationship(
-    graph: AssetRelationshipGraph,
-    source_id: str,
-    target_id: str,
-    rel_type: str,
-) -> bool:
-    """Check if a reverse relationship exists"""
-    if target_id not in graph.relationships:
-        return False
+def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str]) -> Set[Tuple[str, str, str]]:
+    """Build a set of all relationships for O(1) lookup.
 
-    for reverse_target, reverse_rel_type, _ in graph.relationships[target_id]:
-        if reverse_target == source_id and reverse_rel_type == rel_type:
-            return True
-
-    return False
+    Returns a set of tuples (source_id, target_id, rel_type) for efficient membership checking.
+    This optimization reduces the time complexity of reverse relationship checks from O(n) to O(1).
+    """
+    relationship_set = set()
+    for source_id, rels in graph.relationships.items():
+        if source_id not in asset_ids:
+            continue
+        for target_id, rel_type, _ in rels:
+            if target_id not in asset_ids:
+                continue
+            relationship_set.add((source_id, target_id, rel_type))
+    return relationship_set
 
 
 def _collect_relationships(
     graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
 ) -> tuple:
-    """Collect all relationships with directionality info and filtering"""
+    """Collect all relationships with directionality info and filtering.
+
+    Uses a pre-built relationship set for O(1) reverse relationship lookups,
+    significantly improving performance for graphs with many relationships.
+    """
+    # Build relationship set once for O(1) lookups
+    relationship_set = _build_relationship_set(graph, asset_ids)
+
     bidirectional_pairs = set()
     all_relationships = []
 
@@ -127,7 +134,8 @@ def _collect_relationships(
                 continue
 
             pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
-            reverse_exists = _check_reverse_relationship(graph, source_id, target_id, rel_type)
+            # O(1) lookup instead of O(n) iteration
+            reverse_exists = (target_id, source_id, rel_type) in relationship_set
             is_bidirectional = reverse_exists and pair_key not in bidirectional_pairs
 
             if is_bidirectional:
