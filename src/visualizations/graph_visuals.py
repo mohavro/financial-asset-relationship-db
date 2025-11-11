@@ -5,6 +5,23 @@ import plotly.graph_objects as go
 
 from src.logic.asset_graph import AssetRelationshipGraph
 
+# Color and style mapping for relationship types (shared constant)
+REL_TYPE_COLORS = {
+    "same_sector": "#FF6B6B",  # Red for sector relationships
+    "market_cap_similar": "#4ECDC4",  # Teal for market cap
+    "correlation": "#45B7D1",  # Blue for correlations
+    "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
+    "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
+    "income_comparison": "#DDA0DD",  # Plum for income comparisons
+    "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
+    "default": "#888888",  # Gray for others
+}
+
+
+def _should_include_relationship(rel_type: str, relationship_filters: dict = None) -> bool:
+    """Check if a relationship type should be included based on filters"""
+    return relationship_filters is None or relationship_filters.get(rel_type, True)
+
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
