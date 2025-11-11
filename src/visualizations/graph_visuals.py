@@ -92,7 +92,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 
 def _get_relationship_color(rel_type: str) -> str:
     """Get color for a relationship type"""
-    return REL_TYPE_COLORS[rel_type]
+    return REL_TYPE_COLORS.get(rel_type, REL_TYPE_COLORS["default"])
 
 
 def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str]) -> Set[Tuple[str, str, str]]:
