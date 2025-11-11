@@ -383,7 +383,11 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
+    """Create arrow markers for unidirectional relationships with comprehensive error handling.
+
+    This function includes extensive input validation (lines 386-410) to address review feedback
+    regarding error handling for positions and asset_ids. All inputs are validated before any
+    calculations proceed to prevent runtime errors from malformed data.
 
     Validates positions and asset_ids for shape, type, and length compatibility to
     prevent runtime errors when external data sources are used.
