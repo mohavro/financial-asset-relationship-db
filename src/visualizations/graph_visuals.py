@@ -474,6 +474,8 @@ def _create_directional_arrows(
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
+    # This vectorized approach is significantly faster than looping: O(1) array operations
+    # vs O(n) loop iterations, especially beneficial for large graphs with many relationships
 
     arrow_trace = go.Scatter3d(
         x=arrow_positions[:, 0].tolist(),
