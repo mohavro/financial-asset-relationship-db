@@ -205,12 +205,11 @@ class TestAPIEndpoints:
     @pytest.fixture
     def client(self):
         """
-        Provide a TestClient configured with a sample graph for use in tests.
+        Provide a TestClient bound to the FastAPI app with a sample graph.
         
-        Yields a TestClient instance for the FastAPI app after setting the application's graph to a sample database, and ensures the application's graph is reset when the fixture is torn down.
-        
+        Sets the application's graph to a sample database and yields a TestClient for use in tests. On fixture teardown the application's graph is reset.
         Returns:
-            TestClient: A TestClient instance connected to the FastAPI app.
+            TestClient: Test client instance for the FastAPI application.
         """
         api_main.set_graph(create_sample_database())
         client = TestClient(app)
