@@ -104,7 +104,6 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
     return relationship_set
 
 
-
 def _collect_relationships(
     graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
 ) -> tuple:
