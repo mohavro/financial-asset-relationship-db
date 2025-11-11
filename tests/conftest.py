@@ -1,6 +1,45 @@
 """Pytest configuration and fixtures for the financial asset relationship database tests."""
 
+from typing import TYPE_CHECKING
+
 import pytest
+
+if TYPE_CHECKING:
+    from _pytest.config.argparsing import Parser
+
+
+def pytest_addoption(parser: "Parser") -> None:
+    """
+    Register dummy coverage command-line options when pytest-cov is unavailable.
+    
+    If the `pytest-cov` plugin cannot be imported this registers `--cov` and
+    `--cov-report` as benign, appendable options so test runs that include those
+    flags do not error. If `pytest-cov` is importable this function has no effect.
+    
+    Parameters:
+        parser (Parser): Pytest argument parser used to add the command-line options.
+    """
+
+    try:
+        import pytest_cov  # type: ignore
+    except Exception:  # pragma: no cover - this branch only runs without pytest-cov
+        group = parser.getgroup("cov")
+        group.addoption(
+            "--cov",
+            action="append",
+            dest="cov",
+            default=[],
+            metavar="path",
+            help="Dummy option registered when pytest-cov is unavailable.",
+        )
+        group.addoption(
+            "--cov-report",
+            action="append",
+            dest="cov_report",
+            default=[],
+            metavar="type",
+            help="Dummy option registered when pytest-cov is unavailable.",
+        )
 
 from src.logic.asset_graph import AssetRelationshipGraph
 from src.models.financial_models import (
@@ -96,20 +135,31 @@ def sample_regulatory_event():
 
 
 @pytest.fixture
-def empty_graph():
-    """Create an empty asset relationship graph."""
-    return AssetRelationshipGraph()
+def empty_graph(tmp_path):
+    """Create an empty asset relationship graph backed by an isolated database."""
+    db_path = tmp_path / "empty_graph.db"
+    graph = AssetRelationshipGraph(database_url=f"sqlite:///{db_path}")
+    try:
+        yield graph
+    finally:
+        if graph._engine is not None:
+            graph._engine.dispose()
 
 
 @pytest.fixture
-def populated_graph(sample_equity, sample_bond, sample_commodity, sample_currency):
+def populated_graph(sample_equity, sample_bond, sample_commodity, sample_currency, tmp_path):
     """Create a populated asset relationship graph."""
-    graph = AssetRelationshipGraph()
+    db_path = tmp_path / "populated_graph.db"
+    graph = AssetRelationshipGraph(database_url=f"sqlite:///{db_path}")
     graph.add_asset(sample_equity)
     graph.add_asset(sample_bond)
     graph.add_asset(sample_commodity)
     graph.add_asset(sample_currency)
-    return graph
+    try:
+        yield graph
+    finally:
+        if graph._engine is not None:
+            graph._engine.dispose()
 
 
 @pytest.fixture
