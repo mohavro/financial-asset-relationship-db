@@ -72,13 +72,37 @@ export default function NetworkVisualization({ data }: NetworkVisualizationProps
       return;
     }
 
-    const MAX_NODES = 500;
-    const MAX_EDGES = 2000;
+const MAX_NODES = Number(process.env.NEXT_PUBLIC_MAX_NODES) || 500;
+const MAX_EDGES = Number(process.env.NEXT_PUBLIC_MAX_EDGES) || 2000;
+
+export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
+  const [plotData, setPlotData] = useState<any[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'tooLarge'>('loading');
+  const [message, setMessage] = useState('Loading visualization...');
+
+  useEffect(() => {
+    if (!data) {
+      setPlotData([]);
+      setStatus('empty');
+      setMessage('No visualization data available.');
+      return;
+    }
+
+    const nodes = Array.isArray(data.nodes) ? data.nodes : [];
+    const edges = Array.isArray(data.edges) ? data.edges : [];
+
+    if (nodes.length === 0 || edges.length === 0) {
+      setPlotData([]);
+      setStatus('empty');
+      setMessage('Visualization data is missing nodes or edges.');
+      return;
+    }
+
     if (nodes.length > MAX_NODES || edges.length > MAX_EDGES) {
       setPlotData([]);
       setStatus('tooLarge');
       setMessage(
-        `Visualization is unavailable because the dataset is too large (${nodes.length} nodes, ${edges.length} edges).`
+        `Visualization is unavailable because the dataset is too large (${nodes.length} nodes, ${edges.length} edges). Maximum: ${MAX_NODES} nodes, ${MAX_EDGES} edges.`
       );
       return;
     }

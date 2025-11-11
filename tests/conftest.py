@@ -135,20 +135,31 @@ def sample_regulatory_event():
 
 
 @pytest.fixture
-def empty_graph():
-    """Create an empty asset relationship graph."""
-    return AssetRelationshipGraph()
+def empty_graph(tmp_path):
+    """Create an empty asset relationship graph backed by an isolated database."""
+    db_path = tmp_path / "empty_graph.db"
+    graph = AssetRelationshipGraph(database_url=f"sqlite:///{db_path}")
+    try:
+        yield graph
+    finally:
+        if graph._engine is not None:
+            graph._engine.dispose()
 
 
 @pytest.fixture
-def populated_graph(sample_equity, sample_bond, sample_commodity, sample_currency):
+def populated_graph(sample_equity, sample_bond, sample_commodity, sample_currency, tmp_path):
     """Create a populated asset relationship graph."""
-    graph = AssetRelationshipGraph()
+    db_path = tmp_path / "populated_graph.db"
+    graph = AssetRelationshipGraph(database_url=f"sqlite:///{db_path}")
     graph.add_asset(sample_equity)
     graph.add_asset(sample_bond)
     graph.add_asset(sample_commodity)
     graph.add_asset(sample_currency)
-    return graph
+    try:
+        yield graph
+    finally:
+        if graph._engine is not None:
+            graph._engine.dispose()
 
 
 @pytest.fixture
