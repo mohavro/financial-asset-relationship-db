@@ -123,7 +123,11 @@ def get_connection() -> Iterator[sqlite3.Connection]:
     try:
         yield connection
     finally:
-        if DATABASE_PATH != ":memory:":
+        # Close connection only if not using any in-memory database (including URI-based)
+        if not (
+            DATABASE_PATH == ":memory:" or
+            (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
+        ):
             connection.close()
 
 
