@@ -19,7 +19,13 @@ const isPaginatedResponse = (value: unknown): value is PaginatedAssetsResponse =
     typeof value === 'object' &&
     value !== null &&
     'items' in value &&
-    Array.isArray((value as PaginatedAssetsResponse).items)
+    'total' in value &&
+    'page' in value &&
+    'per_page' in value &&
+    Array.isArray((value as PaginatedAssetsResponse).items) &&
+    typeof (value as PaginatedAssetsResponse).total === 'number' &&
+    typeof (value as PaginatedAssetsResponse).page === 'number' &&
+    typeof (value as PaginatedAssetsResponse).per_page === 'number'
   );
 };
 
@@ -107,7 +113,7 @@ export default function AssetList() {
     } finally {
       setLoading(false);
     }
-  }, [filter, page, pageSize, querySummary]);
+  }, [filter, page, pageSize]);
 
   const syncStateFromParams = useCallback(() => {
     const nextAssetClass = searchParams.get('asset_class') ?? '';
@@ -143,7 +149,10 @@ export default function AssetList() {
       });
 
       const queryString = params.toString();
-      router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+      const currentQueryString = searchParams.toString();
+      if (queryString !== currentQueryString) {
+        router.replace(`${pathname}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+      }
     },
     [pathname, router, searchParams]
   );
@@ -161,18 +170,12 @@ export default function AssetList() {
     return Math.max(1, Math.ceil(total / pageSize));
   }, [pageSize, total]);
 
-  const canGoNext = useMemo(() => {
-    if (loading) return false;
-    if (totalPages !== null) {
-      return page < totalPages;
-    }
-    return assets.length === pageSize;
-  }, [assets.length, loading, page, pageSize, totalPages]);
+const canGoNext = !loading && totalPages !== null && page < totalPages;
 
   const canGoPrev = !loading && page > 1;
 
   const handleFilterChange = (field: 'asset_class' | 'sector') => (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
+    const {value} = event.target;
     setFilter(prev => ({ ...prev, [field]: value }));
     setPage(1);
     updateQueryParams({ [field]: value || null, page: '1' });
@@ -185,10 +188,17 @@ export default function AssetList() {
     updateQueryParams({ per_page: String(nextSize), page: '1' });
   };
 
-  const goToPage = (nextPage: number) => {
-    if (nextPage < 1 || (totalPages !== null && nextPage > totalPages)) return;
-    setPage(nextPage);
-    updateQueryParams({ page: String(nextPage) });
+  const goToPage = (requestedPage: number) => {
+    const lowerBounded = Math.max(1, requestedPage);
+    const bounded =
+      totalPages !== null ? Math.min(lowerBounded, totalPages) : lowerBounded;
+
+    if (bounded === page) {
+      return;
+    }
+
+    setPage(bounded);
+    updateQueryParams({ page: String(bounded) });
   };
 
   return (
@@ -241,7 +251,7 @@ export default function AssetList() {
             }`}
             role={error ? 'alert' : 'status'}
           >
-            {error ? error : `Loading results for ${querySummary}...`}
+            {error || `Loading results for ${querySummary}...`}
           </div>
         )}
         <div className="overflow-x-auto">

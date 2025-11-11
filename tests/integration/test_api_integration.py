@@ -208,10 +208,22 @@ class TestAuthenticationFlow:
         assert me_response.status_code == 200
         payload = me_response.json()
         assert payload["username"] == credentials["username"]
+        assert payload["email"] == os.environ["ADMIN_EMAIL"]
+        assert payload["full_name"] == os.environ["ADMIN_FULL_NAME"]
+        assert payload["disabled"] is False
 
         invalid_response = client.get("/api/users/me", headers={"Authorization": "Bearer invalid-token"})
         assert invalid_response.status_code == 401
 
+        # Test authentication with incorrect password
+        invalid_credentials = credentials.copy()
+        invalid_credentials["password"] = "wrongpassword"
+        invalid_token_response = client.post(
+            "/token",
+            data=invalid_credentials,
+            headers={"content-type": "application/x-www-form-urlencoded"},
+        )
+        assert invalid_token_response.status_code == 401
 
 class TestErrorRecovery:
     """Test error handling and recovery."""

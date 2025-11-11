@@ -7,9 +7,7 @@ import logging
 import os
 import re
 import threading
-from contextlib import asynccontextmanager
 from datetime import timedelta
-from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -125,7 +123,7 @@ def _should_use_real_data_fetcher() -> bool:
     Decides whether the application should use the real data fetcher based on the `USE_REAL_DATA_FETCHER` environment variable.
 
     Returns:
-        `true` if `USE_REAL_DATA_FETCHER` is set to a truthy value (`1`, `true`, `yes`, `on`), `false` otherwise.
+        `True` if `USE_REAL_DATA_FETCHER` is set to a truthy value (`1`, `true`, `yes`, `on`), `False` otherwise.
     """
     flag = os.getenv("USE_REAL_DATA_FETCHER", "false")
     return flag.strip().lower() in {"1", "true", "yes", "on"}
@@ -181,7 +179,15 @@ ENV = os.getenv("ENV", "development").lower()
 @app.post("/token", response_model=Token)
 @limiter.limit("5/minute")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    """Generate JWT token for authenticated users"""
+    """
+    Create a JWT access token for a user authenticated with a username and password.
+    
+    Parameters:
+        form_data (OAuth2PasswordRequestForm): Client-submitted credentials (`username` and `password`).
+    
+    Returns:
+        dict: Mapping with `access_token` (JWT string) and `token_type` set to `'bearer'`.
+    """
     # The `request` parameter is required by slowapi's limiter for dependency injection.
     _ = request
 
@@ -200,7 +206,16 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
 @app.get("/api/users/me", response_model=User)
 @limiter.limit("10/minute")
 async def read_users_me(request: Request, current_user: User = Depends(get_current_active_user)):
-    """Return details about the currently authenticated user."""
+    """
+    Retrieve the currently authenticated user.
+    
+    Parameters:
+        request (Request): Included for slowapi limiter dependency injection; unused by the function.
+        current_user (User): Active user injected by the authentication dependency.
+    
+    Returns:
+        The authenticated user.
+    """
 
     # The `request` parameter is required by slowapi's limiter for dependency injection.
     _ = request
@@ -211,30 +226,20 @@ async def read_users_me(request: Request, current_user: User = Depends(get_curre
 def validate_origin(origin: str) -> bool:
     """
     Determine whether an HTTP origin is permitted by the application's CORS rules.
-
-    The check respects an explicit ALLOWED_ORIGINS environment list and allows:
-    - HTTPS origins with a valid domain,
-    - Vercel preview deployment hostnames,
-    - HTTPS localhost/127.0.0.1 on any environment,
-    - HTTP localhost/127.0.0.1 when ENV is set to "development".
-
+    
+    Allows explicitly configured origins, HTTPS origins with a valid domain, Vercel preview hostnames, HTTPS localhost/127.0.0.1 in any environment, and HTTP localhost/127.0.0.1 when ENV is "development".
+    
     Parameters:
-        origin (str): The origin URL to validate (e.g. "https://example.com" or "http://localhost:3000").
-
+        origin (str): Origin URL to validate (for example "https://example.com" or "http://localhost:3000").
+    
     Returns:
-        bool: `True` if the origin is allowed, `False` otherwise.
+        True if the origin is allowed, False otherwise.
     """
     # Read environment dynamically to support runtime overrides (e.g., during tests)
     current_env = os.getenv("ENV", "development").lower()
     
     # Get allowed origins from environment variable or use default
     allowed_origins = [origin for origin in os.getenv("ALLOWED_ORIGINS", "").split(",") if origin]
-    
-    # Get current environment (check env var each time for testing)
-    current_env = os.getenv("ENV", "development").lower()
-
-    # Get allowed origins from environment variable or use default
-    allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
 
     # If origin is in explicitly allowed list, return True
     if origin in allowed_origins and origin:
