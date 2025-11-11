@@ -37,42 +37,8 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     return {asset_id: idx for idx, asset_id in enumerate(asset_ids)}
 
 
-def _build_relationship_index(
-    graph: AssetRelationshipGraph, asset_ids: Iterable[str]
-) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups.
-
-    This function consolidates relationship data into a single index structure
-    that can be efficiently queried for:
-    - Checking if a relationship exists (O(1) lookup)
-    - Getting relationship strength (O(1) lookup)
-    - Detecting bidirectional relationships (O(1) reverse lookup)
-
-    Args:
-        graph: The asset relationship graph
-        asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
-
-    Returns:
-        Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
-    """
-    asset_ids_set = set(asset_ids)
-    relationship_index: Dict[Tuple[str, str, str], float] = {}
-
-    for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
-            continue
-        for target_id, rel_type, strength in rels:
-            if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
-
-    return relationship_index
-
-
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
-    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided')
-
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
     fig = go.Figure()
@@ -143,27 +109,73 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     return fig
 
 
-def _collect_and_group_relationships(
-    relationship_index: Dict[Tuple[str, str, str], float],
-    relationship_filters: Optional[Dict[str, bool]] = None,
-) -> Dict[Tuple[str, bool], List[dict]]:
-    """Collect and group relationships with directionality info and filtering.
-
-    Uses a pre-built relationship index for O(1) reverse relationship lookups.
-    This avoids iterating through all relationships multiple times.
+def _build_relationship_set(
+    graph: AssetRelationshipGraph, asset_ids: Iterable[str]
+) -> Set[Tuple[str, str, str]]:
+    """Build a set of all relationships for O(1) reverse relationship lookups.
 
     Args:
-        relationship_index: Pre-built index mapping (source_id, target_id, rel_type) to strength
-        relationship_filters: Optional dict to filter relationship types (defaults to empty dict if None)
+        graph: The asset relationship graph
+        asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
 
     Returns:
-        Dictionary mapping (rel_type, is_bidirectional) to list of relationships
+        Set of tuples (source_id, target_id, rel_type) for all relationships
     """
-    if relationship_filters is None:
-        relationship_filters = {}
+    asset_ids_set = set(asset_ids)
+    relationship_set: Set[Tuple[str, str, str]] = set()
+    for source_id, rels in graph.relationships.items():
+        if source_id in asset_ids_set:
+            for target_id, rel_type, _ in rels:
+                if target_id in asset_ids_set:
+                    relationship_set.add((source_id, target_id, rel_type))
+    return relationship_set
+
+
+def _build_relationship_index(
+    graph: AssetRelationshipGraph, asset_ids_set: Set[str]
+) -> Dict[Tuple[str, str, str], float]:
+    """Build optimized relationship index for O(1) lookups.
+
+    Args:
+        graph: The asset relationship graph
+        asset_ids_set: Set of asset IDs to include
+
+    Returns:
+        Dictionary mapping (source_id, target_id, rel_type) to strength
+    """
+    relationship_index: Dict[Tuple[str, str, str], float] = {}
+    for source_id, rels in graph.relationships.items():
+        if source_id not in asset_ids_set:
+            continue
+        for target_id, rel_type, strength in rels:
+            if target_id in asset_ids_set:
+                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+    return relationship_index
+
+
+def _collect_relationships(
+    graph: AssetRelationshipGraph,
+    asset_ids: List[str],
+    relationship_filters: Optional[Dict[str, bool]] = None,
+) -> List[dict]:
+    """Collect relationships with filtering applied.
+
+    Args:
+        graph: The asset relationship graph
+        asset_ids: List of asset IDs to include
+        relationship_filters: Optional dict to filter relationship types
+
+    Returns:
+        List of relationship dictionaries with directionality info
+    """
+    # Convert to set for O(1) membership
+    asset_ids_set = set(asset_ids)
+
+    # Build optimized relationship index: (source, target, type) -> strength
+    relationship_index = _build_relationship_index(graph, asset_ids_set)
 
     processed_pairs: Set[Tuple[str, str, str]] = set()
-    relationship_groups: Dict[Tuple[str, bool], List[dict]] = defaultdict(list)
+    relationships: List[dict] = []
 
     for (source_id, target_id, rel_type), strength in relationship_index.items():
         # Skip if this relationship type is filtered out
@@ -186,9 +198,8 @@ def _collect_and_group_relationships(
         if is_bidirectional:
             processed_pairs.add(pair_key)
 
-        # Group relationships directly
-        group_key = (rel_type, is_bidirectional)
-        relationship_groups[group_key].append(
+        # Collect relationship with directionality info
+        relationships.append(
             {
                 "source_id": source_id,
                 "target_id": target_id,
@@ -197,6 +208,26 @@ def _collect_and_group_relationships(
                 "is_bidirectional": is_bidirectional,
             }
         )
+
+    return relationships
+
+
+def _group_relationships(
+    relationships: List[dict],
+) -> Dict[Tuple[str, bool], List[dict]]:
+    """Group relationships by type and directionality.
+
+    Args:
+        relationships: List of relationship dictionaries with directionality info
+
+    Returns:
+        Dictionary mapping (rel_type, is_bidirectional) to list of relationships
+    """
+    relationship_groups: Dict[Tuple[str, bool], List[dict]] = defaultdict(list)
+
+    for rel in relationships:
+        group_key = (rel["rel_type"], rel["is_bidirectional"])
+        relationship_groups[group_key].append(rel)
 
     return relationship_groups
 
@@ -337,9 +368,8 @@ def _create_relationship_traces(
     Optimized for performance with large volumes of relationships by:
     - Using O(1) asset ID lookups via dictionary index
     - Pre-allocating arrays instead of using extend()
-    - Single-pass collection and grouping of relationships
+    - Separated collection and grouping of relationships for better modularity
     - Efficient set-based bidirectional relationship detection
-    - Building relationship index once and reusing it
 
     Args:
         graph: The asset relationship graph
@@ -350,26 +380,14 @@ def _create_relationship_traces(
     Returns:
         List of Scatter3d traces for relationships
     """
-    # Validate input parameters
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise ValueError('Invalid input data: graph must be an AssetRelationshipGraph instance')
-    if not hasattr(graph, 'relationships') or not isinstance(graph.relationships, dict):
-        raise ValueError('Invalid input data: graph must have a relationships dictionary')
-    if not isinstance(positions, np.ndarray):
-        raise ValueError('Invalid input data: positions must be a numpy array')
-    if len(positions) != len(asset_ids):
-        raise ValueError('Invalid input data: positions array length must match asset_ids length')
-
     # Build asset ID index once for O(1) lookups throughout processing
     asset_id_index = _build_asset_id_index(asset_ids)
 
-    # Build relationship index once for O(1) lookups (optimization per review comment)
-    relationship_index = _build_relationship_index(graph, asset_ids)
+    # Collect relationships with filtering
+    relationships = _collect_relationships(graph, asset_ids, relationship_filters)
 
-    # Collect and group relationships using the pre-built index
-    relationship_groups = _collect_and_group_relationships(
-        relationship_index, relationship_filters
-    )
+    # Group relationships by type and directionality
+    relationship_groups = _group_relationships(relationships)
 
     traces: List[go.Scatter3d] = []
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
@@ -387,11 +405,9 @@ def _create_directional_arrows(
 ) -> List[go.Scatter3d]:
     """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
 
-    Uses a pre-built relationship index for O(1) lookups and computes arrow positions
-    in a single vectorized step for performance.
+    Uses a pre-built relationship set and asset ID index for O(1) lookups and
+    computes arrow positions in a single vectorized step for performance.
     """
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
     if not isinstance(positions, np.ndarray):
@@ -416,23 +432,25 @@ def _create_directional_arrows(
     if not np.isfinite(positions).all():
         raise ValueError("Invalid positions: values must be finite numbers")
 
-    # Build relationship index once for O(1 lookups (optimization per review comment)
-    relationship_index = _build_relationship_index(graph, asset_ids)
+    relationship_set = _build_relationship_set(graph, asset_ids)
+    asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
     source_indices: List[int] = []
     target_indices: List[int] = []
     hover_texts: List[str] = []
 
-    # Gather unidirectional relationships using the pre-built index
-    for (source_id, target_id, rel_type), _ in relationship_index.items():
-        # Check for reverse relationship using O(1) index lookup
-        reverse_key = (target_id, source_id, rel_type)
-        if reverse_key not in relationship_index:
-            # This is a unidirectional relationship
-            source_indices.append(asset_id_index[source_id])
-            target_indices.append(asset_id_index[target_id])
-            hover_texts.append(f"Direction: {source_id} → {target_id}<br>Type: {rel_type}")
+    # Gather unidirectional relationships
+    for source_id, rels in graph.relationships.items():
+        if source_id not in asset_ids_set:
+            continue
+        for target_id, rel_type, _ in rels:
+            if target_id not in asset_ids_set:
+                continue
+            if (target_id, source_id, rel_type) not in relationship_set:
+                source_indices.append(asset_id_index[source_id])
+                target_indices.append(asset_id_index[target_id])
+                hover_texts.append(f"Direction: {source_id} → {target_id}<br>Type: {rel_type}")
 
     if not source_indices:
         return []
@@ -481,8 +499,6 @@ def visualize_3d_graph_with_filters(
     toggle_arrows: bool = True,
 ) -> go.Figure:
     """Create 3D visualization with selective relationship filtering"""
-    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided')
 
     if not show_all_relationships:
         # Filter which relationship types to show
