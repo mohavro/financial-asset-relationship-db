@@ -6,7 +6,10 @@ import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 # Color and style mapping for relationship types (shared constant)
-REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
+# Default color for relationships with no specific color mapping
+DEFAULT_COLOR = "#888888"
+
+REL_TYPE_COLORS = defaultdict(lambda: DEFAULT_COLOR, {
     "same_sector": "#FF6B6B",  # Red for sector relationships
     "market_cap_similar": "#4ECDC4",  # Teal for market cap
     "correlation": "#45B7D1",  # Blue for correlations
