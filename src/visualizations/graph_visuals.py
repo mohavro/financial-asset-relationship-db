@@ -284,6 +284,9 @@ def _get_relationship_color(rel_type: str) -> str:
 
     Returns:
         Hex color code string
+    """
+    return REL_TYPE_COLORS[rel_type]
+
 
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
     """Get line style configuration for a relationship"""
