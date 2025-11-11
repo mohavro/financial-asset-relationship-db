@@ -29,6 +29,9 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
 
     Args:
+
+        asset_ids: List of asset IDs
+    Args:
         asset_ids: List of asset IDs
 
     Returns:
