@@ -147,6 +147,7 @@ def _collect_and_group_relationships(
     Returns:
         Dictionary mapping (rel_type, is_bidirectional) to list of relationships
     """
+    # Avoid mutable default argument by using None and initializing inside function
     if relationship_filters is None:
         relationship_filters = {}
 
