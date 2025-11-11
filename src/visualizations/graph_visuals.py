@@ -1,18 +1,3 @@
-"""Graph visualization module for financial asset relationship networks.
-
-This module provides optimized 3D visualization functions for large-scale asset graphs.
-
-Performance Optimizations:
-- O(1) asset ID lookups via dictionary indexing (eliminates O(n) list.index() calls)
-- Pre-allocated arrays for edge coordinates (avoids dynamic list.extend() overhead)
-- Single-pass relationship collection and grouping (reduces iteration overhead)
-- Set-based bidirectional relationship detection (O(1) reverse lookups)
-- defaultdict for relationship grouping (eliminates conditional checks)
-- Vectorized NumPy operations for arrow positioning
-
-These optimizations significantly improve performance for graphs with large volumes
-of relationships (1000s to 10000s of edges).
-"""
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -21,7 +6,9 @@ import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 # Color and style mapping for relationship types (shared constant)
-REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
+# Define default color as a constant for better maintainability
+DEFAULT_COLOR = "#888888"  # Gray for unknown relationship types
+REL_TYPE_COLORS = defaultdict(lambda: DEFAULT_COLOR, {
     "same_sector": "#FF6B6B",  # Red for sector relationships
     "market_cap_similar": "#4ECDC4",  # Teal for market cap
     "correlation": "#45B7D1",  # Blue for correlations
@@ -100,7 +87,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
         },
         scene=dict(
             xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
-            yaxis=dict(title="Dimension  2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
             zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
             bgcolor="rgba(248, 248, 248, 0.95)",
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
@@ -137,28 +124,22 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
 
 
 def _collect_and_group_relationships(
-    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: Optional[Dict[str, bool]] = None
-) -> dict:
-    """Collect and group relationships with directionality info and filtering.
+    graph: AssetRelationshipGraph,
+    asset_ids: List[str],
+    relationship_filters: Optional[Dict[str, bool]] = None,
+) -> Dict[Tuple[str, bool], List[dict]]:
+    """Collect and group relationships with directionality info and optional filtering.
 
-    Merges collection and grouping into a single pass for better performance.
-    Uses a pre-built relationship index for O(1) reverse relationship lookups.
+    Optimized to minimize nested iterations and per-item checks using O(1) lookups.
 
-    Args:
-        graph: The asset relationship graph
-        asset_ids: List of asset IDs to include
-        relationship_filters: Optional dict to filter relationship types
-
-    Returns:
-        Dictionary mapping (rel_type, is_bidirectional) to list of relationships
+    Returns a dictionary mapping (rel_type, is_bidirectional) to a list of relationships.
     """
-    # Precompute allowed relationship types to avoid repeated dict lookups in the hot loop
+    asset_ids_set = set(asset_ids)
+
+    # Pre-compute allowed relationship types for O(1) checks per item
     allowed_types: Optional[Set[str]] = None
     if relationship_filters is not None:
-        allowed_types = {t for t, is_on in relationship_filters.items() if is_on}
-
-    # Convert to set for O(1) membership
-    asset_ids_set = set(asset_ids)
+        allowed_types = {rel for rel, allowed in relationship_filters.items() if allowed}
 
     # Build optimized relationship index: (source, target, type) -> strength
     relationship_index: Dict[Tuple[str, str, str], float] = {}
@@ -173,22 +154,19 @@ def _collect_and_group_relationships(
             relationship_index[(source_id, target_id, rel_type)] = strength
 
     processed_pairs: Set[Tuple[str, str, str]] = set()
-    relationship_groups: Dict[Tuple[str, bool], list] = defaultdict(list)
+    relationship_groups: Dict[Tuple[str, bool], List[dict]] = defaultdict(list)
 
-    # Single pass through relationship index
     for (source_id, target_id, rel_type), strength in relationship_index.items():
-        # Check for bidirectional relationship using O(1) index lookup
+        # Check for bidirectionality in O(1)
         is_bidirectional = (target_id, source_id, rel_type) in relationship_index
 
-        # Track bidirectional pairs to avoid duplicates using a canonical (min, max) key
+        # Skip duplicate entry for bidirectional pairs using canonical key
         if is_bidirectional:
-            a, b = (source_id, target_id) if source_id <= target_id else (target_id, source_id)
-            pair_key: Tuple[str, str, str] = (a, b, rel_type)
-            if pair_key in processed_pairs:
-                continue  # Skip duplicate bidirectional pair
-            processed_pairs.add(pair_key)
+            canonical_key = (min(source_id, target_id), max(source_id, target_id), rel_type)
+            if canonical_key in processed_pairs:
+                continue
+            processed_pairs.add(canonical_key)
 
-        # Group relationships directly
         group_key = (rel_type, is_bidirectional)
         relationship_groups[group_key].append(
             {
@@ -200,7 +178,7 @@ def _collect_and_group_relationships(
             }
         )
 
-    return dict(relationship_groups)
+    return relationship_groups
 
 
 def _build_edge_coordinates_optimized(
@@ -365,19 +343,17 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships using vectorized operations.
+    """Create arrow markers for unidirectional relationships.
 
-    Uses vectorized NumPy operations for efficient computation of arrow positions,
-    especially beneficial for large graphs with many relationships.
+    Uses a pre-built relationship set for O(1) reverse relationship lookups
+    and asset ID index for O(1) position lookups.
     """
     # Build relationship set and indices once for O(1) lookups
-    relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
+    relationship_set = _build_relationship_set(graph, asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
-    source_indices: List[int] = []
-    target_indices: List[int] = []
-    hover_texts: List[str] = []
+    arrows: List[dict] = []
 
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
@@ -390,36 +366,45 @@ def _create_directional_arrows(
 
             # Check if this is truly unidirectional using O(1) lookup
             if (target_id, source_id, rel_type) not in relationship_set:
-                source_indices.append(asset_id_index[source_id])
-                target_indices.append(asset_id_index[target_id])
-                hover_texts.append(f"Direction: {source_id} → {target_id}<br>Type: {rel_type}")
+                # O(1) lookup instead of O(n) list.index()
+                source_idx = asset_id_index[source_id]
+                target_idx = asset_id_index[target_id]
 
-    if not source_indices:
-        return []
+                # Calculate arrow position (70% along the edge towards target)
+                arrow_pos = positions[source_idx] + 0.7 * (positions[target_idx] - positions[source_idx])
 
-    # Vectorized position computation: 70% along the edge towards target
-    source_positions = positions[np.array(source_indices)]
-    target_positions = positions[np.array(target_indices)]
-    arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
+                arrows.append({
+                    "pos": arrow_pos,
+                    "hover": f"Direction: {source_id} → {target_id}<br>Type: {rel_type}",
+                    "rel_type": rel_type,
+                })
 
-    arrow_trace = go.Scatter3d(
-        x=arrow_positions[:, 0].tolist(),
-        y=arrow_positions[:, 1].tolist(),
-        z=arrow_positions[:, 2].tolist(),
-        mode="markers",
-        marker=dict(
-            symbol="diamond",
-            size=8,
-            color="rgba(255, 0, 0, 0.8)",
-            line=dict(color="red", width=1),
-        ),
-        hovertext=hover_texts,
-        hoverinfo="text",
-        name="Direction Arrows",
-        visible=True,
-        showlegend=False,
-    )
-    return [arrow_trace]
+    # Create arrow trace
+    if arrows:
+        arrow_x = [arrow["pos"][0] for arrow in arrows]
+        arrow_y = [arrow["pos"][1] for arrow in arrows]
+        arrow_z = [arrow["pos"][2] for arrow in arrows]
+        arrow_hovers = [arrow["hover"] for arrow in arrows]
+
+        arrow_trace = go.Scatter3d(
+            x=arrow_x,
+            y=arrow_y,
+            z=arrow_z,
+            mode="markers",
+            marker=dict(
+                symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
+                size=8,
+                color="rgba(255, 0, 0, 0.8)",
+                line=dict(color="red", width=1),
+            ),
+            hovertext=arrow_hovers,
+            hoverinfo="text",
+            name="Direction Arrows",
+            visible=True,
+            showlegend=False,
+        )
+        return [arrow_trace]
+    return []
 
 
 def visualize_3d_graph_with_filters(
