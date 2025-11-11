@@ -12,13 +12,13 @@ from urllib.parse import urlparse
 
 def _get_database_url() -> str:
     """
-    Obtain the database URL from the DATABASE_URL environment variable.
+    Get the database URL from the `DATABASE_URL` environment variable.
     
     Returns:
-        database_url (str): The configured database URL.
+        The configured database URL string.
     
     Raises:
-        ValueError: If the DATABASE_URL environment variable is not set.
+        ValueError: If the `DATABASE_URL` environment variable is not set.
     """
 
     database_url = os.getenv("DATABASE_URL")
@@ -29,13 +29,16 @@ def _get_database_url() -> str:
 
 def _resolve_sqlite_path(url: str) -> str:
     """
-    Resolve a SQLite URL to a filesystem path, handling in-memory URLs, percent-encoding and common sqlite URL forms.
+    Resolve a SQLite URL to a filesystem path or the special in-memory indicator.
+    
+    Supports common SQLite URL forms such as `sqlite:///relative.db`, `sqlite:////absolute/path.db`
+    and `sqlite:///:memory:`. Percent-encodings in the path are decoded before resolution.
     
     Parameters:
-        url (str): A SQLite URL (examples: `sqlite:///relative.db`, `sqlite:////absolute/path.db`, `sqlite:///:memory:`).
+        url (str): SQLite URL to resolve.
     
     Returns:
-        str: The resolved filesystem path for file-based URLs, or the special string `":memory:"` for in-memory databases.
+        str: Filesystem path for file-based URLs, or the literal string `":memory:"` for in-memory databases.
     """
 
     from urllib.parse import urlparse, unquote
@@ -105,12 +108,12 @@ def _connect() -> sqlite3.Connection:
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Provide a context manager that yields a configured SQLite connection for use within a with-statement.
+    Yield a configured SQLite connection for use in a with-statement.
     
-    The yielded `sqlite3.Connection` is closed automatically when the context exits.
-     
+    The connection is closed automatically when the context exits.
+    
     Returns:
-        sqlite3.Connection: A configured SQLite connection instance that will be closed on context exit.
+        sqlite3.Connection: Configured SQLite connection instance; will be closed on context exit.
     """
 
     connection = _connect()
@@ -121,7 +124,13 @@ def get_connection() -> Iterator[sqlite3.Connection]:
 
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
-    """Execute a write query within a managed connection."""
+    """
+    Execute a write (non-SELECT) SQL query using a managed SQLite connection.
+    
+    Parameters:
+    	query (str): SQL statement to execute; typically an INSERT, UPDATE, DELETE, or DDL.
+    	parameters (tuple | list | None): Sequence of parameters to bind into the query, or None for no parameters.
+    """
 
     with get_connection() as connection:
         connection.execute(query, parameters or ())
@@ -130,14 +139,14 @@ def execute(query: str, parameters: tuple | list | None = None) -> None:
 
 def fetch_one(query: str, parameters: tuple | list | None = None):
     """
-    Fetches a single row from the database for the provided SQL query.
+    Return the first row produced by the given SQL query, or None if the query returns no rows.
     
     Parameters:
     	query (str): SQL statement to execute.
-    	parameters (tuple | list | None): Optional sequence of parameters to bind into the query.
+    	parameters (tuple | list | None): Optional sequence of parameters to bind into the query; use an empty sequence or None for no parameters.
     
     Returns:
-    	sqlite3.Row | None: The first row of the result set as a `sqlite3.Row`, or `None` if the query returned no rows.
+    	sqlite3.Row | None: The first row of the result set as a `sqlite3.Row`, or `None` if no rows were returned.
     """
 
     with get_connection() as connection:

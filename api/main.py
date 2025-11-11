@@ -182,11 +182,11 @@ ENV = os.getenv("ENV", "development").lower()
 @limiter.limit("5/minute")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     """
-    Generate a JWT access token for a user authenticated with username and password.
+    Create a JWT access token for a user authenticated by username and password.
     
     Parameters:
-        request (Request): Required for slowapi's rate limiter dependency injection; not otherwise used.
-        form_data (OAuth2PasswordRequestForm): Credentials submitted by the client.
+        request (Request): Required by the rate limiter for dependency injection; not otherwise used.
+        form_data (OAuth2PasswordRequestForm): Credentials submitted by the client (username and password).
     
     Returns:
         dict: Mapping containing `access_token` (JWT string) and `token_type` set to `'bearer'`.
@@ -230,13 +230,13 @@ def validate_origin(origin: str) -> bool:
     """
     Determine whether an HTTP origin is permitted by the application's CORS rules.
     
-    Allows origins that are explicitly listed via the ALLOWED_ORIGINS environment variable, HTTPS origins with a valid domain, Vercel preview hostnames, HTTPS localhost/127.0.0.1 in any environment, and HTTP localhost/127.0.0.1 when ENV is "development".
+    Allows explicitly configured origins, HTTPS origins with a valid domain, Vercel preview hostnames, HTTPS localhost/127.0.0.1 in any environment, and HTTP localhost/127.0.0.1 when ENV is "development".
     
     Parameters:
-        origin (str): The origin URL to validate (for example "https://example.com" or "http://localhost:3000").
+        origin (str): Origin URL to validate (for example "https://example.com" or "http://localhost:3000").
     
     Returns:
-        bool: `True` if the origin is allowed, `False` otherwise.
+        True if the origin is allowed, False otherwise.
     """
     # Read environment dynamically to support runtime overrides (e.g., during tests)
     current_env = os.getenv("ENV", "development").lower()
