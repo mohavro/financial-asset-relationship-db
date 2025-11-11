@@ -411,6 +411,10 @@ def _create_directional_arrows(
     Raises:
         TypeError: If graph is not an AssetRelationshipGraph instance
         ValueError: If positions or asset_ids are None, have mismatched lengths,
+
+    # Early validation for data integrity (addresses review feedback)
+    if positions is None or asset_ids is None or len(positions) != len(asset_ids):
+        raise ValueError('Invalid input data for positions or asset_ids')
                    contain invalid data types, or have non-finite values
 
     Note:
