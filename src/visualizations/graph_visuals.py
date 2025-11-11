@@ -181,6 +181,62 @@ def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> d
 
 
 def _build_edge_coordinates(
+def _collect_and_group_relationships(
+    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
+) -> dict:
+    """Collect and group relationships in a single pass for better efficiency.
+
+    This combined function merges the functionality of _collect_relationships and
+    _group_relationships to reduce overhead and streamline the data processing pipeline.
+
+    Args:
+        graph: The asset relationship graph
+        asset_ids: List of asset IDs to include
+        relationship_filters: Optional dict to filter relationship types
+
+    Returns:
+        Dict mapping (rel_type, is_bidirectional) to list of relationships
+    """
+    relationship_set = _build_relationship_set(graph, asset_ids)
+
+    bidirectional_pairs = set()
+    relationship_groups = {}
+
+    for source_id, rels in graph.relationships.items():
+        if source_id not in asset_ids:
+            continue
+
+        for target_id, rel_type, strength in rels:
+            if target_id not in asset_ids:
+                continue
+
+            if relationship_filters and rel_type in relationship_filters and not relationship_filters[rel_type]:
+                continue
+
+            pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
+            reverse_exists = (target_id, source_id, rel_type) in relationship_set
+            is_bidirectional = reverse_exists and pair_key not in bidirectional_pairs
+
+            if is_bidirectional:
+                bidirectional_pairs.add(pair_key)
+            elif reverse_exists and pair_key in bidirectional_pairs:
+                continue
+
+            group_key = (rel_type, is_bidirectional)
+            if group_key not in relationship_groups:
+                relationship_groups[group_key] = []
+            relationship_groups[group_key].append(
+                {
+                    "source_id": source_id,
+                    "target_id": target_id,
+                    "rel_type": rel_type,
+                    "strength": strength,
+                    "is_bidirectional": is_bidirectional,
+                    "pair_key": pair_key,
+                }
+            )
+
+    return relationship_groups
     relationships: list, positions: np.ndarray, asset_id_to_idx: dict
 ) -> tuple:
     """Build edge coordinate lists for relationships"""
