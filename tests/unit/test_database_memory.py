@@ -13,7 +13,11 @@ import api.database as database
 
 @pytest.fixture()
 def restore_database_module(monkeypatch) -> Iterator[None]:
-    """Reload api.database after test and restore DATABASE_URL env."""
+    """
+    Fixture that yields to a test, then restores the api.database module and DATABASE_URL environment.
+    
+    After the test completes it closes and clears any in-memory SQLite connection created on api.database, restores the original DATABASE_URL environment variable (or removes it if none was set), and reloads the api.database module to reset its state.
+    """
 
     original_url = os.environ.get("DATABASE_URL")
 

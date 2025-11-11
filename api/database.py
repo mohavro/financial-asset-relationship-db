@@ -48,7 +48,15 @@ _MEMORY_CONNECTION: sqlite3.Connection | None = None
 
 
 def _connect() -> sqlite3.Connection:
-    """Create (or return) a SQLite connection with sensible defaults."""
+    """
+    Obtain a SQLite connection configured for the application's database.
+    
+    For an in-memory database (path ':memory:'), returns a single shared connection reused by callers.
+    For a file-backed database, returns a new connection.
+    
+    Returns:
+        sqlite3.Connection: Connection with detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False and row_factory=sqlite3.Row.
+    """
 
     global _MEMORY_CONNECTION
 
@@ -71,7 +79,14 @@ def _connect() -> sqlite3.Connection:
 
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
-    """Context manager that yields a database connection and ensures cleanup."""
+    """
+    Provide a context-managed SQLite connection for the configured database.
+    
+    Yields a `sqlite3.Connection` for use inside a with-statement. For file-backed databases the connection is closed when the context exits; for an in-memory database the shared connection is left open.
+     
+    Returns:
+        sqlite3.Connection: The database connection to use within the context.
+    """
 
     connection = _connect()
     try:
@@ -82,6 +97,16 @@ def get_connection() -> Iterator[sqlite3.Connection]:
 
 
 def fetch_value(query: str, parameters: tuple | list | None = None):
+    """
+    Return the first column of the first row produced by the given SQL query.
+    
+    Parameters:
+        query (str): SQL statement to execute.
+        parameters (tuple | list | None): Parameters to bind to the SQL statement.
+    
+    Returns:
+        The value of the first column of the first row, or None if the query returned no rows.
+    """
     row = fetch_one(query, parameters)
     return row[0] if row is not None else None
     """Execute a write query within a managed connection."""
