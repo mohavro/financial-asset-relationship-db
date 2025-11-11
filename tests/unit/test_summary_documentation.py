@@ -24,12 +24,28 @@ class TestEnhancedTestSummary:
 
     @pytest.fixture
     def summary_path(self):
-        """Path to enhanced test summary file."""
+        """
+        Provide the path to the enhanced test summary file.
+        
+        Returns:
+            Path: Path to "ENHANCED_TEST_SUMMARY.md".
+        """
         return Path("ENHANCED_TEST_SUMMARY.md")
 
     @pytest.fixture
     def summary_content(self, summary_path):
-        """Load enhanced test summary content."""
+        """
+        Load the text content of the summary file at the given path.
+        
+        Parameters:
+        	summary_path (Path): Path to the summary markdown file to read.
+        
+        Returns:
+        	str: The file content.
+        
+        Raises:
+        	AssertionError: If `summary_path` does not exist.
+        """
         assert summary_path.exists(), "ENHANCED_TEST_SUMMARY.md not found"
         with open(summary_path, encoding="utf-8") as f:
             return f.read()
@@ -44,7 +60,12 @@ class TestEnhancedTestSummary:
         assert len(summary_content.strip()) > 0
 
     def test_summary_has_main_title(self, summary_content):
-        """Test that summary has main title."""
+        """
+        Verify the summary contains the main title "Enhanced Test Suite Summary".
+        
+        Parameters:
+            summary_content (str): Full text content of the summary markdown file being tested.
+        """
         assert "# Enhanced Test Suite Summary" in summary_content
 
     def test_summary_has_executive_summary(self, summary_content):
@@ -58,7 +79,12 @@ class TestEnhancedTestSummary:
         assert "Test Functions" in summary_content
 
     def test_summary_mentions_new_test_classes(self, summary_content):
-        """Test that summary mentions the new test classes."""
+        """
+        Verify the summary contains the expected new test class names.
+        
+        Checks that the summary content mentions TestDocumentationEdgeCases, TestDocumentationPerformance,
+        TestDocumentationRobustness and TestDocumentationSchemaValidation.
+        """
         assert "TestDocumentationEdgeCases" in summary_content
         assert "TestDocumentationPerformance" in summary_content
         assert "TestDocumentationRobustness" in summary_content
@@ -70,7 +96,15 @@ class TestEnhancedTestSummary:
         assert "64" in summary_content
 
     def test_summary_valid_markdown_headings(self, summary_content):
-        """Test that all markdown headings are properly formatted."""
+        """
+        Assert that every Markdown heading in the provided content has a space after the leading `#` characters.
+        
+        Parameters:
+            summary_content (str): Full text of the summary Markdown file to validate.
+        
+        Raises:
+            AssertionError: If any heading line does not have a space after its `#` markers; the error message includes the failing line number.
+        """
         lines = summary_content.split("\n")
         for i, line in enumerate(lines, 1):
             if line.startswith("#"):
@@ -78,7 +112,12 @@ class TestEnhancedTestSummary:
                 assert re.match(r"^#+\s", line), f"Line {i}: Heading missing space after #"
 
     def test_summary_no_broken_formatting(self, summary_content):
-        """Test that markdown formatting is not broken."""
+        """
+        Verify the summary contains no malformed Markdown heading markers (for example, consecutive `#` characters without the required space).
+        
+        Parameters:
+            summary_content (str): The full text content of the summary markdown file to validate.
+        """
         # Check for common markdown issues
         assert "##" not in summary_content.replace("##", "# #")  # No triple hashes without space
 
@@ -88,18 +127,33 @@ class TestFinalTestSummary:
 
     @pytest.fixture
     def summary_path(self):
-        """Path to final test summary file."""
+        """
+        Path to the final test summary markdown file.
+        
+        Returns:
+            Path: Path object pointing to "FINAL_TEST_SUMMARY.md".
+        """
         return Path("FINAL_TEST_SUMMARY.md")
 
     @pytest.fixture
     def summary_content(self, summary_path):
-        """Load final test summary content."""
+        """
+        Read the UTF-8 text content of the specified summary file.
+        
+        Parameters:
+            summary_path (Path): Path to the summary markdown file.
+        
+        Returns:
+            str: The file content as a Unicode string.
+        """
         assert summary_path.exists(), "FINAL_TEST_SUMMARY.md not found"
         with open(summary_path, encoding="utf-8") as f:
             return f.read()
 
     def test_summary_file_exists(self, summary_path):
-        """Test that FINAL_TEST_SUMMARY.md exists."""
+        """
+        Verify the FINAL_TEST_SUMMARY.md file exists and is a regular file.
+        """
         assert summary_path.exists()
         assert summary_path.is_file()
 
@@ -135,7 +189,11 @@ class TestFinalTestSummary:
         assert "lines" in summary_content.lower()
 
     def test_summary_describes_test_classes(self, summary_content):
-        """Test that summary describes the test classes."""
+        """
+        Verify the summary includes the expected test class names.
+        
+        Asserts that the provided summary content mentions the test classes TestDependencyMatrix, TestSystemManifest and TestDocumentationConsistency.
+        """
         assert "TestDependencyMatrix" in summary_content
         assert "TestSystemManifest" in summary_content
         assert "TestDocumentationConsistency" in summary_content
@@ -148,7 +206,14 @@ class TestFinalTestSummary:
         assert re.search(r"\|[-\s|]+\|", summary_content)
 
     def test_summary_valid_markdown_structure(self, summary_content):
-        """Test that markdown structure is valid."""
+        """
+        Validate that a Markdown document's top-level heading is H1 when headings are present.
+        
+        Parses the content for lines starting with '#' followed by a space and, if any headings are found, asserts the first heading's level is 1.
+        
+        Parameters:
+            summary_content (str): The Markdown document content to check.
+        """
         lines = summary_content.split("\n")
         # Check heading hierarchy
         heading_levels = []
@@ -168,12 +233,28 @@ class TestDocumentationSummary:
 
     @pytest.fixture
     def summary_path(self):
-        """Path to test documentation summary file."""
+        """
+        Return the path to the documentation validation summary file.
+        
+        Returns:
+            Path: A pathlib.Path pointing to "TEST_DOCUMENTATION_SUMMARY.md".
+        """
         return Path("TEST_DOCUMENTATION_SUMMARY.md")
 
     @pytest.fixture
     def summary_content(self, summary_path):
-        """Load test documentation summary content."""
+        """
+        Read and return the UTF-8 contents of a summary markdown file.
+        
+        Parameters:
+            summary_path (Path): Path to the summary markdown file.
+        
+        Returns:
+            str: Contents of the file.
+        
+        Raises:
+            AssertionError: If `summary_path` does not exist.
+        """
         assert summary_path.exists(), "TEST_DOCUMENTATION_SUMMARY.md not found"
         with open(summary_path, encoding="utf-8") as f:
             return f.read()
@@ -188,7 +269,12 @@ class TestDocumentationSummary:
         assert len(summary_content.strip()) > 0
 
     def test_summary_has_main_title(self, summary_content):
-        """Test that summary has main title."""
+        """
+        Verify the summary contains the expected main title.
+        
+        Parameters:
+        	summary_content (str): Full Markdown text of the summary file to be validated. The test checks for the presence of the line "# Documentation Validation Test Suite".
+        """
         assert "# Documentation Validation Test Suite" in summary_content
 
     def test_summary_has_overview_section(self, summary_content):
@@ -201,7 +287,12 @@ class TestDocumentationSummary:
         assert "test_documentation_validation.py" in summary_content
 
     def test_summary_has_test_coverage_section(self, summary_content):
-        """Test that summary has Test Coverage section."""
+        """
+        Verify the summary includes a "## Test Coverage" heading.
+        
+        Parameters:
+        	summary_content (str): Full text content of the summary markdown file to check.
+        """
         assert "## Test Coverage" in summary_content
 
     def test_summary_lists_all_test_classes(self, summary_content):
@@ -216,11 +307,17 @@ class TestDocumentationSummary:
             assert test_class in summary_content, f"Missing test class: {test_class}"
 
     def test_summary_has_execution_results(self, summary_content):
-        """Test that summary includes test execution results."""
+        """
+        Verify the summary contains a section or mention of test execution results.
+        
+        Checks for the exact heading "Test Execution Results" or a case-insensitive occurrence of the word "execution".
+        """
         assert "Test Execution Results" in summary_content or "execution" in summary_content.lower()
 
     def test_summary_has_key_features_section(self, summary_content):
-        """Test that summary has Key Features section."""
+        """
+        Verify the summary contains a "Key Features" or "Features" section.
+        """
         assert "Key Features" in summary_content or "Features" in summary_content
 
     def test_summary_mentions_validation_types(self, summary_content):
@@ -236,12 +333,24 @@ class TestDocumentationSummary:
         assert "pytest" in summary_content
 
     def test_summary_includes_code_blocks(self, summary_content):
-        """Test that summary includes code blocks for examples."""
+        """
+        Verify the summary contains at least one fenced code block marker (```) .
+        """
         # Should have at least one code block
         assert "```" in summary_content
 
     def test_summary_valid_markdown_lists(self, summary_content):
-        """Test that markdown lists are properly formatted."""
+        """
+        Verify Markdown list items use a space after the marker.
+        
+        Checks each line of the provided Markdown content and asserts that any unordered list marker ('-' or '*') is followed by a single space (a lone marker is allowed).
+        
+        Parameters:
+            summary_content (str): The Markdown document text to validate.
+        
+        Raises:
+            AssertionError: If a list item marker is not followed by a space, with the failing line included in the message.
+        """
         lines = summary_content.split("\n")
         for line in lines:
             if line.strip().startswith("-") or line.strip().startswith("*"):
@@ -257,7 +366,14 @@ class TestSummaryFilesConsistency:
 
     @pytest.fixture
     def all_summaries(self):
-        """Load all summary files."""
+        """
+        Load the contents of the three expected summary markdown files that exist in the current directory.
+        
+        Only files among ENHANCED_TEST_SUMMARY.md, FINAL_TEST_SUMMARY.md and TEST_DOCUMENTATION_SUMMARY.md that are present are included.
+        
+        Returns:
+            dict: Mapping of filename (str) to file content (str) decoded as UTF-8.
+        """
         summaries = {}
         for filename in ["ENHANCED_TEST_SUMMARY.md", "FINAL_TEST_SUMMARY.md", 
                         "TEST_DOCUMENTATION_SUMMARY.md"]:
@@ -293,7 +409,12 @@ class TestSummaryFilesConsistency:
                 f"{filename} should mention at least one documentation file"
 
     def test_summaries_use_consistent_terminology(self, all_summaries):
-        """Test that summaries use consistent terminology."""
+        """
+        Verify each summary contains the word "test".
+        
+        Parameters:
+        	all_summaries (dict): Mapping from filename (str or Path) to the file's text content (str); each value is checked for the presence of the word "test" (case-insensitive).
+        """
         # All should use "test" terminology consistently
         for filename, content in all_summaries.items():
             assert "test" in content.lower(), f"{filename} should use test terminology"
@@ -325,7 +446,11 @@ class TestSummaryFilesEdgeCases:
                     f"{filename} is too long: {line_count} lines"
 
     def test_summaries_have_reasonable_file_size(self):
-        """Test that summary files are not excessively large."""
+        """
+        Verify that each summary markdown file present is smaller than 100 KB.
+        
+        Checks ENHANCED_TEST_SUMMARY.md, FINAL_TEST_SUMMARY.md and TEST_DOCUMENTATION_SUMMARY.md (if they exist) and asserts that each file's size is less than 100 kilobytes. Fails with an AssertionError naming the offending file and its size in KB if a file exceeds the limit.
+        """
         max_size_kb = 100  # 100KB
         for filename in ["ENHANCED_TEST_SUMMARY.md", "FINAL_TEST_SUMMARY.md",
                         "TEST_DOCUMENTATION_SUMMARY.md"]:

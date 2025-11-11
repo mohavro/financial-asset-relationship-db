@@ -133,7 +133,11 @@ class TestDependencyMatrix:
         assert "## File Type Distribution" in dependency_matrix_content
 
     def test_dependency_matrix_file_counts_match(self, dependency_matrix_content):
-        """Test that total files count matches sum of individual file type counts."""
+        """
+        Verify that the reported total files analysed equals the sum of the per-file-type counts.
+        
+        Asserts that the integer parsed from "- Files analyzed: N" matches the sum of all integers parsed from lines like "- X <type> files".
+        """
         # Extract total files analyzed
         total_pattern = r"- Files analyzed: (\d+)"
         total_match = re.search(total_pattern, dependency_matrix_content)
@@ -153,7 +157,15 @@ class TestDependencyMatrix:
         assert "## Key Dependencies by Type" in dependency_matrix_content
 
     def test_dependency_matrix_language_sections_exist(self, dependency_matrix_content):
-        """Test that dependency sections for major languages exist."""
+        """
+        Check that the dependency matrix contains at least one major language section.
+        
+        Verifies the document includes at least one of the language headings: "### PY", "### JS", "### TS" or "### TSX".
+        Fails the test if none of these sections are present.
+        
+        Parameters:
+            dependency_matrix_content (str): The full text content of the dependencyMatrix.md file.
+        """
         # Check for at least some of the main language sections
         language_sections = ["### PY", "### JS", "### TS", "### TSX"]
 
@@ -163,7 +175,14 @@ class TestDependencyMatrix:
         assert len(found_sections) > 0, "No language dependency sections found"
 
     def test_dependency_matrix_dependency_format(self, dependency_matrix_content):
-        """Test that dependencies are properly formatted as bullet points."""
+        """
+        Validate that dependency lists in the dependency matrix are formatted as bullet points.
+        
+        For each "Top dependencies:" section in the provided document, ensures the section content (up to the next "###" heading) either contains the message "No common dependencies found" or consists of non-empty lines that start with a dash (`-`).
+        
+        Parameters:
+            dependency_matrix_content (str): Full text content of the dependencyMatrix.md file.
+        """
         # After "Top dependencies:" there should be bullet points
         sections = dependency_matrix_content.split("Top dependencies:")
 
@@ -320,7 +339,14 @@ class TestSystemManifest:
         assert "## Current Status" in system_manifest_content
 
     def test_system_manifest_has_current_phase(self, system_manifest_content):
-        """Test that systemManifest.md specifies current phase."""
+        """
+        Assert that the System Manifest declares a current project phase.
+        
+        Raises an assertion error if no line matching "- Current Phase: <value>" is present in the provided System Manifest content.
+        
+        Parameters:
+            system_manifest_content (str): Full text of the systemManifest.md file to inspect.
+        """
         pattern = r"- Current Phase: (.+)"
         match = re.search(pattern, system_manifest_content)
 
@@ -367,7 +393,9 @@ class TestSystemManifest:
             assert count >= 0, f"File count for {file_type} should be non-negative"
 
     def test_system_manifest_has_dependencies_section(self, system_manifest_content):
-        """Test that systemManifest.md has Dependencies section."""
+        """
+        Verify that systemManifest.md contains the "## Dependencies" section.
+        """
         assert "## Dependencies" in system_manifest_content
 
     def test_system_manifest_has_directory_structure(self, system_manifest_content):
@@ -793,7 +821,11 @@ class TestDocumentationEdgeCases:
                 "Timestamp is in the future (allowing 5 min clock skew)"
 
     def test_file_counts_are_positive_integers(self):
-        """Test that all file counts are positive integers."""
+        """
+        Asserts that every file count listed in .elastic-copilot/memory/dependencyMatrix.md is an integer greater than zero and less than 100000.
+        
+        The test locates numeric file counts in the document and fails if any count is not within the valid range.
+        """
         path = Path(".elastic-copilot/memory/dependencyMatrix.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()
@@ -969,7 +1001,11 @@ class TestDocumentationRobustness:
                     "Dependency section format unclear"
 
     def test_documentation_path_separators_consistent(self):
-        """Test that file paths use consistent separators."""
+        """
+        Check that file paths listed as "###" headers in .elastic-copilot/memory/systemManifest.md use a consistent separator style.
+        
+        Parses file paths from headings matching the pattern `### <path>` and, when more than 10 paths are found, asserts that at least 80% use the same separator (either backslash `\` or forward slash `/`). If no paths are found the test performs no assertion.
+        """
         path = Path(".elastic-copilot/memory/systemManifest.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()
@@ -1054,7 +1090,11 @@ class TestDocumentationSchemaValidation:
             assert field in content, f"Required field missing: {field}"
 
     def test_dependency_sections_follow_pattern(self):
-        """Test that dependency sections follow expected patterns."""
+        """
+        Validate that language-specific dependency section headings in the system manifest follow the expected format.
+        
+        Reads .elastic-copilot/memory/systemManifest.md and locates headings matching the pattern "## LANG Dependencies". If such headings exist, each language token (checked up to the first 10 occurrences) must be either uppercase or title case and have a length of 2 to 4 characters; otherwise the test fails with an assertion.
+        """
         path = Path(".elastic-copilot/memory/systemManifest.md")
         with open(path, encoding="utf-8") as f:
             content = f.read()
