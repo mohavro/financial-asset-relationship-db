@@ -28,9 +28,6 @@ def _get_relationship_color(rel_type: str) -> str:
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
 
-    Args:
-        asset_ids: List of asset IDs
-
     Returns:
         Dictionary mapping asset_id to its index in the list
     """
@@ -40,6 +37,9 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    Args:
+        asset_ids: List of asset IDs
+
 
     fig = go.Figure()
 
