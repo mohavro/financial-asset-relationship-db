@@ -387,10 +387,26 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
+    """Create arrow markers for unidirectional relationships with comprehensive error handling.
 
-    Uses a pre-built relationship index for O(1) lookups and computes arrow positions
-    in a single vectorized step for performance.
+    This function validates all input parameters before processing to prevent runtime errors
+    when working with external data sources. It uses vectorized NumPy operations for performance.
+
+    Args:
+        graph: AssetRelationshipGraph instance containing relationship data
+        positions: NumPy array of shape (n, 3) with node positions
+        asset_ids: List of asset ID strings matching positions array length
+
+    Returns:
+        List containing a single Scatter3d trace with arrow markers, or empty list if no arrows
+
+    Raises:
+        TypeError: If graph is not an AssetRelationshipGraph instance
+        ValueError: If positions or asset_ids are None, have mismatched lengths,
+                   contain invalid data types, or have non-finite values
+
+    Note:
+        Addresses review feedback on error handling - validates input integrity before processing.
     """
     if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
