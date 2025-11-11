@@ -242,8 +242,6 @@ def _collect_and_group_relationships(
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
 
-    # Create index mapping for O(1) lookups
-    asset_id_to_idx = {asset_id: idx for idx, asset_id in enumerate(asset_ids)}
 
     for rel in relationships:
         source_idx = asset_id_to_idx[rel["source_id"]]
