@@ -395,10 +395,11 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships with comprehensive error handling.
+    """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
 
-    This function validates all input parameters before processing to prevent runtime errors
-    when working with external data sources. It uses vectorized NumPy operations for performance.
+    Uses a pre-built relationship index for O(1) lookups and computes arrow positions
+    in a single vectorized step for performance. Includes comprehensive input validation
+    to prevent runtime errors when working with external data sources.
 
     Args:
         graph: AssetRelationshipGraph instance containing relationship data
@@ -411,10 +412,6 @@ def _create_directional_arrows(
     Raises:
         TypeError: If graph is not an AssetRelationshipGraph instance
         ValueError: If positions or asset_ids are None, have mismatched lengths,
-
-    # Early validation for data integrity (addresses review feedback)
-    if positions is None or asset_ids is None or len(positions) != len(asset_ids):
-        raise ValueError('Invalid input data for positions or asset_ids')
                    contain invalid data types, or have non-finite values
 
     Note:
@@ -425,7 +422,9 @@ def _create_directional_arrows(
     if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
         raise ValueError("Invalid input data: graph must have a relationships dictionary")
     if positions is None or asset_ids is None:
-        raise ValueError("Invalid input data for positions or asset_ids")
+        raise ValueError("Invalid input data: positions and asset_ids must not be None")
+    if len(positions) != len(asset_ids):
+        raise ValueError("Invalid input data: positions and asset_ids must have the same length")
     if not isinstance(positions, np.ndarray):
         positions = np.asarray(positions)
     if positions.ndim != 2 or positions.shape[1] != 3:
