@@ -39,6 +39,9 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
+    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
+        raise ValueError('Invalid graph data provided')
+
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
     fig = go.Figure()
@@ -351,6 +354,16 @@ def _create_relationship_traces(
     Returns:
         List of Scatter3d traces for relationships
     """
+    # Validate input parameters
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise ValueError('Invalid input data: graph must be an AssetRelationshipGraph instance')
+    if not hasattr(graph, 'relationships') or not isinstance(graph.relationships, dict):
+        raise ValueError('Invalid input data: graph must have a relationships dictionary')
+    if not isinstance(positions, np.ndarray):
+        raise ValueError('Invalid input data: positions must be a numpy array')
+    if len(positions) != len(asset_ids):
+        raise ValueError('Invalid input data: positions array length must match asset_ids length')
+
     # Build asset ID index once for O(1) lookups throughout processing
     asset_id_index = _build_asset_id_index(asset_ids)
 
@@ -378,30 +391,22 @@ def _create_directional_arrows(
     Uses a pre-built relationship set and asset ID index for O(1) lookups and
     computes arrow positions in a single vectorized step for performance.
     """
-    # Validate positions and asset_ids first (as per reviewer's suggestion)
-    if positions is None or asset_ids is None:
-        raise ValueError("Invalid input data for positions or asset_ids")
-    if len(positions) != len(asset_ids):
-        raise ValueError("Invalid input data for positions or asset_ids")
-
-    # Validate graph type
     if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
-
-    # Additional validation for positions
+    if positions is None or asset_ids is None:
+        raise ValueError("Invalid input data: positions and asset_ids must not be None")
     if not isinstance(positions, np.ndarray):
         positions = np.asarray(positions)
     if positions.ndim != 2 or positions.shape[1] != 3:
         raise ValueError("Invalid positions shape: expected (n, 3)")
+    if len(positions) != len(asset_ids):
+        raise ValueError("Invalid input data: positions and asset_ids must have the same length")
     if not np.issubdtype(positions.dtype, np.number):
         try:
             positions = positions.astype(float)
         except Exception as exc:
             raise ValueError("Invalid positions: values must be numeric") from exc
-    if not np.isfinite(positions).all():
-        raise ValueError("Invalid positions: values must be finite numbers")
-
-    # Validate asset_ids contents
+    # Validate asset_ids contents and numeric validity of positions
     if not isinstance(asset_ids, (list, tuple)):
         try:
             asset_ids = list(asset_ids)
@@ -409,6 +414,8 @@ def _create_directional_arrows(
             raise ValueError("asset_ids must be an iterable of strings") from exc
     if not all(isinstance(a, str) and a for a in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
+    if not np.isfinite(positions).all():
+        raise ValueError("Invalid positions: values must be finite numbers")
 
     relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
@@ -477,6 +484,8 @@ def visualize_3d_graph_with_filters(
     toggle_arrows: bool = True,
 ) -> go.Figure:
     """Create 3D visualization with selective relationship filtering"""
+    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
+        raise ValueError('Invalid graph data provided')
 
     if not show_all_relationships:
         # Filter which relationship types to show
