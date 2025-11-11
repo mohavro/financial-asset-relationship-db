@@ -463,13 +463,14 @@ def _create_directional_arrows(
     if not source_indices:
         return []
 
-    # Performance optimization: Use vectorized NumPy operations for arrow position calculation
-    # This computes all arrow positions at once using array operations, which is significantly
-    # faster than a Python loop for large graphs (O(1) array operations vs O(n) loop iterations)
+    # Performance optimization: Use vectorized NumPy operations for arrow position calculation.
+    # Instead of calculating positions in a loop, we compute all arrow positions at once using
+    # array operations, which is significantly faster for large graphs (vectorized operations
+    # leverage optimized C code and SIMD instructions vs. interpreted Python loops).
     src_idx_arr = np.asarray(source_indices, dtype=int)
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
-    # Vectorized computation: arrow_positions = source + 0.7 * (target - source)
-    # Places arrows at 70% along each edge towards the target
+    # Vectorized computation places arrows at 70% along each edge towards the target
+    # Formula: arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
