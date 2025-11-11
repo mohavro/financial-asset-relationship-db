@@ -415,8 +415,9 @@ def _create_directional_arrows(
     if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
         raise ValueError("Invalid input data: graph must have a relationships dictionary")
 
+    # Early validation as suggested in review: check None, length match, and basic compatibility
     try:
-        if len(positions) != len(asset_ids):
+        if positions is None or asset_ids is None or len(positions) != len(asset_ids):
             raise ValueError('Invalid input data for positions or asset_ids')
     except TypeError as exc:
         raise ValueError("Invalid input data: positions and asset_ids must support len()") from exc
