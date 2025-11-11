@@ -103,8 +103,9 @@ def _check_reverse_relationship(graph: AssetRelationshipGraph, source_id: str, t
 
 
 def _collect_relationships(
-        graph: AssetRelationshipGraph, asset_ids: List[str],
-        relationship_filters: dict = None
+    graph: AssetRelationshipGraph,
+    asset_ids: List[str],
+    relationship_filters: dict = None,
 ) -> tuple:
     """Collect all relationships with directionality info and filtering"""
     bidirectional_pairs = set()
