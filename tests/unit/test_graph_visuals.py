@@ -604,6 +604,7 @@ class TestCreateDirectionalArrowsErrorHandling:
         _create_directional_arrows(populated_graph, positions, asset_ids)
 
         # Assert
+        assert sum(len(rels) for rels in populated_graph.relationships.values()) == initial_relationship_count
 
 
 @pytest.mark.unit
