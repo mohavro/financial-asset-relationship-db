@@ -68,7 +68,12 @@ class UserRepository:
     """Repository for accessing user credential records."""
 
     def get_user(self, username: str) -> Optional[UserInDB]:
-        """Fetch a user by username."""
+        """
+        Retrieve a user record by username from the repository.
+        
+        Returns:
+            `UserInDB` for the matching username, `None` if no such user exists.
+        """
 
         row = fetch_one(
             """
@@ -146,12 +151,8 @@ def verify_password(plain_password, hashed_password):
     """
     Verify whether a plaintext password matches a stored hashed password.
     
-    Parameters:
-        plain_password (str): Plaintext password to verify.
-        hashed_password (str): Stored hashed password to compare against.
-    
     Returns:
-        bool: `True` if the plaintext password matches the hashed password, `False` otherwise.
+        `true` if the plaintext password matches the hashed password, `false` otherwise.
     """
 
     return pwd_context.verify(plain_password, hashed_password)
@@ -173,9 +174,9 @@ def get_password_hash(password):
 
 def _seed_credentials_from_env(repository: UserRepository) -> None:
     """
-    Seed an administrative user from environment variables into the provided repository.
+    Seed an administrative user into the repository from environment variables.
     
-    Reads ADMIN_USERNAME and ADMIN_PASSWORD from the environment; if both are present creates or updates a user record in the repository using ADMIN_EMAIL, ADMIN_FULL_NAME and ADMIN_DISABLED (interpreted as a truthy flag). If either username or password is missing, the function does nothing. The password is stored hashed.
+    If both ADMIN_USERNAME and ADMIN_PASSWORD are set, create or update that user in the repository using optional ADMIN_EMAIL, ADMIN_FULL_NAME and ADMIN_DISABLED (interpreted as a truthy flag). The provided password is stored hashed. If either ADMIN_USERNAME or ADMIN_PASSWORD is missing, no changes are made.
     """
 
     username = os.getenv("ADMIN_USERNAME")
@@ -207,14 +208,14 @@ if not user_repository.has_users():
 
 def get_user(username: str, repository: Optional[UserRepository] = None) -> Optional[UserInDB]:
     """
-    Retrieve a user record by username.
+    Retrieve a user by username.
     
     Parameters:
         username (str): Username to look up.
         repository (Optional[UserRepository]): Repository to query; if omitted the module-level `user_repository` is used.
     
     Returns:
-        UserInDB | None: The matching user record, or `None` if no user exists with the given username.
+        Optional[UserInDB]: The matching UserInDB instance, or `None` if no user exists with that username.
     """
 
     repo = repository or user_repository
@@ -223,15 +224,15 @@ def get_user(username: str, repository: Optional[UserRepository] = None) -> Opti
 
 def authenticate_user(username: str, password: str, repository: Optional[UserRepository] = None):
     """
-    Authenticate credentials and retrieve the matching user.
+    Authenticate a username and password and return the corresponding stored user.
     
     Parameters:
-        username (str): The username to authenticate.
-        password (str): The plaintext password to verify.
-        repository (Optional[UserRepository]): Repository to query for the user; if omitted the module's default repository is used.
+        username (str): Username to authenticate.
+        password (str): Plaintext password to verify.
+        repository (Optional[UserRepository]): Repository to query for the user; if omitted the module-level repository is used.
     
     Returns:
-        UserInDB | bool: `UserInDB` instance when authentication succeeds, `False` otherwise.
+        UserInDB when authentication succeeds, `False` otherwise.
     """
 
     user = get_user(username, repository=repository)
@@ -268,14 +269,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     """
     Retrieve the authenticated user represented by the provided JWT.
     
-    Decodes and validates the token, extracts the subject username, and returns the corresponding User model instance.
-    
     Returns:
-        User: The authenticated user's data.
+        User: The User model corresponding to the token's subject.
     
     Raises:
-        HTTPException: With status 401 when the token is invalid or the user cannot be found.
-        HTTPException: With status 401 when the token has expired.
+        HTTPException: 401 with detail "Token has expired" if the token has expired.
+        HTTPException: 401 with detail "Could not validate credentials" if the token is invalid, missing the subject, or no matching user is found.
     """
 
     credentials_exception = HTTPException(
@@ -307,13 +306,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     """
-    Return the currently authenticated active user.
+    Get the currently authenticated active user.
     
     Raises:
-        HTTPException: 400 if the user account is disabled.
+        HTTPException: 400 with detail "Inactive user" if the user's account is disabled.
     
     Returns:
-        current_user (User): The authenticated user's public profile.
+        The authenticated user's public profile as a `User` instance.
     """
 
     if current_user.disabled:
