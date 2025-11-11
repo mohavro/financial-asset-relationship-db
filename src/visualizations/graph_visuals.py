@@ -39,6 +39,12 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
+    # Validate input graph object
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise ValueError('Invalid graph data provided: must be an AssetRelationshipGraph instance')
+    if not hasattr(graph, 'get_3d_visualization_data_enhanced'):
+        raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
+
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
     fig = go.Figure()
@@ -378,9 +384,6 @@ def _create_directional_arrows(
     Uses a pre-built relationship set and asset ID index for O(1) lookups and
     computes arrow positions in a single vectorized step for performance.
     """
-    # Validate input parameters
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
     if not isinstance(positions, np.ndarray):
@@ -472,6 +475,11 @@ def visualize_3d_graph_with_filters(
     toggle_arrows: bool = True,
 ) -> go.Figure:
     """Create 3D visualization with selective relationship filtering"""
+    # Validate input graph object
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise ValueError('Invalid graph data provided: must be an AssetRelationshipGraph instance')
+    if not hasattr(graph, 'get_3d_visualization_data_enhanced'):
+        raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
 
     if not show_all_relationships:
         # Filter which relationship types to show
