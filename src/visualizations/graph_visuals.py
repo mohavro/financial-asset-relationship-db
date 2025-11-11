@@ -28,6 +28,9 @@ def _get_relationship_color(rel_type: str) -> str:
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
 
+    Args:
+        asset_ids: List of asset IDs
+
     Returns:
         Dictionary mapping asset_id to its index in the list
     """
@@ -37,9 +40,6 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
-    Args:
-        asset_ids: List of asset IDs
-
 
     fig = go.Figure()
 
@@ -241,7 +241,7 @@ def _build_edge_coordinates_optimized(
     edges_y: List[Optional[float]] = [None] * (num_edges * 3)
     edges_z: List[Optional[float]] = [None] * (num_edges * 3)
 
-    # Fill arrays using vectorized indexing
+    # Efficiently populate coordinate lists using vectorized array indexing
     for i in range(num_edges):
         base_idx = i * 3
         edges_x[base_idx] = source_positions[i, 0]
@@ -386,11 +386,18 @@ def _create_directional_arrows(
 ) -> List[go.Scatter3d]:
     """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
 
-    Uses a pre-built relationship set and asset ID index for O(1) lookups and
-    computes arrow positions in a single vectorized step for performance.
+    Performance optimization: Uses vectorized array operations to compute all arrow positions
+    at once, which is significantly faster than a Python loop for large graphs.
 
-    Performance optimization: Vectorized array operations compute all arrow positions
-    at once, which is significantly faster than Python loops for large graphs.
+    Uses a pre-built relationship set and asset ID index for O(1) lookups.
+
+    Args:
+        graph: The asset relationship graph
+        positions: NumPy array of node positions (n, 3)
+        asset_ids: List of asset IDs
+
+    Returns:
+        List containing a single Scatter3d trace for directional arrows
     """
     relationship_set = _build_relationship_set(graph, asset_ids)
     asset_ids_set = set(asset_ids)
@@ -415,11 +422,13 @@ def _create_directional_arrows(
     if not source_indices:
         return []
 
-    # Vectorized computation: arrow_positions = source + 0.7 * (target - source)
-    # This computes all arrow positions at once using array operations, which is
-    # significantly faster than a Python loop for large graphs
+    # Performance optimization: Use vectorized NumPy operations for arrow position calculation
+    # This computes all arrow positions at once using array operations, which is significantly
+    # faster than a Python loop for large graphs (O(1) array operations vs O(n) loop iterations)
     src_idx_arr = np.asarray(source_indices, dtype=int)
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
+    # Vectorized computation: arrow_positions = source + 0.7 * (target - source)
+    # Places arrows at 70% along each edge towards the target
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
