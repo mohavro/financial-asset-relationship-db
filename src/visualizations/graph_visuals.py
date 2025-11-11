@@ -1,3 +1,18 @@
+"""Graph visualization module for financial asset relationship networks.
+
+This module provides optimized 3D visualization functions for large-scale asset graphs.
+
+Performance Optimizations:
+- O(1) asset ID lookups via dictionary indexing (eliminates O(n) list.index() calls)
+- Pre-allocated arrays for edge coordinates (avoids dynamic list.extend() overhead)
+- Single-pass relationship collection and grouping (reduces iteration overhead)
+- Set-based bidirectional relationship detection (O(1) reverse lookups)
+- defaultdict for relationship grouping (eliminates conditional checks)
+- Vectorized NumPy operations for arrow positioning
+
+These optimizations significantly improve performance for graphs with large volumes
+of relationships (1000s to 10000s of edges).
+"""
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 
