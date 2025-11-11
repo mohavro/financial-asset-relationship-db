@@ -417,9 +417,6 @@ def _create_directional_arrows(
     # Early validation to fail fast with clear error messages (addresses review feedback)
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
-    # Early validation: Check for None and length mismatch (per review feedback)
-    if positions is None or asset_ids is None:
-        raise ValueError('Invalid input data for positions or asset_ids')
 
     try:
         if len(positions) != len(asset_ids):
