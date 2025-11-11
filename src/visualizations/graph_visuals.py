@@ -108,7 +108,7 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
 def _collect_relationships(
     graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
 ) -> tuple:
-    """Collect all relationships with directionality info and filtering.
+    """Collect all relationships with directionality info, filtering, and optimized list allocation.
 
     Uses a pre-built relationship set for O(1) reverse relationship lookups,
     significantly improving performance for graphs with many relationships.
@@ -117,7 +117,12 @@ def _collect_relationships(
     relationship_set = _build_relationship_set(graph, asset_ids)
 
     bidirectional_pairs = set()
-    all_relationships = []
+
+    # Pre-allocate list with estimated size to reduce dynamic resizing
+    # Use relationship_set size as upper bound estimate
+    estimated_size = len(relationship_set)
+    all_relationships = [None] * estimated_size if estimated_size > 0 else []
+    rel_index = 0
 
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids:
