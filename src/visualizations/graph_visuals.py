@@ -38,6 +38,11 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
+    # Validate input graph object
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise ValueError('Invalid graph data provided: must be an AssetRelationshipGraph instance')
+    if not hasattr(graph, 'get_3d_visualization_data_enhanced'):
+        raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
         raise ValueError('Invalid graph data provided')
