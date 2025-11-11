@@ -378,6 +378,8 @@ def _create_directional_arrows(
     Uses a pre-built relationship set and asset ID index for O(1) lookups and
     computes arrow positions in a single vectorized step for performance.
     """
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
     if not isinstance(positions, np.ndarray):
