@@ -9,15 +9,13 @@ if TYPE_CHECKING:
 
 
 def pytest_addoption(parser: "Parser") -> None:
-    """Register dummy coverage options when ``pytest-cov`` isn't installed.
-
-    The repository's pytest configuration includes ``--cov`` and ``--cov-report``
-    flags by default. In environments where the ``pytest-cov`` plugin is not
-    available those arguments would normally cause pytest to exit with an
-    ``unrecognized arguments`` error. To keep the default configuration working
-    everywhere we register lightweight stand-ins for those options when the real
-    plugin cannot be imported. The options are accepted but ignored, which
-    mirrors the behaviour of simply running the tests without coverage enabled.
+    """
+    Register lightweight dummy coverage CLI options when the `pytest-cov` plugin is not available.
+    
+    If `pytest-cov` can be imported this function does nothing. If the import fails it registers `--cov` and `--cov-report` as benign, appendable options so test runs that include those flags do not error; the options are accepted but ignored.
+    
+    Parameters:
+        parser (Parser): The pytest argument parser used to add command-line options.
     """
 
     try:

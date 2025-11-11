@@ -205,12 +205,12 @@ class TestAPIEndpoints:
     @pytest.fixture
     def client(self):
         """
-        Provide a pytest fixture that yields a TestClient configured with a sample in-memory graph for endpoint tests.
+        Pytest fixture that yields a TestClient configured with a sample in-memory graph for endpoint tests.
         
-        The fixture sets a sample graph in the application before yielding the TestClient and ensures the graph is reset after the test completes.
+        Sets a sample in-memory graph on the application before yielding the client and resets the graph after the test completes.
         
         Returns:
-            TestClient: A TestClient instance configured to use the sample graph.
+            TestClient: A test client instance connected to the application populated with the sample graph.
         """
         api_main.set_graph(create_sample_database())
         client = TestClient(app)
