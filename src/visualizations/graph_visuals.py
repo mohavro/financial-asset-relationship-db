@@ -103,9 +103,7 @@ def _check_reverse_relationship(graph: AssetRelationshipGraph, source_id: str, t
 
 
 def _collect_relationships(
-    graph: AssetRelationshipGraph,
-    asset_ids: List[str],
-    relationship_filters: dict = None,
+    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
 ) -> tuple:
     """Collect all relationships with directionality info and filtering"""
     bidirectional_pairs = set()
@@ -120,11 +118,7 @@ def _collect_relationships(
                 continue
 
             # Skip if this relationship type is filtered out
-            if (
-                relationship_filters
-                and rel_type in relationship_filters
-                and not relationship_filters[rel_type]
-            ):
+            if relationship_filters and rel_type in relationship_filters and not relationship_filters[rel_type]:
                 continue
 
             pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
@@ -187,49 +181,44 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
     direction_text = "↔" if is_bidirectional else "→"
 
     for rel in relationships:
-        hover_text = (
-            f"{rel['source_id']} {direction_text} {rel['target_id']}<br>"
-            f"Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
-        )
+        hover_text = f"{rel['source_id']} {direction_text} {rel['target_id']}<br>Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
         hover_texts.extend([hover_text, hover_text, None])
 
     return hover_texts
 
 
-def _get_trace_styling(rel_type: str, is_bidirectional: bool) -> dict:
-    """Get styling configuration for a trace"""
-    color = _get_relationship_color(rel_type)
-    line_width = 4 if is_bidirectional else 2
-    line_dash = "solid" if is_bidirectional else "dash"
+def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
+    """Get line style configuration for a relationship"""
+    return dict(
+        color=_get_relationship_color(rel_type),
+        width=4 if is_bidirectional else 2,
+        dash="solid" if is_bidirectional else "dash",
+    )
 
-    return {"color": color, "width": line_width, "dash": line_dash}
 
-
-def _get_trace_name(rel_type: str, is_bidirectional: bool) -> str:
-    """Get display name for a trace"""
-    name = f"{rel_type.replace('_', ' ').title()}"
-    name += " (↔)" if is_bidirectional else " (→)"
-    return name
+def _format_trace_name(rel_type: str, is_bidirectional: bool) -> str:
+    """Format trace name for legend"""
+    base_name = rel_type.replace("_", " ").title()
+    direction_symbol = " (↔)" if is_bidirectional else " (→)"
+    return base_name + direction_symbol
 
 
 def _create_trace_for_group(
-        rel_type: str, is_bidirectional: bool, relationships: list, positions: np.ndarray, asset_ids: List[str]
+    rel_type: str, is_bidirectional: bool, relationships: list, positions: np.ndarray, asset_ids: List[str]
 ) -> go.Scatter3d:
     """Create a single trace for a relationship group"""
     edges_x, edges_y, edges_z = _build_edge_coordinates(relationships, positions, asset_ids)
     hover_texts = _build_hover_texts(relationships, rel_type, is_bidirectional)
-    line_style = _get_trace_styling(rel_type, is_bidirectional)
-    trace_name = _get_trace_name(rel_type, is_bidirectional)
 
     return go.Scatter3d(
         x=edges_x,
         y=edges_y,
         z=edges_z,
         mode="lines",
-        line=line_style,
+        line=_get_line_style(rel_type, is_bidirectional),
         hovertext=hover_texts,
         hoverinfo="text",
-        name=trace_name,
+        name=_format_trace_name(rel_type, is_bidirectional),
         visible=True,
         legendgroup=rel_type,
     )
