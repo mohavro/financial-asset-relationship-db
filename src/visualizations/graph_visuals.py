@@ -156,6 +156,7 @@ def _collect_and_group_relationships(
     processed_pairs: Set[Tuple[str, str, str]] = set()
     relationship_groups: Dict[Tuple[str, bool], List[dict]] = {}
 
+    bidirectional_pairs: Set[Tuple[str, str, str]] = set()
     for (source_id, target_id, rel_type), strength in relationship_index.items():
         # Skip if this relationship type is filtered out
         if relationship_filters and rel_type in relationship_filters and not relationship_filters[rel_type]:
