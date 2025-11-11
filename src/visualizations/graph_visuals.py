@@ -416,7 +416,9 @@ def _create_filtered_relationship_traces(
     relationship_groups = _group_relationships(all_relationships, bidirectional_pairs)
 
     traces = []
-    for (rel_type, is_bidirectional), relationships in relationship_groups.items():
+    for (
+        (rel_type, is_bidirectional), relationships
+    ) in relationship_groups.items():
         if relationships:
             trace = _create_trace_for_group(rel_type, is_bidirectional, relationships, positions, asset_ids)
             traces.append(trace)
