@@ -395,6 +395,15 @@ def _create_directional_arrows(
         except Exception as exc:
             raise ValueError("Invalid positions: values must be numeric") from exc
 
+    # Validate asset_ids contents and numeric validity of positions
+    if not isinstance(asset_ids, (list, tuple)):
+        try:
+            asset_ids = list(asset_ids)
+        except Exception as exc:
+            raise ValueError("asset_ids must be an iterable of strings") from exc
+    if not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("asset_ids must contain non-empty strings")
+    if not np.isfinite(positions).all():
     relationship_set = _build_relationship_set(graph, asset_ids)
     if len(asset_ids) == 0:
         return []
