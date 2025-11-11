@@ -59,9 +59,7 @@ def _is_truthy(value: str | None) -> bool:
     Returns:
         bool: True if `value` matches a recognised truthy form, False otherwise.
     """
-    if not value:
-        return False
-    return value.lower() in ('true', '1', 'yes', 'on')
+    return False if not value else value.lower() in ('true', '1', 'yes', 'on')
 
 
 class UserRepository:
