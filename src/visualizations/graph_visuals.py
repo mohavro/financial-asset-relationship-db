@@ -102,18 +102,6 @@ def _check_reverse_relationship(graph: AssetRelationshipGraph, source_id: str, t
     return False
 
 
-def _check_reverse_relationship(graph: AssetRelationshipGraph, source_id: str, target_id: str, rel_type: str) -> bool:
-    """Check if a reverse relationship exists"""
-    if target_id not in graph.relationships:
-        return False
-
-    for reverse_target, reverse_rel_type, _ in graph.relationships[target_id]:
-        if reverse_target == source_id and reverse_rel_type == rel_type:
-            return True
-
-    return False
-
-
 def _collect_relationships(
         graph: AssetRelationshipGraph, asset_ids: List[str],
         relationship_filters: dict = None
