@@ -1,20 +1,23 @@
 from collections import defaultdict
-from typing import Dict, List, Set, Tuple
+from typing import List, Set, Tuple
 
 import numpy as np
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 # Color and style mapping for relationship types (shared constant)
-REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
-    "same_sector": "#FF6B6B",  # Red for sector relationships
-    "market_cap_similar": "#4ECDC4",  # Teal for market cap
-    "correlation": "#45B7D1",  # Blue for correlations
-    "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
-    "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
-    "income_comparison": "#DDA0DD",  # Plum for income comparisons
-    "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
-})
+REL_TYPE_COLORS = defaultdict(
+    lambda: "#888888",
+    {
+        "same_sector": "#FF6B6B",  # Red for sector relationships
+        "market_cap_similar": "#4ECDC4",  # Teal for market cap
+        "correlation": "#45B7D1",  # Blue for correlations
+        "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
+        "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
+        "income_comparison": "#DDA0DD",  # Plum for income comparisons
+        "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
+    },
+)
 
 
 def _get_relationship_color(rel_type: str) -> str:
@@ -93,6 +96,10 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str]) -> Set[Tuple[str, str, str]]:
     """Build a set of all relationships for O(1) reverse relationship lookups.
 
+    This optimization reduces the time complexity of reverse relationship checks
+    from O(n) to O(1) by pre-building a set of all relationships. This is especially
+    beneficial for graphs with a large number of relationships.
+
     Args:
         graph: The asset relationship graph
         asset_ids: List of asset IDs to include
@@ -101,22 +108,26 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
         Set of tuples (source_id, target_id, rel_type) for all relationships
     """
     relationship_set = set()
-    asset_ids_set = set(asset_ids)  # Convert to set for O(1) lookups
+    asset_ids_set = set(asset_ids)  # Convert to set for O(1) membership checks
+
     for source_id, rels in graph.relationships.items():
-        if source_id in asset_ids_set:
-            for target_id, rel_type, _ in rels:
-                if target_id in asset_ids_set:
-                    relationship_set.add((source_id, target_id, rel_type))
+        if source_id not in asset_ids_set:
+            continue
+        for target_id, rel_type, _ in rels:
+            if target_id not in asset_ids_set:
+                continue
+            relationship_set.add((source_id, target_id, rel_type))
+
     return relationship_set
 
 
-def _collect_and_group_relationships(
+def _collect_relationships(
     graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: dict = None
-) -> dict:
-    """Collect and group relationships with directionality info and filtering.
+) -> tuple:
+    """Collect all relationships with directionality info and filtering.
 
-    Merges collection and grouping into a single pass for better performance.
-    Uses a pre-built relationship set for O(1) reverse relationship lookups.
+    Uses a pre-built relationship set for O(1) reverse relationship lookups,
+    significantly improving performance for graphs with many relationships.
 
     Args:
         graph: The asset relationship graph
@@ -124,24 +135,20 @@ def _collect_and_group_relationships(
         relationship_filters: Optional dict to filter relationship types
 
     Returns:
-        Dictionary mapping (rel_type, is_bidirectional) to list of relationships
+        Tuple of (all_relationships list, bidirectional_pairs set)
     """
-    if relationship_filters is None:
-        relationship_filters = {}
-
     # Build relationship set once for O(1) lookups
     relationship_set = _build_relationship_set(graph, asset_ids)
-    asset_ids_set = set(asset_ids)
 
     bidirectional_pairs = set()
-    relationship_groups = {}
+    all_relationships = []
 
     for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
+        if source_id not in asset_ids:
             continue
 
         for target_id, rel_type, strength in rels:
-            if target_id not in asset_ids_set:
+            if target_id not in asset_ids:
                 continue
 
             # Skip if this relationship type is filtered out
@@ -153,31 +160,42 @@ def _collect_and_group_relationships(
             reverse_exists = (target_id, source_id, rel_type) in relationship_set
             is_bidirectional = reverse_exists and pair_key not in bidirectional_pairs
 
-            # Skip duplicate bidirectional relationships
             if is_bidirectional:
-                if pair_key in bidirectional_pairs:
-                    continue
                 bidirectional_pairs.add(pair_key)
 
-            # Group relationships directly
-            group_key = (rel_type, is_bidirectional)
-            if group_key not in relationship_groups:
-                relationship_groups[group_key] = []
+            all_relationships.append(
+                {
+                    "source_id": source_id,
+                    "target_id": target_id,
+                    "rel_type": rel_type,
+                    "strength": strength,
+                    "is_bidirectional": is_bidirectional,
+                    "pair_key": pair_key,
+                }
+            )
 
-            relationship_groups[group_key].append({
-                "source_id": source_id,
-                "target_id": target_id,
-                "rel_type": rel_type,
-                "strength": strength,
-                "is_bidirectional": is_bidirectional,
-            })
+    return all_relationships, bidirectional_pairs
+
+
+def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> dict:
+    """Group relationships by type and directionality"""
+    relationship_groups = {}
+
+    for rel in all_relationships:
+        if rel["is_bidirectional"] and rel["pair_key"] in bidirectional_pairs:
+            bidirectional_pairs.discard(rel["pair_key"])
+        elif rel["is_bidirectional"]:
+            continue
+
+        group_key = (rel["rel_type"], rel["is_bidirectional"])
+        if group_key not in relationship_groups:
+            relationship_groups[group_key] = []
+        relationship_groups[group_key].append(rel)
 
     return relationship_groups
 
 
-def _build_edge_coordinates(
-    relationships: list, positions: np.ndarray, asset_ids: List[str]
-) -> tuple:
+def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
 
@@ -198,24 +216,16 @@ def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: boo
     direction_text = "↔" if is_bidirectional else "→"
 
     for rel in relationships:
-        hover_text = (
-            f"{rel['source_id']} {direction_text} {rel['target_id']}<br>"
-            f"Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
-        )
+        hover_text = f"{rel['source_id']} {direction_text} {rel['target_id']}<br>Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
         hover_texts.extend([hover_text, hover_text, None])
 
     return hover_texts
 
 
-def _get_relationship_color(rel_type: str) -> str:
-    """Get color for a relationship type"""
-    return REL_TYPE_COLORS[rel_type]
-
-
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
     """Get line style configuration for a relationship"""
     return dict(
-        color=REL_TYPE_COLORS[rel_type],
+        color=_get_relationship_color(rel_type),
         width=4 if is_bidirectional else 2,
         dash="solid" if is_bidirectional else "dash",
     )
@@ -250,23 +260,11 @@ def _create_trace_for_group(
 
 
 def _create_relationship_traces(
-    graph: AssetRelationshipGraph,
-    positions: np.ndarray,
-    asset_ids: List[str],
-    relationship_filters: dict = None,
+    graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create separate traces for different types of relationships with enhanced visibility.
-
-    Args:
-        graph: The asset relationship graph
-        positions: Node positions array
-        asset_ids: List of asset IDs
-        relationship_filters: Optional dict to filter relationship types
-
-    Returns:
-        List of Scatter3d traces for relationships
-    """
-    relationship_groups = _collect_and_group_relationships(graph, asset_ids, relationship_filters)
+    """Create separate traces for different types of relationships with enhanced visibility"""
+    all_relationships, bidirectional_pairs = _collect_relationships(graph, asset_ids)
+    relationship_groups = _group_relationships(all_relationships, bidirectional_pairs)
 
     traces = []
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
@@ -282,26 +280,27 @@ def _create_directional_arrows(
 ) -> List[go.Scatter3d]:
     """Create arrow markers for unidirectional relationships.
 
-    Uses a pre-built relationship set for O(1) reverse relationship lookups.
+    Uses a pre-built relationship set for O(1) reverse relationship lookups,
+    improving performance compared to iterating through all relationships.
     """
     arrows = []
 
     # Build relationship set once for O(1) lookups
     relationship_set = _build_relationship_set(graph, asset_ids)
-    asset_ids_set = set(asset_ids)
 
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
+        if source_id not in asset_ids:
             continue
 
         for target_id, rel_type, strength in rels:
-            if target_id not in asset_ids_set:
+            if target_id not in asset_ids:
                 continue
 
-            # Check if this is truly unidirectional
+            # Check if this is truly unidirectional using O(1) lookup
             if (target_id, source_id, rel_type) not in relationship_set:
-                source_idx, target_idx = asset_ids.index(source_id), asset_ids.index(target_id)
+                source_idx = asset_ids.index(source_id)
+                target_idx = asset_ids.index(target_id)
 
                 # Calculate arrow position (70% along the edge towards target)
                 arrow_pos = positions[source_idx] + 0.7 * (positions[target_idx] - positions[source_idx])
@@ -376,7 +375,7 @@ def visualize_3d_graph_with_filters(
     fig = go.Figure()
 
     # Create relationship traces with filtering
-    relationship_traces = _create_relationship_traces(graph, positions, asset_ids, relationship_filters)
+    relationship_traces = _create_filtered_relationship_traces(graph, positions, asset_ids, relationship_filters)
 
     # Add all relationship traces
     for trace in relationship_traces:
@@ -435,3 +434,25 @@ def visualize_3d_graph_with_filters(
     )
 
     return fig
+
+
+def _create_filtered_relationship_traces(
+    graph: AssetRelationshipGraph,
+    positions: np.ndarray,
+    asset_ids: List[str],
+    relationship_filters: dict = None,
+) -> List[go.Scatter3d]:
+    """Create relationship traces with optional filtering"""
+    if relationship_filters is None:
+        return _create_relationship_traces(graph, positions, asset_ids)
+
+    all_relationships, bidirectional_pairs = _collect_relationships(graph, asset_ids, relationship_filters)
+    relationship_groups = _group_relationships(all_relationships, bidirectional_pairs)
+
+    traces = []
+    for (rel_type, is_bidirectional), relationships in relationship_groups.items():
+        if relationships:
+            trace = _create_trace_for_group(rel_type, is_bidirectional, relationships, positions, asset_ids)
+            traces.append(trace)
+
+    return traces
