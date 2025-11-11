@@ -107,10 +107,6 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     )
 
     return fig
-    Args:
-        graph: The asset relationship graph.
-        asset_ids: Asset IDs to include in the relationship set.
-
 
 
 def _build_relationship_set(
@@ -382,6 +378,13 @@ def _create_directional_arrows(
     Uses a pre-built relationship set for O(1) reverse relationship lookups
     and asset ID index for O(1) position lookups.
     """
+    relationship_set = _build_relationship_set(graph, asset_ids)
+    asset_ids_set = set(asset_ids)
+    asset_id_index = _build_asset_id_index(asset_ids)
+
+    source_indices: List[int] = []
+    target_indices: List[int] = []
+    hover_texts: List[str] = []
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
     if not isinstance(positions, np.ndarray):
@@ -400,12 +403,6 @@ def _create_directional_arrows(
     if not all(isinstance(a, str) for a in asset_ids):
         raise ValueError("asset_ids must be a list of strings")
 
-    relationship_set = _build_relationship_set(graph, asset_ids)
-    asset_ids_set = set(asset_ids)
-    asset_id_index = _build_asset_id_index(asset_ids)
-
-    arrows: List[dict] = []
-
     # Find unidirectional relationships
     for source_id, rels in graph.relationships.items():
         if source_id not in asset_ids_set:
@@ -421,30 +418,25 @@ def _create_directional_arrows(
                 source_idx = asset_id_index[source_id]
                 target_idx = asset_id_index[target_id]
 
-                # Calculate arrow position (70% along the edge towards target)
-                arrow_pos = positions[source_idx] + 0.7 * (
-                    positions[target_idx] - positions[source_idx]
+                # Collect indices and hover texts for vectorized arrow computation
+                hover_texts.append(
+                    f"Direction: {source_id} → {target_id}<br>Type: {rel_type}"
                 )
+                source_indices.append(source_idx)
+                target_indices.append(target_idx)
 
-                arrows.append(
-                    {
-                        "pos": arrow_pos,
-                        "hover": f"Direction: {source_id} → {target_id}<br>Type: {rel_type}",
-                        "rel_type": rel_type,
-                    }
-                )
-
-    # Create arrow trace
-    if arrows:
-        arrow_x = [arrow["pos"][0] for arrow in arrows]
-        arrow_y = [arrow["pos"][1] for arrow in arrows]
-        arrow_z = [arrow["pos"][2] for arrow in arrows]
-        arrow_hovers = [arrow["hover"] for arrow in arrows]
+    # Vectorized arrow position computation and trace creation
+    if source_indices:
+        src_idx_arr = np.asarray(source_indices, dtype=int)
+        tgt_idx_arr = np.asarray(target_indices, dtype=int)
+        src_pos = positions[src_idx_arr]
+        tgt_pos = positions[tgt_idx_arr]
+        arrow_positions = src_pos + 0.7 * (tgt_pos - src_pos)
 
         arrow_trace = go.Scatter3d(
-            x=arrow_x,
-            y=arrow_y,
-            z=arrow_z,
+            x=arrow_positions[:, 0].tolist(),
+            y=arrow_positions[:, 1].tolist(),
+            z=arrow_positions[:, 2].tolist(),
             mode="markers",
             marker=dict(
                 symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
@@ -452,7 +444,7 @@ def _create_directional_arrows(
                 color="rgba(255, 0, 0, 0.8)",
                 line=dict(color="red", width=1),
             ),
-            hovertext=arrow_hovers,
+            hovertext=hover_texts,
             hoverinfo="text",
             name="Direction Arrows",
             visible=True,
