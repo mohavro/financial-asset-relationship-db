@@ -90,6 +90,18 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     return fig
 
 
+def _check_reverse_relationship(graph: AssetRelationshipGraph, source_id: str, target_id: str, rel_type: str) -> bool:
+    """Check if a reverse relationship exists"""
+    if target_id not in graph.relationships:
+        return False
+
+    for reverse_target, reverse_rel_type, _ in graph.relationships[target_id]:
+        if reverse_target == source_id and reverse_rel_type == rel_type:
+            return True
+
+    return False
+
+
 def _collect_relationships(
         graph: AssetRelationshipGraph, asset_ids: List[str],
         relationship_filters: dict = None
@@ -114,16 +126,8 @@ def _collect_relationships(
             ):
                 continue
 
-            # Check if reverse relationship exists
-            reverse_exists = False
-            if target_id in graph.relationships:
-                for reverse_target, reverse_rel_type, reverse_strength in graph.relationships[target_id]:
-                    if reverse_target == source_id and reverse_rel_type == rel_type:
-                        reverse_exists = True
-                        break
-
             pair_key = tuple(sorted([source_id, target_id]) + [rel_type])
-            is_bidirectional = False
+            reverse_exists = _check_reverse_relationship(graph, source_id, target_id, rel_type)
 
             if reverse_exists and pair_key not in bidirectional_pairs:
                 is_bidirectional = True
