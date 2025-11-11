@@ -396,6 +396,7 @@ def _create_directional_arrows(
             raise ValueError("Invalid positions: values must be numeric") from exc
 
     relationship_set = _build_relationship_set(graph, asset_ids)
+    # Convert to set for O(1) membership testing (optimization already applied)
     asset_ids_set = set(asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
