@@ -8,10 +8,9 @@ This module contains comprehensive unit tests for the asset_graph module includi
 """
 
 import numpy as np
-from src.logic.asset_graph import AssetRelationshipGraph
-
 import pytest
 
+from src.logic.asset_graph import AssetRelationshipGraph
 
 @pytest.mark.unit
 class TestAssetRelationshipGraphInit:
