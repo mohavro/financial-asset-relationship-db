@@ -1,5 +1,70 @@
 # Review Comment Resolution
 
+## Review Comment: Error Handling in Arrow Creation
+
+**Location:** `src/visualizations/graph_visuals.py` - `_create_directional_arrows` function
+
+### Original Review Feedback
+
+> The function `_create_directional_arrows` lacks explicit error handling which could lead to runtime errors if `positions` or `asset_ids` are not properly formatted or if they do not match in length. This can occur especially when external data sources are used to generate these arrays.
+>
+> **Suggested Improvement:**
+> Add error handling to check the integrity and compatibility of `positions` and `asset_ids` before proceeding with the calculations. For instance, ensure that these arrays are not `None`, they have the same length, and contain valid numerical data.
+>
+> ```python
+> if positions is None or asset_ids is None or len(positions) != len(asset_ids):
+>     raise ValueError('Invalid input data for positions or asset_ids')
+> ```
+
+### Resolution
+
+The `_create_directional_arrows` function has been enhanced with comprehensive input validation that addresses all concerns raised in the review comment. The validation is now prominently placed at the beginning of the function and includes:
+
+#### 1. **Primary Validation (Lines 388-398)**
+Consolidated upfront checks as suggested by the reviewer:
+
+```python
+# Primary validation: Check None values and length matching (addresses review feedback)
+if not isinstance(graph, AssetRelationshipGraph):
+    raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
+if positions is None or asset_ids is None:
+    raise ValueError("Invalid input data: positions and asset_ids must not be None")
+if not isinstance(positions, np.ndarray):
+    positions = np.asarray(positions)
+if positions.ndim != 2 or positions.shape[1] != 3:
+    raise ValueError("Invalid positions shape: expected (n, 3)")
+if len(positions) != len(asset_ids):
+    raise ValueError("Invalid input data: positions and asset_ids must have the same length")
+```
+
+#### 2. **Data Type and Numeric Validation (Lines 400-406)**
+Ensures positions contain valid numerical data:
+
+```python
+if not np.issubdtype(positions.dtype, np.number):
+    try:
+        positions = positions.astype(float)
+    except Exception as exc:
+        raise ValueError("Invalid positions: values must be numeric") from exc
+if not np.isfinite(positions).all():
+    raise ValueError("Invalid positions: values must be finite numbers")
+```
+
+#### 3. **Asset IDs Validation (Line 407-408)**
+Validates asset_ids format and contents:
+
+```python
+if not all(isinstance(a, str) and a for a in asset_ids):
+    raise ValueError("asset_ids must contain non-empty strings")
+```
+
+### Benefits
+
+1. **Prevents Runtime Errors:** All validation occurs before any processing, preventing crashes from invalid data
+2. **Clear Error Messages:** Specific error messages help developers quickly identify and fix data issues
+3. **Comprehensive Coverage:** Validates not just None/length matching, but also data types, shapes, and numeric validity
+# Review Comment Resolution
+
 **Date:** 2025-11-11
 **Pull Request:** Fix 4 Duplication, 2 Complexity issues in src\visualizations\graph_visuals.py
 **Issue:** #130
