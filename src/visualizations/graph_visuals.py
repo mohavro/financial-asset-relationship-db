@@ -6,19 +6,20 @@ import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 # Color and style mapping for relationship types (shared constant)
-REL_TYPE_COLORS = defaultdict(
-    lambda: "#888888",
-    {
-        "default": "#888888",  # Gray for others
-        "same_sector": "#FF6B6B",  # Red for sector relationships
-        "market_cap_similar": "#4ECDC4",  # Teal for market cap
-        "correlation": "#45B7D1",  # Blue for correlations
-        "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
-        "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
-        "income_comparison": "#DDA0DD",  # Plum for income comparisons
-        "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
-    },
-)
+REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
+    "same_sector": "#FF6B6B",  # Red for sector relationships
+    "market_cap_similar": "#4ECDC4",  # Teal for market cap
+    "correlation": "#45B7D1",  # Blue for correlations
+    "corporate_bond_to_equity": "#96CEB4",  # Green for corporate bonds
+    "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
+    "income_comparison": "#DDA0DD",  # Plum for income comparisons
+    "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
+})
+
+
+def _get_relationship_color(rel_type: str) -> str:
+    """Get color for a relationship type"""
+    return REL_TYPE_COLORS[rel_type]
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
@@ -174,7 +175,9 @@ def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> d
     return relationship_groups
 
 
-def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
+def _build_edge_coordinates(
+    relationships: list, positions: np.ndarray, asset_ids: List[str]
+) -> tuple:
     """Build edge coordinate lists for relationships"""
     edges_x, edges_y, edges_z = [], [], []
 
@@ -392,7 +395,9 @@ def visualize_3d_graph_with_filters(
 
     fig.update_layout(
         title={
-            "text": f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships",
+            "text": (
+                f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships"
+            ),
             "x": 0.5,
             "xanchor": "center",
             "font": {"size": 16},
