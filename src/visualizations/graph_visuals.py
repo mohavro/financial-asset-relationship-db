@@ -21,7 +21,7 @@ REL_TYPE_COLORS = defaultdict(
 
 
 def _get_relationship_color(rel_type: str) -> str:
-    """Get color for a relationship type; falls back to default via REL_TYPE_COLORS"""
+    """Get color for a relationship type"""
     return REL_TYPE_COLORS[rel_type]
 
 
@@ -41,29 +41,15 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
     # Validate input graph object
     if not isinstance(graph, AssetRelationshipGraph):
-        raise ValueError('Invalid graph data provided: must be an AssetRelationshipGraph instance')
-    if not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
+        raise ValueError(
+            "Invalid graph data provided: must be an AssetRelationshipGraph instance"
+        )
+    if not hasattr(graph, "get_3d_visualization_data_enhanced"):
+        raise ValueError(
+            "Invalid graph data provided: missing required method get_3d_visualization_data_enhanced"
+        )
 
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
-    # Validate returned data integrity
-    if positions is None or asset_ids is None or colors is None or hover_texts is None:
-        raise ValueError("Invalid graph data returned: positions, asset_ids, colors, and hover_texts must not be None")
-    if not isinstance(positions, np.ndarray):
-        positions = np.asarray(positions)
-    if positions.ndim != 2 or positions.shape[1] != 3:
-        raise ValueError("Invalid positions shape: expected (n, 3)")
-    n = len(asset_ids)
-    if positions.shape[0] != n:
-        raise ValueError("Invalid graph data: positions and asset_ids length mismatch")
-    if len(colors) != n:
-        raise ValueError("Invalid graph data: colors length must match number of asset_ids")
-    if len(hover_texts) != n:
-        raise ValueError("Invalid graph data: hover_texts length must match number of asset_ids")
-    if not np.issubdtype(positions.dtype, np.number):
-        try:
-            positions = positions.astype(float)
-        except Exception as exc:
 
     fig = go.Figure()
 
@@ -133,16 +119,6 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     return fig
 
 
-
-def _build_edge_coordinates_optimized(
-    relationships: List[dict],
-    positions: np.ndarray,
-    asset_id_index: Dict[str, int],
-) -> Tuple[List[Optional[float]], List[Optional[float]], List[Optional[float]]]:
-    """Build edge coordinate lists for relationships using optimized O(1) lookups.
-
-    Args:
-
 def _build_relationship_set(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Set[Tuple[str, str, str]]:
@@ -165,28 +141,6 @@ def _build_relationship_set(
     return relationship_set
 
 
-def _build_relationship_index(
-    graph: AssetRelationshipGraph, asset_ids_set: Set[str]
-) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups.
-
-    Args:
-        graph: The asset relationship graph
-        asset_ids_set: Set of asset IDs to include
-
-    Returns:
-        Dictionary mapping (source_id, target_id, rel_type) to strength
-    """
-    relationship_index: Dict[Tuple[str, str, str], float] = {}
-    for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
-            continue
-        for target_id, rel_type, strength in rels:
-            if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
-    return relationship_index
-
-
 def _collect_and_group_relationships(
     graph: AssetRelationshipGraph,
     asset_ids: List[str],
@@ -205,11 +159,20 @@ def _collect_and_group_relationships(
     Returns:
         Dictionary mapping (rel_type, is_bidirectional) to list of relationships
     """
+    if relationship_filters is None:
+        relationship_filters = {}
+
     # Convert to set for O(1) membership
     asset_ids_set = set(asset_ids)
 
     # Build optimized relationship index: (source, target, type) -> strength
-    relationship_index = _build_relationship_index(graph, asset_ids_set)
+    relationship_index: Dict[Tuple[str, str, str], float] = {}
+    for source_id, rels in graph.relationships.items():
+        if source_id not in asset_ids_set:
+            continue
+        for target_id, rel_type, strength in rels:
+            if target_id in asset_ids_set:
+                relationship_index[(source_id, target_id, rel_type)] = float(strength)
 
     processed_pairs: Set[Tuple[str, str, str]] = set()
     relationship_groups: Dict[Tuple[str, bool], List[dict]] = defaultdict(list)
@@ -220,12 +183,14 @@ def _collect_and_group_relationships(
             continue
 
         # Create canonical pair key for bidirectional detection without sorting overhead
-        pair_key: Tuple[str, str, str] = (
-            (source_id, target_id, rel_type) if source_id <= target_id else (target_id, source_id, rel_type)
-        )
+        if source_id <= target_id:
+            pair_key: Tuple[str, str, str] = (source_id, target_id, rel_type)
+        else:
+            pair_key = (target_id, source_id, rel_type)
 
         # Check for bidirectional relationship using O(1) index lookup
-        is_bidirectional = (target_id, source_id, rel_type) in relationship_index
+        reverse_key = (target_id, source_id, rel_type)
+        is_bidirectional = reverse_key in relationship_index
 
         # Track bidirectional pairs to avoid duplicates
         if is_bidirectional and pair_key in processed_pairs:
@@ -233,6 +198,29 @@ def _collect_and_group_relationships(
         if is_bidirectional:
             processed_pairs.add(pair_key)
 
+        # Group relationships directly
+        group_key = (rel_type, is_bidirectional)
+        relationship_groups[group_key].append(
+            {
+                "source_id": source_id,
+                "target_id": target_id,
+                "rel_type": rel_type,
+                "strength": strength,
+                "is_bidirectional": is_bidirectional,
+            }
+        )
+
+    return relationship_groups
+
+
+def _build_edge_coordinates_optimized(
+    relationships: List[dict],
+    positions: np.ndarray,
+    asset_id_index: Dict[str, int],
+) -> Tuple[List[Optional[float]], List[Optional[float]], List[Optional[float]]]:
+    """Build edge coordinate lists for relationships using optimized O(1) lookups.
+
+    Args:
         relationships: List of relationship dictionaries
         positions: NumPy array of node positions
         asset_id_index: Dictionary mapping asset_id to index for O(1) lookup
@@ -411,13 +399,13 @@ def _create_directional_arrows(
     if not np.issubdtype(positions.dtype, np.number):
         try:
             positions = positions.astype(float)
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-except
             raise ValueError("Invalid positions: values must be numeric") from exc
     # Validate asset_ids contents and numeric validity of positions
     if not isinstance(asset_ids, (list, tuple)):
         try:
             asset_ids = list(asset_ids)
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-except
             raise ValueError("asset_ids must be an iterable of strings") from exc
     if not all(isinstance(a, str) and a for a in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
@@ -493,9 +481,13 @@ def visualize_3d_graph_with_filters(
     """Create 3D visualization with selective relationship filtering"""
     # Validate input graph object
     if not isinstance(graph, AssetRelationshipGraph):
-        raise ValueError('Invalid graph data provided: must be an AssetRelationshipGraph instance')
-    if not hasattr(graph, 'get_3d_visualization_data_enhanced'):
-        raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
+        raise ValueError(
+            "Invalid graph data provided: must be an AssetRelationshipGraph instance"
+        )
+    if not hasattr(graph, "get_3d_visualization_data_enhanced"):
+        raise ValueError(
+            "Invalid graph data provided: missing required method get_3d_visualization_data_enhanced"
+        )
 
     if not show_all_relationships:
         # Filter which relationship types to show
