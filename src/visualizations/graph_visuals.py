@@ -420,6 +420,7 @@ def visualize_3d_graph_with_filters(
         title={
             "text": (
                 f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships"
+            ),
             "x": 0.5,
             "xanchor": "center",
             "font": {"size": 16},
