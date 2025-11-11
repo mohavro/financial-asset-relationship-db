@@ -462,6 +462,9 @@ def visualize_3d_graph_with_filters(
     toggle_arrows: bool = True,
 ) -> go.Figure:
     """Create 3D visualization with selective relationship filtering"""
+    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, 'get_3d_visualization_data_enhanced'):
+        raise ValueError('Invalid graph data provided')
+
 
     if not show_all_relationships:
         # Filter which relationship types to show
