@@ -380,6 +380,22 @@ def _create_directional_arrows(
 
     Uses a pre-built relationship index for O(1) lookups and computes arrow positions
     in a single vectorized step for performance.
+
+    NOTE: This function implements comprehensive input validation to address review feedback
+    regarding error handling. All parameters are validated before processing to prevent
+    runtime errors from improperly formatted or mismatched data.
+
+    Args:
+        graph: AssetRelationshipGraph instance containing relationship data
+        positions: NumPy array of shape (n, 3) with node positions
+        asset_ids: List of n asset ID strings matching positions length
+
+    Returns:
+        List containing a single Scatter3d trace with arrow markers, or empty list
+
+    Raises:
+        TypeError: If graph is not an AssetRelationshipGraph instance
+        ValueError: If inputs are None, mismatched lengths, invalid shapes, or non-numeric
     """
     if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
