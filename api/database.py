@@ -12,10 +12,10 @@ from urllib.parse import urlparse
 
 def _get_database_url() -> str:
     """
-    Get the database URL from the `DATABASE_URL` environment variable.
+    Read the DATABASE_URL environment variable and return its value.
     
     Returns:
-        The configured database URL string.
+        The value of the `DATABASE_URL` environment variable.
     
     Raises:
         ValueError: If the `DATABASE_URL` environment variable is not set.
@@ -108,12 +108,12 @@ def _connect() -> sqlite3.Connection:
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Yield a configured SQLite connection for use in a with-statement.
+    Yield a configured SQLite connection for use within a with-statement.
     
     The connection is closed automatically when the context exits.
     
     Returns:
-        sqlite3.Connection: Configured SQLite connection instance; will be closed on context exit.
+        sqlite3.Connection: Configured SQLite connection that will be closed on context exit.
     """
 
     connection = _connect()
@@ -125,11 +125,11 @@ def get_connection() -> Iterator[sqlite3.Connection]:
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
-    Execute a write (non-SELECT) SQL query using a managed SQLite connection.
+    Execute and commit a write SQL query using a managed SQLite connection.
     
     Parameters:
-    	query (str): SQL statement to execute; typically an INSERT, UPDATE, DELETE, or DDL.
-    	parameters (tuple | list | None): Sequence of parameters to bind into the query, or None for no parameters.
+        query (str): SQL statement to execute.
+        parameters (tuple | list | None): Sequence of values to bind to the query; pass None or an empty sequence if there are no parameters.
     """
 
     with get_connection() as connection:
@@ -139,14 +139,14 @@ def execute(query: str, parameters: tuple | list | None = None) -> None:
 
 def fetch_one(query: str, parameters: tuple | list | None = None):
     """
-    Return the first row produced by the given SQL query, or None if the query returns no rows.
+    Retrieve the first row produced by an SQL query.
     
     Parameters:
-    	query (str): SQL statement to execute.
-    	parameters (tuple | list | None): Optional sequence of parameters to bind into the query; use an empty sequence or None for no parameters.
+        query (str): SQL statement to execute.
+        parameters (tuple | list | None): Optional sequence of parameters to bind into the query.
     
     Returns:
-    	sqlite3.Row | None: The first row of the result set as a `sqlite3.Row`, or `None` if no rows were returned.
+        sqlite3.Row | None: The first row of the result set as a `sqlite3.Row`, or `None` if the query returned no rows.
     """
 
     with get_connection() as connection:

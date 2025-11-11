@@ -180,14 +180,13 @@ ENV = os.getenv("ENV", "development").lower()
 @limiter.limit("5/minute")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
     """
-    Create a JWT access token for a user authenticated by username and password.
+    Create a JWT access token for a user authenticated with a username and password.
     
     Parameters:
-        request (Request): Required by the rate limiter for dependency injection; not otherwise used.
-        form_data (OAuth2PasswordRequestForm): Credentials submitted by the client (username and password).
+        form_data (OAuth2PasswordRequestForm): Client-submitted credentials (`username` and `password`).
     
     Returns:
-        dict: Mapping containing `access_token` (JWT string) and `token_type` set to `'bearer'`.
+        dict: Mapping with `access_token` (JWT string) and `token_type` set to `'bearer'`.
     """
     # The `request` parameter is required by slowapi's limiter for dependency injection.
     _ = request
@@ -208,14 +207,14 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
 @limiter.limit("10/minute")
 async def read_users_me(request: Request, current_user: User = Depends(get_current_active_user)):
     """
-    Get the currently authenticated user.
+    Retrieve the currently authenticated user.
     
     Parameters:
-        request (Request): Required for slowapi's rate-limiter dependency injection; parameter is unused.
-        current_user (User): The authenticated user injected by the dependency.
+        request (Request): Included for slowapi limiter dependency injection; unused by the function.
+        current_user (User): Active user injected by the authentication dependency.
     
     Returns:
-        User: The currently authenticated user.
+        The authenticated user.
     """
 
     # The `request` parameter is required by slowapi's limiter for dependency injection.
