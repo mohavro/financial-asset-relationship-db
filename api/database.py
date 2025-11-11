@@ -111,12 +111,12 @@ def _connect() -> sqlite3.Connection:
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Yield a configured SQLite connection for use within a with-statement.
+    Provide a context-managed SQLite connection for the configured database.
     
-    The connection is closed automatically when the context exits.
-    
+    Yields a `sqlite3.Connection` for use inside a with-statement. For file-backed databases the connection is closed when the context exits; for an in-memory database the shared connection is left open.
+     
     Returns:
-        sqlite3.Connection: Configured SQLite connection that will be closed on context exit.
+        sqlite3.Connection: The database connection to use within the context.
     """
 
     connection = _connect()
@@ -127,6 +127,20 @@ def get_connection() -> Iterator[sqlite3.Connection]:
             connection.close()
 
 
+def fetch_value(query: str, parameters: tuple | list | None = None):
+    """
+    Return the first column of the first row produced by the given SQL query.
+    
+    Parameters:
+        query (str): SQL statement to execute.
+        parameters (tuple | list | None): Parameters to bind to the SQL statement.
+    
+    Returns:
+        The value of the first column of the first row, or None if the query returned no rows.
+    """
+    row = fetch_one(query, parameters)
+    return row[0] if row is not None else None
+    """Execute a write query within a managed connection."""
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
     Execute and commit a write SQL query using a managed SQLite connection.
