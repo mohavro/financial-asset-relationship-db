@@ -418,7 +418,8 @@ def _create_directional_arrows(
                    contain invalid data types, or have non-finite values
 
     Note:
-        Addresses review feedback on error handling - validates input integrity before processing.
+        Addresses review feedback (line 545) - validates input integrity before processing
+        to prevent runtime errors when external data sources are used.
     """
     if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
