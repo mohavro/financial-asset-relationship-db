@@ -5,7 +5,10 @@ import numpy as np
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
-# Color and style mapping for relationship types (shared constant)
+# Color and style mapping for relationship types (shared constant).
+# Using defaultdict with lambda eliminates the need for .get() calls with default parameters.
+# Any non-existent relationship type will automatically return the default gray color (#888888).
+# This approach enhances both readability and efficiency by avoiding explicit default checks.
 REL_TYPE_COLORS = defaultdict(
     lambda: "#888888",
     {
