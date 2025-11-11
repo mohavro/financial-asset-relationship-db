@@ -124,7 +124,7 @@ def _collect_relationships(
             continue
 
         for target_id, rel_type, strength in rels:
-            if target_id not in asset_ids_set:
+            if target_id not in asset_ids:
                 continue
 
             # Skip if this relationship type is filtered out
