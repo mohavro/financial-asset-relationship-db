@@ -138,6 +138,9 @@ def _collect_and_group_relationships(
 
     Args:
         graph: The asset relationship graph
+    # Ensure mutable default is not shared across calls
+    if relationship_filters is None:
+        relationship_filters = {}
         asset_ids: List of asset IDs to include
         relationship_filters: Optional dict mapping relationship types to visibility flags
 
