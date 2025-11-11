@@ -17,7 +17,7 @@ These optimizations significantly reduce computational complexity from O(n²) or
 to O(n) for most operations, making the module suitable for graphs with thousands
 of nodes and relationships.
 """
-from typing import Dict, List, Set, Tuple
+from typing import List, Set, Tuple
 
 import numpy as np
 import plotly.graph_objects as go
