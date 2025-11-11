@@ -93,6 +93,11 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str]) -> Set[Tuple[str, str, str]]:
     """Build a set of all relationships for O(1) reverse relationship lookups.
 
+    Performance: O(R) where R is the number of relationships.
+    This enables O(1) bidirectional relationship detection instead of O(R) per lookup.
+    For large graphs with millions of relationships, this provides significant speedup
+    (from O(R²) to O(R) for the overall collection process).
+
     Args:
         graph: The asset relationship graph
         asset_ids: List of asset IDs to include
