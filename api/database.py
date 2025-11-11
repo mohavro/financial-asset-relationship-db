@@ -66,25 +66,6 @@ def _resolve_sqlite_path(url: str) -> str:
 
     return str(resolved_path)
 
-    parsed = urlparse(url)
-    if parsed.scheme != "sqlite":
-        raise ValueError("Only sqlite URLs are supported for DATABASE_URL")
-
-    if parsed.path in {"", "/"} and parsed.netloc:
-        path = f"/{parsed.netloc}"
-    else:
-        path = parsed.path
-
-# Handle three-slash relative paths (sqlite:///path.db)
-if parsed.netloc == "" and path.startswith("/") and path != "/:memory:":
-    relative_path = path[1:]  # Remove leading slash
-    resolved = Path(relative_path)
-else:
-    resolved = Path(path).expanduser().resolve()
-resolved.parent.mkdir(parents=True, exist_ok=True)
-return str(resolved)
-    return str(resolved)
-
 
 DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
@@ -131,21 +112,6 @@ def get_connection() -> Iterator[sqlite3.Connection]:
             connection.close()
 
 
-from typing import Any
-
-def fetch_value(query: str, parameters: tuple | list | None = None) -> Any | None:
-    """
-    Return the first column of the first row produced by the given SQL query.
-    
-    Parameters:
-        query (str): SQL statement to execute.
-        parameters (tuple | list | None): Parameters to bind to the SQL statement.
-    
-    Returns:
-        The value of the first column of the first row, or None if the query returned no rows.
-    """
-    row = fetch_one(query, parameters)
-    return row[0] if row is not None else None
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
     Execute and commit a write SQL query using a managed SQLite connection.
