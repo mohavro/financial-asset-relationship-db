@@ -46,6 +46,24 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
         raise ValueError('Invalid graph data provided: missing required method get_3d_visualization_data_enhanced')
 
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    # Validate returned data integrity
+    if positions is None or asset_ids is None or colors is None or hover_texts is None:
+        raise ValueError("Invalid graph data returned: positions, asset_ids, colors, and hover_texts must not be None")
+    if not isinstance(positions, np.ndarray):
+        positions = np.asarray(positions)
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid positions shape: expected (n, 3)")
+    n = len(asset_ids)
+    if positions.shape[0] != n:
+        raise ValueError("Invalid graph data: positions and asset_ids length mismatch")
+    if len(colors) != n:
+        raise ValueError("Invalid graph data: colors length must match number of asset_ids")
+    if len(hover_texts) != n:
+        raise ValueError("Invalid graph data: hover_texts length must match number of asset_ids")
+    if not np.issubdtype(positions.dtype, np.number):
+        try:
+            positions = positions.astype(float)
+        except Exception as exc:
 
     fig = go.Figure()
 
