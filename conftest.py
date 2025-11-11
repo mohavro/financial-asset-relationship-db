@@ -39,7 +39,7 @@ def pytest_load_initial_conftests(args: List[str], early_config, parser) -> None
             skip_next = True
             continue
 
-        if arg.startswith("--cov=") or arg.startswith("--cov-report="):
+        if arg.startswith(("--cov=", "--cov-report=")):
             continue
 
         filtered_args.append(arg)
