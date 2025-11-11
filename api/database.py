@@ -29,13 +29,16 @@ def _get_database_url() -> str:
 
 def _resolve_sqlite_path(url: str) -> str:
     """
-    Resolve a SQLite URL to a filesystem path, handling in-memory URLs, percent-encoding and common sqlite URL forms.
+    Resolve a SQLite URL to a filesystem path or the special in-memory indicator.
+    
+    Supports common SQLite URL forms such as `sqlite:///relative.db`, `sqlite:////absolute/path.db`
+    and `sqlite:///:memory:`. Percent-encodings in the path are decoded before resolution.
     
     Parameters:
-        url (str): A SQLite URL (examples: `sqlite:///relative.db`, `sqlite:////absolute/path.db`, `sqlite:///:memory:`).
+        url (str): SQLite URL to resolve.
     
     Returns:
-        str: The resolved filesystem path for file-based URLs, or the special string `":memory:"` for in-memory databases.
+        str: Filesystem path for file-based URLs, or the literal string `":memory:"` for in-memory databases.
     """
 
     from urllib.parse import urlparse, unquote
