@@ -19,7 +19,13 @@ const isPaginatedResponse = (value: unknown): value is PaginatedAssetsResponse =
     typeof value === 'object' &&
     value !== null &&
     'items' in value &&
-    Array.isArray((value as PaginatedAssetsResponse).items)
+    'total' in value &&
+    'page' in value &&
+    'per_page' in value &&
+    Array.isArray((value as PaginatedAssetsResponse).items) &&
+    typeof (value as PaginatedAssetsResponse).total === 'number' &&
+    typeof (value as PaginatedAssetsResponse).page === 'number' &&
+    typeof (value as PaginatedAssetsResponse).per_page === 'number'
   );
 };
 
@@ -182,14 +188,17 @@ const canGoNext = !loading && totalPages !== null && page < totalPages;
     updateQueryParams({ per_page: String(nextSize), page: '1' });
   };
 
-  const goToPage = (nextPage: number) => {
-    if (
-      nextPage < 1 ||
-      (totalPages !== null && nextPage > totalPages) ||
-      nextPage === page
-    ) return;
-    setPage(nextPage);
-    updateQueryParams({ page: String(nextPage) });
+  const goToPage = (requestedPage: number) => {
+    const lowerBounded = Math.max(1, requestedPage);
+    const bounded =
+      totalPages !== null ? Math.min(lowerBounded, totalPages) : lowerBounded;
+
+    if (bounded === page) {
+      return;
+    }
+
+    setPage(bounded);
+    updateQueryParams({ page: String(bounded) });
   };
 
   return (
@@ -242,7 +251,7 @@ const canGoNext = !loading && totalPages !== null && page < totalPages;
             }`}
             role={error ? 'alert' : 'status'}
           >
-            {error ? error : `Loading results for ${querySummary}...`}
+            {error || `Loading results for ${querySummary}...`}
           </div>
         )}
         <div className="overflow-x-auto">

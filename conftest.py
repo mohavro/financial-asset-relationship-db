@@ -20,7 +20,7 @@ def _cov_plugin_available() -> bool:
     Check whether the pytest-cov plugin is importable.
     
     Returns:
-        bool: `True` if the `pytest-cov` plugin can be imported, `False` otherwise.
+        `True` if the pytest-cov plugin is importable, `False` otherwise.
     """
 
     return importlib.util.find_spec("pytest_cov") is not None
@@ -28,12 +28,12 @@ def _cov_plugin_available() -> bool:
 
 def pytest_load_initial_conftests(args: List[str], early_config, parser) -> None:  # pragma: no cover - exercised via pytest
     """
-    Remove pytest-cov related CLI options from the provided args list when the pytest-cov plugin is not installed.
+    Remove pytest-cov related command-line options from the provided argument list when the pytest-cov plugin is not available.
     
-    If the pytest-cov plugin is unavailable, this hook filters out coverage flags so pytest can run without the plugin. It removes both combined forms (`--cov=...`, `--cov-report=...`) and separate-option forms (`--cov <path>`, `--cov-report <format>`). The original `args` list is mutated in place.
+    If the plugin is present the argument list is left unchanged. Otherwise, remove occurrences of --cov and --cov-report together with their following parameters, and any inline forms starting with --cov= or --cov-report=. The original `args` list is updated in-place.
     
     Parameters:
-        args (List[str]): The list of pytest command-line arguments to filter; modified in place.
+        args (List[str]): Mutable list of command-line arguments; coverage-related options are removed from this list in-place.
     """
 
     if _cov_plugin_available():
@@ -51,7 +51,7 @@ def pytest_load_initial_conftests(args: List[str], early_config, parser) -> None
             skip_next = True
             continue
 
-        if arg.startswith("--cov=") or arg.startswith("--cov-report="):
+        if arg.startswith(("--cov=", "--cov-report=")):
             continue
 
         filtered_args.append(arg)

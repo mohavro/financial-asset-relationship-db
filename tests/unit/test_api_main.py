@@ -205,11 +205,13 @@ class TestAPIEndpoints:
     @pytest.fixture
     def client(self):
         """
-        Provide a TestClient bound to the FastAPI app with a sample graph.
+        Pytest fixture that yields a TestClient configured with a sample in-memory graph for endpoint tests.
+        
+        Sets a sample in-memory graph on the application before yielding the client and resets the graph after the test completes.
         
         Sets the application's graph to a sample database and yields a TestClient for use in tests. On fixture teardown the application's graph is reset.
         Returns:
-            TestClient: Test client instance for the FastAPI application.
+            TestClient: A test client instance connected to the application populated with the sample graph.
         """
         api_main.set_graph(create_sample_database())
         client = TestClient(app)
@@ -277,7 +279,7 @@ class TestAPIEndpoints:
 
     def test_get_metrics_no_assets(self, client):
         """Metrics endpoint should handle empty graph (no assets)."""
-        api_main.set_graph(AssetRelationshipGraph(database_url="sqlite:///:memory:"))
+        api_main.set_graph(AssetRelationshipGraph())
         response = client.get("/api/metrics")
         assert response.status_code == 200
         data = response.json()
@@ -289,7 +291,7 @@ class TestAPIEndpoints:
 
     def test_get_metrics_one_asset_no_relationships(self, client):
         """Metrics endpoint should handle graph with one asset and no relationships."""
-        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
+        graph = AssetRelationshipGraph()
         graph.add_asset(
             Equity(
                 id="AAPL",
@@ -312,7 +314,7 @@ class TestAPIEndpoints:
 
     def test_get_metrics_multiple_assets_no_relationships(self, client):
         """Metrics endpoint should handle graph with multiple assets and no relationships."""
-        graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
+        graph = AssetRelationshipGraph()
         graph.add_asset(
             Equity(
                 id="AAPL",

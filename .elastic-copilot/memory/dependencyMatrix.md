@@ -1,15 +1,17 @@
 # Dependency Matrix
 
-*Generated: 2025-11-07T18:22:38.791Z*
+*Generated: 2025-11-10T00:22:30.591Z*
 
 ## Summary
 
-- Files analyzed: 57
-- File types: py, js, ts, tsx
+- Files analyzed: 56
+- File types: py, ts, tsx, js
 
 ## File Type Distribution
 
-- 32 py files
+- 35 py files
+- 4 ts files
+- 9 tsx files
 - 8 js files
 - 5 ts files
 - 12 tsx files
@@ -35,6 +37,28 @@ Top dependencies:
 - ../api
 
 ### TSX
+### TS
+
+Top dependencies:
+- axios
+- ../../app/types/api
+- ../types/api
+
+### TSX
+
+Top dependencies:
+- react
+- next/dynamic
+- ../types/api
+- next/navigation
+- ../lib/api
+- ./lib/api
+- ./components/NetworkVisualization
+- ./components/MetricsDashboard
+- ./components/AssetList
+- ./types/api
+
+### JS
 
 Top dependencies:
 - react
