@@ -174,11 +174,9 @@ def _collect_and_group_relationships(
             bidirectional_pairs.add(pair_key)
             processed_pairs.add(pair_key)
 
-        # Group relationships directly
-        group_key = (rel_type, is_bidirectional)
         if group_key not in relationship_groups:
             relationship_groups[group_key] = []
-        relationship_groups[group_key].append(
+        relationship_groups[(rel_type, is_bidirectional)].append(
             {
                 "source_id": source_id,
                 "target_id": target_id,
