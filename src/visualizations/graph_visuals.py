@@ -347,7 +347,7 @@ def _create_directional_arrows(
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
-    arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
+    arrow_positions = source_positions + 0.7 * (target_positions - source_positions)  # vectorized per review
 
     arrow_trace = go.Scatter3d(
         x=arrow_positions[:, 0].tolist(),
