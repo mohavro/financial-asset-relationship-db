@@ -152,7 +152,7 @@ def verify_password(plain_password, hashed_password):
     Verify whether a plaintext password matches a stored hashed password.
     
     Returns:
-        `true` if the plaintext password matches the hashed password, `false` otherwise.
+        `True` if the plaintext password matches the hashed password, `False` otherwise.
     """
 
     return pwd_context.verify(plain_password, hashed_password)
