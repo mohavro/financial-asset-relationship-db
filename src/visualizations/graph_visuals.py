@@ -20,11 +20,6 @@ REL_TYPE_COLORS = defaultdict(
 )
 
 
-def _get_relationship_color(rel_type: str) -> str:
-    """Get color for a relationship type"""
-    return REL_TYPE_COLORS[rel_type]
-
-
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
 
