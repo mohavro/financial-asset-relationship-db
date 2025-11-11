@@ -330,7 +330,13 @@ def _create_relationship_traces(
     asset_ids: List[str],
     relationship_filters: dict = None,
 ) -> List[go.Scatter3d]:
-    """Create separate traces for different types of relationships with enhanced visibility.
+    """Create separate traces for different types of relationships with optimized performance.
+
+    Performance optimizations for large datasets:
+    - O(1) asset ID lookups via dictionary index (eliminates O(n) list.index() calls)
+    - Pre-allocated arrays instead of dynamic extend() operations
+    - Single-pass collection and grouping of relationships
+    - Efficient set-based bidirectional relationship detection
 
     Optimized for performance with large volumes of relationships by:
     - Using O(1) asset ID lookups via dictionary index
