@@ -457,6 +457,155 @@ class TestEdgeCases:
         # Assert scene grid configuration
         scene = fig.layout.scene
         assert scene.xaxis.showgrid is True
+
+
+@pytest.mark.unit
+class TestCreateDirectionalArrowsErrorHandling:
+    """Test suite for _create_directional_arrows error handling as requested in review."""
+
+    def test_create_directional_arrows_with_none_positions(self, populated_graph):
+        """Test that function raises ValueError when positions is None."""
+        asset_ids = list(populated_graph.assets.keys())
+
+        with pytest.raises(ValueError, match="positions and asset_ids must not be None"):
+            _create_directional_arrows(populated_graph, None, asset_ids)
+
+    def test_create_directional_arrows_with_none_asset_ids(self, populated_graph):
+        """Test that function raises ValueError when asset_ids is None."""
+        positions = np.array([[0, 0, 0], [1, 1, 1]])
+
+        with pytest.raises(ValueError, match="positions and asset_ids must not be None"):
+            _create_directional_arrows(populated_graph, positions, None)
+
+    def test_create_directional_arrows_with_mismatched_lengths(self, populated_graph):
+        """Test that function raises ValueError when positions and asset_ids have different lengths."""
+        positions = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
+        asset_ids = ["ASSET1", "ASSET2"]  # Length mismatch
+
+        with pytest.raises(ValueError, match="positions and asset_ids must have the same length"):
+            _create_directional_arrows(populated_graph, positions, asset_ids)
+
+    def test_create_directional_arrows_with_invalid_positions_shape(self, populated_graph):
+        """Test that function raises ValueError when positions has wrong shape."""
+        positions = np.array([[0, 0], [1, 1]])  # 2D instead of 3D
+        asset_ids = ["ASSET1", "ASSET2"]
+
+        with pytest.raises(ValueError, match="Invalid positions shape: expected \\(n, 3\\)"):
+            _create_directional_arrows(populated_graph, positions, asset_ids)
+
+    def test_create_directional_arrows_with_non_numeric_positions(self, populated_graph):
+        """Test that function raises ValueError when positions contains non-numeric data."""
+        positions = np.array([["a", "b", "c"], ["d", "e", "f"]])
+        asset_ids = ["ASSET1", "ASSET2"]
+
+        with pytest.raises(ValueError, match="Invalid positions: values must be numeric"):
+            _create_directional_arrows(populated_graph, positions, asset_ids)
+
+    def test_create_directional_arrows_with_infinite_positions(self, populated_graph):
+        """Test that function raises ValueError when positions contains infinite values."""
+        positions = np.array([[0, 0, 0], [np.inf, 1, 1]])
+        asset_ids = ["ASSET1", "ASSET2"]
+
+        with pytest.raises(ValueError, match="Invalid positions: values must be finite numbers"):
+            _create_directional_arrows(populated_graph, positions, asset_ids)
+
+    def test_create_directional_arrows_with_nan_positions(self, populated_graph):
+        """Test that function raises ValueError when positions contains NaN values."""
+        positions = np.array([[0, 0, 0], [np.nan, 1, 1]])
+        asset_ids = ["ASSET1", "ASSET2"]
+
+        with pytest.raises(ValueError, match="Invalid positions: values must be finite numbers"):
+            _create_directional_arrows(populated_graph, positions, asset_ids)
+
+    def test_create_directional_arrows_with_empty_asset_ids(self, populated_graph):
+        """Test that function raises ValueError when asset_ids contains empty strings."""
+        positions = np.array([[0, 0, 0], [1, 1, 1]])
+        asset_ids = ["ASSET1", ""]  # Empty string
+
+        with pytest.raises(ValueError, match="asset_ids must contain non-empty strings"):
+            _create_directional_arrows(populated_graph, positions, asset_ids)
+
+    def test_create_directional_arrows_with_non_string_asset_ids(self, populated_graph):
+        """Test that function raises ValueError when asset_ids contains non-strings."""
+        positions = np.array([[0, 0, 0], [1, 1, 1]])
+        asset_ids = ["ASSET1", 123]  # Non-string
+
+        with pytest.raises(ValueError, match="asset_ids must contain non-empty strings"):
+            _create_directional_arrows(populated_graph, positions, asset_ids)
+
+    def test_create_directional_arrows_with_invalid_graph_type(self):
+        """Test that function raises TypeError when graph is not AssetRelationshipGraph."""
+        positions = np.array([[0, 0, 0], [1, 1, 1]])
+        asset_ids = ["ASSET1", "ASSET2"]
+        invalid_graph = {"not": "a graph"}
+
+        with pytest.raises(TypeError, match="Expected graph to be an instance of AssetRelationshipGraph"):
+            _create_directional_arrows(invalid_graph, positions, asset_ids)
+
+    def test_create_directional_arrows_with_valid_inputs(self, populated_graph):
+        """Test that function works correctly with valid inputs."""
+        # Add a unidirectional relationship
+        populated_graph.add_relationship("TEST_AAPL", "TEST_BOND", "corporate_bond_to_equity", 0.8)
+
+        positions, asset_ids, _, _ = populated_graph.get_3d_visualization_data_enhanced()
+
+        # Execute
+        result = _create_directional_arrows(populated_graph, positions, asset_ids)
+
+        # Assert
+        assert isinstance(result, list)
+        # Should return list of traces (may be empty if no unidirectional relationships)
+        for trace in result:
+            assert isinstance(trace, go.Scatter3d)
+
+    def test_create_directional_arrows_with_no_unidirectional_relationships(self, populated_graph):
+        """Test that function returns empty list when there are no unidirectional relationships."""
+        # Add only bidirectional relationships
+        populated_graph.add_relationship("TEST_AAPL", "TEST_BOND", "correlation", 0.7)
+        populated_graph.add_relationship("TEST_BOND", "TEST_AAPL", "correlation", 0.7)
+
+        positions, asset_ids, _, _ = populated_graph.get_3d_visualization_data_enhanced()
+
+        # Execute
+        result = _create_directional_arrows(populated_graph, positions, asset_ids)
+
+        # Assert - should return empty list when no unidirectional relationships
+        assert isinstance(result, list)
+
+    def test_create_directional_arrows_with_list_positions(self, populated_graph):
+        """Test that function handles list positions by converting to numpy array."""
+        positions = [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]
+        asset_ids = ["ASSET1", "ASSET2"]
+
+        # Should not raise error - function converts to numpy array
+        result = _create_directional_arrows(populated_graph, positions, asset_ids)
+
+        # Assert
+        assert isinstance(result, list)
+
+    def test_create_directional_arrows_with_tuple_asset_ids(self, populated_graph):
+        """Test that function handles tuple asset_ids by converting to list."""
+        positions = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+        asset_ids = ("ASSET1", "ASSET2")  # Tuple instead of list
+
+        # Should not raise error - function converts to list
+        result = _create_directional_arrows(populated_graph, positions, asset_ids)
+
+        # Assert
+        assert isinstance(result, list)
+
+    def test_create_directional_arrows_preserves_graph_state(self, populated_graph):
+        """Test that function doesn't modify the graph."""
+        populated_graph.add_relationship("TEST_AAPL", "TEST_BOND", "corporate_bond_to_equity", 0.8)
+
+        positions, asset_ids, _, _ = populated_graph.get_3d_visualization_data_enhanced()
+        initial_relationship_count = sum(len(rels) for rels in populated_graph.relationships.values())
+
+        # Execute
+        _create_directional_arrows(populated_graph, positions, asset_ids)
+
+        # Assert
+        assert sum(len(rels) for rels in populated_graph.relationships.values()) == initial_relationship_count
         assert scene.yaxis.showgrid is True
         assert scene.zaxis.showgrid is True
 
