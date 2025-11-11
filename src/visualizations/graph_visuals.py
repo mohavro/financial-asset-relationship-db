@@ -71,6 +71,18 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
     fig = go.Figure()
+    # Validate visualization data to prevent runtime errors
+    if not isinstance(positions, np.ndarray) or positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid graph data provided: positions must be a (n, 3) numpy array")
+    if not isinstance(asset_ids, (list, tuple)) or not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("Invalid graph data provided: asset_ids must be a sequence of non-empty strings")
+    n = len(asset_ids)
+    if positions.shape[0] != n:
+        raise ValueError("Invalid graph data provided: positions length must match asset_ids length")
+    if not isinstance(colors, (list, tuple)) or len(colors) != n:
+        raise ValueError("Invalid graph data provided: colors length must match asset_ids length")
+    if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
+        raise ValueError("Invalid graph data provided: hover_texts length must match asset_ids length")
 
     # Create separate traces for different relationship types and directions
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
