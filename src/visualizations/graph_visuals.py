@@ -106,6 +106,7 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
         Set of tuples (source_id, target_id, rel_type) for all relationships
     """
     relationship_set = set()
+    asset_ids_set = set(asset_ids)  # Convert to set for O(1) lookups
     for source_id, rels in graph.relationships.items():
         if source_id in asset_ids:
             for target_id, rel_type, _ in rels:
