@@ -131,7 +131,9 @@ def get_connection() -> Iterator[sqlite3.Connection]:
             connection.close()
 
 
-def fetch_value(query: str, parameters: tuple | list | None = None):
+from typing import Any
+
+def fetch_value(query: str, parameters: tuple | list | None = None) -> Any | None:
     """
     Return the first column of the first row produced by the given SQL query.
     
