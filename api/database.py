@@ -83,6 +83,15 @@ def _connect() -> sqlite3.Connection:
     Returns:
         sqlite3.Connection: A connection to DATABASE_PATH with the module's preferred settings.
     """
+    global _MEMORY_CONNECTION
+    
+    is_memory = DATABASE_PATH == ":memory:" or (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
+    
+    if is_memory:
+        if _MEMORY_CONNECTION is None:
+            _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+            _MEMORY_CONNECTION.row_factory = sqlite3.Row
+        return _MEMORY_CONNECTION
 
     connection = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
     connection.row_factory = sqlite3.Row
@@ -99,16 +108,13 @@ def get_connection() -> Iterator[sqlite3.Connection]:
     Returns:
         sqlite3.Connection: The database connection to use within the context.
     """
-
+    is_memory = DATABASE_PATH == ":memory:" or (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
+    
     connection = _connect()
     try:
         yield connection
     finally:
-        # Close connection only if not using any in-memory database (including URI-based)
-        if not (
-            DATABASE_PATH == ":memory:" or
-            (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
-        ):
+        if not is_memory:
             connection.close()
 
 
