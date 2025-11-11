@@ -139,6 +139,7 @@ def _collect_and_group_relationships(
 
     Merges collection and grouping into a single pass for better performance.
     Uses a pre-built relationship index for O(1) reverse relationship lookups.
+    Applies pre-filtering during index construction to reduce per-iteration checks.
 
     Args:
         graph: The asset relationship graph
@@ -151,6 +152,11 @@ def _collect_and_group_relationships(
     if relationship_filters is None:
         relationship_filters = {}
 
+    # Determine allowed relationship types if filters provided
+    allowed_types: Optional[Set[str]] = None
+    if relationship_filters:
+        allowed_types = {k for k, v in relationship_filters.items() if v}
+
     # Convert to set for O(1) membership
     asset_ids_set = set(asset_ids)
 
@@ -160,17 +166,16 @@ def _collect_and_group_relationships(
         if source_id not in asset_ids_set:
             continue
         for target_id, rel_type, strength in rels:
-            if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+            if target_id not in asset_ids_set:
+                continue
+            if allowed_types is not None and rel_type not in allowed_types:
+                continue
+            relationship_index[(source_id, target_id, rel_type)] = float(strength)
 
     processed_pairs: Set[Tuple[str, str, str]] = set()
     relationship_groups: Dict[Tuple[str, bool], List[dict]] = defaultdict(list)
 
     for (source_id, target_id, rel_type), strength in relationship_index.items():
-        # Skip if this relationship type is filtered out
-        if relationship_filters and rel_type in relationship_filters and not relationship_filters[rel_type]:
-            continue
-
         # Create canonical pair key for bidirectional detection without sorting overhead
         if source_id <= target_id:
             pair_key: Tuple[str, str, str] = (source_id, target_id, rel_type)
