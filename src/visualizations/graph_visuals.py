@@ -1,4 +1,22 @@
 from collections import defaultdict
+"""
+Graph Visualization Module - Optimized for Large-Scale Relationship Networks
+
+This module provides high-performance 3D visualization of asset relationship graphs
+using Plotly. It has been optimized to handle large volumes of relationships efficiently.
+
+Performance Optimizations:
+- O(1) asset ID lookups using dictionary-based indexing
+- O(1) reverse relationship lookups using pre-built relationship sets
+- Single-pass collection and grouping of relationships
+- Pre-allocated arrays for coordinate building
+- Set-based membership testing instead of list iterations
+- Efficient bidirectional relationship detection
+
+These optimizations significantly reduce computational complexity from O(n²) or O(n³)
+to O(n) for most operations, making the module suitable for graphs with thousands
+of nodes and relationships.
+"""
 from typing import Dict, List, Set, Tuple
 
 import numpy as np
