@@ -7,6 +7,7 @@ from src.logic.asset_graph import AssetRelationshipGraph
 
 # Color and style mapping for relationship types (shared constant)
 REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
+    "default": "#888888",  # Gray for others
     "same_sector": "#FF6B6B",  # Red for sector relationships
     "market_cap_similar": "#4ECDC4",  # Teal for market cap
     "correlation": "#45B7D1",  # Blue for correlations
@@ -14,7 +15,7 @@ REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
     "commodity_currency": "#FFEAA7",  # Yellow for commodity-currency
     "income_comparison": "#DDA0DD",  # Plum for income comparisons
     "regulatory_impact": "#FFA07A",  # Light salmon for regulatory
-})
+}
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
