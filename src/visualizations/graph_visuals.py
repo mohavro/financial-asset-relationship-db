@@ -157,6 +157,19 @@ def _collect_relationships(
             )
 
     return all_relationships, bidirectional_pairs
+def _build_edge_coordinates(relationships: list, positions: np.ndarray, asset_ids: List[str]) -> tuple:
+    """Build edge coordinate lists for relationships"""
+    edges_x, edges_y, edges_z = [], [], []
+    for rel in relationships:
+        source_idx = asset_ids.index(rel["source_id"])
+        target_idx = asset_ids.index(rel["target_id"])
+        edges_x.extend([positions[source_idx, 0], positions[target_idx, 0], None])
+        edges_y.extend([positions[source_idx, 1], positions[target_idx, 1], None])
+        edges_z.extend([positions[source_idx, 2], positions[target_idx, 2], None])
+    return edges_x, edges_y, edges_z
+
+
+def _build_hover_texts(relationships: list, rel_type: str, is_bidirectional: bool) -> list:
 
 
 def _group_relationships(all_relationships: list, bidirectional_pairs: set) -> dict:
