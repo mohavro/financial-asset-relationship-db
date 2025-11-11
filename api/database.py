@@ -12,13 +12,13 @@ from urllib.parse import urlparse
 
 def _get_database_url() -> str:
     """
-    Obtain the database URL from the DATABASE_URL environment variable.
+    Read the DATABASE_URL environment variable and return its value.
     
     Returns:
-        database_url (str): The configured database URL.
+        The value of the `DATABASE_URL` environment variable.
     
     Raises:
-        ValueError: If the DATABASE_URL environment variable is not set.
+        ValueError: If the `DATABASE_URL` environment variable is not set.
     """
 
     database_url = os.getenv("DATABASE_URL")
@@ -105,12 +105,12 @@ def _connect() -> sqlite3.Connection:
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Provide a context manager that yields a configured SQLite connection for use within a with-statement.
+    Yield a configured SQLite connection for use within a with-statement.
     
-    The yielded `sqlite3.Connection` is closed automatically when the context exits.
-     
+    The connection is closed automatically when the context exits.
+    
     Returns:
-        sqlite3.Connection: A configured SQLite connection instance that will be closed on context exit.
+        sqlite3.Connection: Configured SQLite connection that will be closed on context exit.
     """
 
     connection = _connect()
@@ -121,7 +121,13 @@ def get_connection() -> Iterator[sqlite3.Connection]:
 
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
-    """Execute a write query within a managed connection."""
+    """
+    Execute and commit a write SQL query using a managed SQLite connection.
+    
+    Parameters:
+        query (str): SQL statement to execute.
+        parameters (tuple | list | None): Sequence of values to bind to the query; pass None or an empty sequence if there are no parameters.
+    """
 
     with get_connection() as connection:
         connection.execute(query, parameters or ())
@@ -130,14 +136,14 @@ def execute(query: str, parameters: tuple | list | None = None) -> None:
 
 def fetch_one(query: str, parameters: tuple | list | None = None):
     """
-    Fetches a single row from the database for the provided SQL query.
+    Retrieve the first row produced by an SQL query.
     
     Parameters:
-    	query (str): SQL statement to execute.
-    	parameters (tuple | list | None): Optional sequence of parameters to bind into the query.
+        query (str): SQL statement to execute.
+        parameters (tuple | list | None): Optional sequence of parameters to bind into the query.
     
     Returns:
-    	sqlite3.Row | None: The first row of the result set as a `sqlite3.Row`, or `None` if the query returned no rows.
+        sqlite3.Row | None: The first row of the result set as a `sqlite3.Row`, or `None` if the query returned no rows.
     """
 
     with get_connection() as connection:
