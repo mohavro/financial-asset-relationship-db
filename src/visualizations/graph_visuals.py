@@ -377,14 +377,6 @@ def _create_directional_arrows(
     Uses a pre-built relationship set and asset ID index for O(1) lookups and
     computes arrow positions in a single vectorized step for performance.
     """
-    relationship_set = _build_relationship_set(graph, asset_ids)
-    asset_ids_set = set(asset_ids)
-    asset_id_index = _build_asset_id_index(asset_ids)
-
-    source_indices: List[int] = []
-    target_indices: List[int] = []
-    hover_texts: List[str] = []
-
     if positions is None or asset_ids is None:
         raise ValueError("Invalid input data: positions and asset_ids must not be None")
     if not isinstance(positions, np.ndarray):
@@ -398,6 +390,14 @@ def _create_directional_arrows(
             positions = positions.astype(float)
         except Exception as exc:
             raise ValueError("Invalid positions: values must be numeric") from exc
+
+    relationship_set = _build_relationship_set(graph, asset_ids)
+    asset_ids_set = set(asset_ids)
+    asset_id_index = _build_asset_id_index(asset_ids)
+
+    source_indices: List[int] = []
+    target_indices: List[int] = []
+    hover_texts: List[str] = []
 
     # Gather unidirectional relationships
     for source_id, rels in graph.relationships.items():
