@@ -220,7 +220,7 @@ def _get_relationship_color(rel_type: str) -> str:
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
     """Get line style configuration for a relationship"""
     return dict(
-        color=_get_relationship_color(rel_type),
+        color=REL_TYPE_COLORS[rel_type],
         width=4 if is_bidirectional else 2,
         dash="solid" if is_bidirectional else "dash",
     )
