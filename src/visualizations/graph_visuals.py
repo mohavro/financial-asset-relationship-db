@@ -120,6 +120,7 @@ def _build_relationship_set(
     Args:
         graph: The asset relationship graph
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
+    # Convert asset_ids to set for O(1) membership tests (performance optimization)
 
     Returns:
         Set of tuples (source_id, target_id, rel_type) for all relationships
