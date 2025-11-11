@@ -6,9 +6,7 @@ import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 # Color and style mapping for relationship types (shared constant)
-# Define default color as a constant for better maintainability
-DEFAULT_COLOR = "#888888"  # Gray for unknown relationship types
-REL_TYPE_COLORS = defaultdict(lambda: DEFAULT_COLOR, {
+REL_TYPE_COLORS = defaultdict(lambda: "#888888", {
     "same_sector": "#FF6B6B",  # Red for sector relationships
     "market_cap_similar": "#4ECDC4",  # Teal for market cap
     "correlation": "#45B7D1",  # Blue for correlations
@@ -87,7 +85,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
         },
         scene=dict(
             xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
-            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension  2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
             zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
             bgcolor="rgba(248, 248, 248, 0.95)",
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
@@ -124,7 +122,7 @@ def _build_relationship_set(graph: AssetRelationshipGraph, asset_ids: List[str])
 
 
 def _collect_and_group_relationships(
-    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: Optional[dict] = None
+    graph: AssetRelationshipGraph, asset_ids: List[str], relationship_filters: Optional[Dict[str, bool]] = None
 ) -> dict:
     """Collect and group relationships with directionality info and filtering.
 
@@ -154,7 +152,6 @@ def _collect_and_group_relationships(
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = strength
 
-    bidirectional_pairs: Set[Tuple[str, str, str]] = set()
     processed_pairs: Set[Tuple[str, str, str]] = set()
     relationship_groups: Dict[Tuple[str, bool], list] = defaultdict(list)
     for (source_id, target_id, rel_type), strength in relationship_index.items():
@@ -173,12 +170,13 @@ def _collect_and_group_relationships(
         if is_bidirectional:
             if pair_key in processed_pairs:
                 continue  # Skip duplicate bidirectional pair
-            bidirectional_pairs.add(pair_key)
             processed_pairs.add(pair_key)
 
+        # Group relationships directly
+        group_key = (rel_type, is_bidirectional)
         if group_key not in relationship_groups:
             relationship_groups[group_key] = []
-        relationship_groups[(rel_type, is_bidirectional)].append(
+        relationship_groups[group_key].append(
             {
                 "source_id": source_id,
                 "target_id": target_id,
