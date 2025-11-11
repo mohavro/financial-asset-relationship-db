@@ -418,8 +418,10 @@ def _create_directional_arrows(
 
     # Early validation as suggested in review: check None, length match, and basic compatibility
     try:
-        if positions is None or asset_ids is None or len(positions) != len(asset_ids):
-            raise ValueError('Invalid input data for positions or asset_ids')
+        if positions is None or asset_ids is None:
+            raise ValueError("positions and asset_ids must not be None")
+        if len(positions) != len(asset_ids):
+            raise ValueError("positions and asset_ids must have the same length")
     except TypeError as exc:
         raise ValueError("Invalid input data: positions and asset_ids must support len()") from exc
     if not isinstance(positions, np.ndarray):
