@@ -156,7 +156,8 @@ def _configure_layout(
             zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
             bgcolor="rgba(248, 248, 248, 0.95)",
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
-        ),
+        )
+    )
         width=1200,
         height=800,
         showlegend=True,
