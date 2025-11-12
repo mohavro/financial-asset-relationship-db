@@ -89,8 +89,8 @@ def _is_valid_color_format(color: str) -> bool:
     if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
         return True
 
-    # Fallback: allow named colors; Plotly will validate at render time
-    return True
+    # Named colors: validate against known CSS/Plotly color names
+    return color.lower() in VALID_NAMED_COLORS
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
