@@ -302,7 +302,6 @@ def _validate_visualization_data(
     if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
         raise ValueError("Invalid graph data: hover_texts length must match asset_ids length")
 
-    )
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
