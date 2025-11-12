@@ -689,6 +689,9 @@ def visualize_3d_graph_with_filters(
             f"Failed to retrieve visualization data from graph: {exc}"
         ) from exc
 
+    # Validate retrieved data
+    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+
     fig = go.Figure()
 
     # Safely build relationship traces according to filters
