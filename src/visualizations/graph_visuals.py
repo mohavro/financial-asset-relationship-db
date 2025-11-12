@@ -42,11 +42,7 @@ def _is_valid_color_format(color: str) -> bool:
     Returns:
         True if color format is valid, False otherwise
     """
-    # Type check: ensure input is a string before proceeding with regex checks
-    if not isinstance(color, str):
-        return False
-
-    if not color:
+    if not isinstance(color, str) or not color:
         return False
 
     # Hex colors
@@ -54,7 +50,7 @@ def _is_valid_color_format(color: str) -> bool:
         return True
 
     # rgb/rgba functions
-    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
+    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
         return True
 
     # Fallback: allow named colors; Plotly will validate at render time
@@ -78,36 +74,39 @@ def _build_relationship_index(
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
     Performance optimizations:
-    - Pre-filters graph.relationships to only include relevant source_ids (addresses review feedback
-      about reducing unnecessary iterations - this eliminates the major inefficiency)
-    - Uses set-based membership tests for O(1) lookups (both source_id and target_id checks)
-    - The target_id check at line 233 is necessary for correctness (we need both endpoints in the
-      asset set) and is already optimized with O(1) set membership test
-    - Cannot pre-filter by target_id without iterating all relationships anyway, so the current
-      approach is optimal
+    - Pre-filters graph.relationships to only include relevant source_ids
+    - Uses set-based membership tests for O(1) lookups
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
     Thread Safety:
     ==============
-    This function implements robust thread safety using a reentrant lock (RLock) to protect
-    access to graph.relationships. This addresses the review feedback about strengthening
-    thread safety guarantees.
+    This function uses a reentrant lock (RLock) to protect concurrent access to graph.relationships
+    within this module. However, true thread safety requires coordination across the entire codebase.
 
     Implementation:
-    - Uses threading.RLock (_graph_access_lock) to synchronize all access to graph.relationships
+    - Uses threading.RLock (_graph_access_lock) to synchronize access to graph.relationships
     - The lock is reentrant, allowing the same thread to acquire it multiple times safely
-    - Protects against concurrent modifications during read operations
     - Creates a snapshot of relationships within the lock to minimize lock hold time
 
-    Thread safety guarantees:
-    ✓ SAFE: Multiple threads calling this function concurrently
-    ✓ SAFE: Concurrent reads and writes to graph.relationships
-    ✓ SAFE: Prevents data races and inconsistent states
-    ✓ SAFE: No risk of reading partially modified data
+    Thread safety guarantees (with conditions):
+    ✓ SAFE: Multiple threads calling visualization functions in this module concurrently
+    ✓ SAFE: Concurrent calls to this function with the same graph object
+    ⚠ CONDITIONAL: Concurrent modifications to graph.relationships are only safe if:
+      - All code that modifies graph.relationships uses the same _graph_access_lock, OR
+      - The graph object is treated as immutable after creation (recommended approach)
 
-    Note: All functions that access graph.relationships should use the same lock
-    (_graph_access_lock) to ensure consistent synchronization across the codebase.
+    Recommended usage patterns for thread safety:
+    1. PREFERRED: Treat graph objects as immutable after creation. Build the graph completely
+       before passing it to visualization functions. This eliminates the need for locking.
+    2. ALTERNATIVE: If you must modify graph.relationships concurrently, ensure all
+       modification code acquires _graph_access_lock before accessing graph.relationships.
+       This requires coordination across your entire codebase.
+
+    Note: The AssetRelationshipGraph class itself does not implement any locking mechanisms.
+    Thread safety for modifications must be managed by the calling code. If other parts of
+    your application modify graph.relationships without using _graph_access_lock, race
+    conditions may occur.
 
     Error Handling (addresses review feedback):
     ===========================================
@@ -145,12 +144,6 @@ def _build_relationship_index(
         raise TypeError(
             f"Invalid graph data: graph.relationships must be a dictionary, "
             f"got {type(graph.relationships).__name__}"
-        )
-
-    # Validate asset_ids is iterable (explicit check as requested in review)
-    if not isinstance(asset_ids, Iterable):
-        raise TypeError(
-            f"Invalid input: asset_ids must be an iterable, got {type(asset_ids).__name__}"
         )
 
     # Validate asset_ids is iterable
@@ -234,11 +227,7 @@ def _build_relationship_index(
                     f"must be numeric (got {type(strength).__name__} with value '{strength}')"
                 ) from exc
 
-            # Add to index if target is in asset_ids_set (O(1) set membership test)
-            # Note: We pre-filtered by source_id above (line 172), which eliminates the major
-            # inefficiency. This target_id check is necessary for correctness (we only want
-            # relationships where BOTH source and target are in the asset set) and is efficient
-            # due to O(1) set lookup. Further pre-filtering would require iterating all relationships.
+            # Add to index if target is in asset_ids_set
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = strength_float
 
@@ -304,6 +293,7 @@ def _create_node_trace(
     # Edge case validation: Ensure inputs are not empty
     if len(asset_ids) == 0:
         raise ValueError("Cannot create node trace with empty inputs (asset_ids length is 0)")
+    return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
         z=positions[:, 2],
@@ -977,30 +967,7 @@ def visualize_3d_graph_with_filters(
     """Create 3D visualization with selective relationship filtering.
 
     This function dynamically creates and adds relationship traces based on optional filters,
-    It implements comprehensive error handling at multiple levels to ensure robustness:
-
-    Error Handling Strategy:
-    ------------------------
-    1. **Input Validation**: Validates graph instance and filter parameter types
-    2. **Filter Configuration**: Validates filter dictionary structure and warns on edge cases
-    3. **Data Retrieval**: Catches exceptions from graph.get_3d_visualization_data_enhanced()
-    4. **Data Validation**: Validates positions, asset_ids, colors, and hover_texts integrity
-    5. **Trace Creation**: Handles errors in relationship trace generation with fallback to empty traces
-    6. **Trace Addition**: Catches exceptions when adding traces to figure
-    7. **Arrow Generation**: Handles errors in directional arrow creation (when toggle_arrows=True)
-    8. **Node Visualization**: Ensures node trace creation succeeds or raises clear error
-    9. **Layout Configuration**: Falls back to default title if dynamic title generation fails
-
-    All errors are logged with detailed context for debugging. Critical errors (graph validation,
-    node creation) raise exceptions, while non-critical errors (relationship traces, arrows)
-    gracefully degrade to partial visualizations.
-
-    Edge Cases Handled:
-    -------------------
-    - All relationship filters disabled (logs warning, shows nodes only)
-    - Invalid filter configurations (raises TypeError with specific parameter names)
-    - Data inconsistencies in graph.relationships (raises ValueError with details)
-    - Malformed visualization data (raises ValueError during validation)
+    with comprehensive error handling to manage potential issues from invalid filter
     configurations or data inconsistencies.
 
     Args:
@@ -1050,12 +1017,7 @@ def visualize_3d_graph_with_filters(
         logger.error("Invalid filter configuration: %s", exc)
         raise
 
-    # ERROR HANDLING: Validate filter configuration to prevent invalid filter settings
-    # This catches type errors (non-boolean values) and structural issues early
-    # before attempting to create traces, preventing downstream failures
-    # Build filter configuration with validation (Error Handling Layer 2)
-    # Validates relationship filter structure and catches configuration errors
-    # to prevent invalid filter settings from causing runtime failures
+    # Build filter configuration with validation
     try:
         if not show_all_relationships:
             relationship_filters = {
@@ -1079,9 +1041,6 @@ def visualize_3d_graph_with_filters(
             relationship_filters = None
     except (TypeError, ValueError) as exc:
         logger.exception("Failed to build filter configuration: %s", exc)
-    # ERROR HANDLING: Retrieve and validate visualization data from graph
-    # This ensures data integrity before attempting to create traces
-    # Catches issues with missing/malformed data early in the pipeline
         raise ValueError(f"Invalid filter configuration: {exc}") from exc
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Unexpected error building filter configuration: %s", exc)
@@ -1104,13 +1063,7 @@ def visualize_3d_graph_with_filters(
     # Create figure
     fig = go.Figure()
 
-    # Build relationship traces with comprehensive error handling:
-    # - TypeError/ValueError: Invalid filter configuration or data structure issues
-    #   These are critical errors that indicate misconfiguration, so we re-raise them
-    # - Other exceptions: Unexpected errors during trace creation
-    #   These are logged but don't prevent visualization (empty trace list is used)
-    # This ensures the visualization can still be displayed even if some traces fail,
-    # while catching configuration errors early
+    # Build relationship traces with comprehensive error handling
     try:
         relationship_traces = _create_relationship_traces(
             graph, positions, asset_ids, relationship_filters
@@ -1154,11 +1107,7 @@ def visualize_3d_graph_with_filters(
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to add directional arrows to figure: %s", exc)
 
-    # ERROR HANDLING: Create and add node trace with strict validation
-    # Node trace is critical - failure here raises exception to prevent
-    # incomplete visualization (relationships without nodes would be meaningless)
-    # This is the only section that raises on error (others log and continue)
-    # because nodes are essential for any meaningful visualization
+    # Add node trace
     try:
         node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
         fig.add_trace(node_trace)
