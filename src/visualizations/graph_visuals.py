@@ -3,11 +3,11 @@ import logging
 from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
-logger = logging.getLogger(__name__)
-
 import numpy as np
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
+
+logger = logging.getLogger(__name__)
 
 # Color and style mapping for relationship types (shared constant)
 REL_TYPE_COLORS = defaultdict(
