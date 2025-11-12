@@ -638,6 +638,10 @@ def _create_trace_for_group(
         legendgroup=rel_type,
     )
 
+    # Generate dynamic title and configure layout using helper functions
+    title_text = _generate_dynamic_title(len(asset_ids), visible_relationships)
+    _configure_layout(fig, title_text)
+
 
 def _create_relationship_traces(
     graph: AssetRelationshipGraph,
