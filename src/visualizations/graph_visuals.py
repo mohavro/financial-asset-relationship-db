@@ -888,5 +888,10 @@ def visualize_3d_graph_with_filters(
         sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x")) // 3
     )
 
+    # Use helper functions for better modularity and reusability (addresses review feedback)
+    # Generate dynamic title based on asset and relationship counts
+    dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
+    # Configure layout using the reusable helper function
+    _configure_3d_layout(fig, dynamic_title)
 
     return fig
