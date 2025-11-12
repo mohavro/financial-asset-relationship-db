@@ -154,44 +154,6 @@ def _create_node_trace(
     )
 
 
-def _configure_layout(
-    fig: go.Figure,
-    title_text: str,
-    width: int = 1200,
-    height: int = 800,
-    gridcolor: str = "rgba(200, 200, 200, 0.3)",
-    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
-    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
-    bgcolor: str = "rgba(248, 248, 248, 0.95)",
-) -> None:
-    """Configure the layout for 3D visualization."""
-    fig.update_layout(
-        title={
-            "text": title_text,
-            "x": 0.5,
-            "xanchor": "center",
-            "font": {"size": 16},
-        },
-        scene=dict(
-            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor=gridcolor),
-            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor=gridcolor),
-            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor=gridcolor),
-            bgcolor=bgcolor,
-            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
-        ),
-        width=width,
-        height=height,
-        showlegend=True,
-        hovermode="closest",
-        legend=dict(
-            x=0.02,
-            y=0.98,
-            bgcolor=legend_bgcolor,
-            bordercolor=legend_bordercolor,
-            borderwidth=1,
-        ),
-    )
-
 
 def _add_directional_arrows_to_figure(
     fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
