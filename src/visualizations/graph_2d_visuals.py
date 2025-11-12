@@ -272,7 +272,7 @@ def visualize_2d_graph(
         # Get 3D positions and convert to 2D
         if hasattr(graph, 'get_3d_visualization_data_enhanced'):
             positions_3d_array, asset_ids_ordered, _, _ = graph.get_3d_visualization_data_enhanced()
-            # Convert numpy array to dictionary
+            # Convert array to dictionary
             positions_3d = {
                 asset_ids_ordered[i]: tuple(positions_3d_array[i])
                 for i in range(len(asset_ids_ordered))
