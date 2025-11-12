@@ -49,16 +49,56 @@ def _build_relationship_index(
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
+
+    Raises:
+        TypeError: If graph is not an AssetRelationshipGraph instance
+        ValueError: If graph.relationships is not a dictionary or contains malformed data
     """
-    asset_ids_set = set(asset_ids)
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
+    if not hasattr(graph, "relationships"):
+        raise ValueError("Invalid graph: missing 'relationships' attribute")
+    if not isinstance(graph.relationships, dict):
+        raise ValueError("Invalid graph: 'relationships' must be a dictionary")
+
+    try:
+        asset_ids_set = set(asset_ids)
+    except TypeError as exc:
+        raise ValueError("asset_ids must be an iterable") from exc
+
+    if not all(isinstance(aid, str) for aid in asset_ids_set):
+        raise ValueError("All asset_ids must be strings")
+
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
     for source_id, rels in graph.relationships.items():
+        if not isinstance(source_id, str):
+            raise ValueError(f"Invalid relationship data: source_id must be a string, got {type(source_id).__name__}")
+
         if source_id not in asset_ids_set:
             continue
-        for target_id, rel_type, strength in rels:
+
+        if not isinstance(rels, (list, tuple)):
+            raise ValueError(f"Invalid relationship data: relationships for '{source_id}' must be a list or tuple")
+
+        for rel in rels:
+            if not isinstance(rel, (list, tuple)) or len(rel) != 3:
+                raise ValueError(f"Invalid relationship data: each relationship must be a 3-element tuple (target_id, rel_type, strength)")
+
+            target_id, rel_type, strength = rel
+
+            if not isinstance(target_id, str):
+                raise ValueError(f"Invalid relationship data: target_id must be a string, got {type(target_id).__name__}")
+            if not isinstance(rel_type, str):
+                raise ValueError(f"Invalid relationship data: rel_type must be a string, got {type(rel_type).__name__}")
+
+            try:
+                strength_float = float(strength)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"Invalid relationship data: strength must be numeric, got {type(strength).__name__}") from exc
+
             if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+                relationship_index[(source_id, target_id, rel_type)] = strength_float
 
     return relationship_index
 
@@ -80,32 +120,6 @@ def _create_node_trace(
     Returns:
         Plotly Scatter3d trace for nodes
     """
-    # Validate positions
-    if not isinstance(positions, np.ndarray):
-        raise ValueError("Invalid input: positions must be a numpy array")
-    if positions.ndim != 2 or positions.shape[1] != 3:
-        raise ValueError("Invalid input: positions must be a (n, 3) numpy array")
-    if not np.issubdtype(positions.dtype, np.number):
-        raise ValueError("Invalid input: positions must contain numeric values")
-    if not np.isfinite(positions).all():
-        raise ValueError("Invalid input: positions must contain finite values")
-
-    # Validate asset_ids
-    if not isinstance(asset_ids, (list, tuple)) or not all(isinstance(a, str) and a for a in asset_ids):
-        raise ValueError("Invalid input: asset_ids must be a sequence of non-empty strings")
-
-    n = len(asset_ids)
-    if n == 0:
-        raise ValueError("Invalid input: asset_ids cannot be empty")
-    if positions.shape[0] != n:
-        raise ValueError("Invalid input: positions length must match asset_ids length")
-
-    # Validate colors and hover_texts
-    if not isinstance(colors, (list, tuple)) or len(colors) != n:
-        raise ValueError("Invalid input: colors length must match asset_ids length")
-    if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
-        raise ValueError("Invalid input: hover_texts length must match asset_ids length")
-
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
@@ -257,14 +271,7 @@ def _add_directional_arrows_to_figure(
 
 
 def _configure_3d_layout(
-    fig: go.Figure,
-    title: str,
-    width: int = 1200,
-    height: int = 800,
-    gridcolor: str = "rgba(200, 200, 200, 0.3)",
-    bgcolor: str = "rgba(248, 248, 248, 0.95)",
-    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
-    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
+    fig: go.Figure, title: str, width: int = 1200, height: int = 800
 ) -> None:
     """Configure the 3D layout for the figure.
 
@@ -273,10 +280,6 @@ def _configure_3d_layout(
         title: Title text for the figure
         width: Figure width in pixels
         height: Figure height in pixels
-        gridcolor: Color for grid lines in RGBA format
-        bgcolor: Background color for the scene in RGBA format
-        legend_bgcolor: Background color for the legend in RGBA format
-        legend_bordercolor: Border color for the legend in RGBA format
     """
     fig.update_layout(
         title={
@@ -286,10 +289,10 @@ def _configure_3d_layout(
             "font": {"size": 16},
         },
         scene=dict(
-            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor=gridcolor),
-            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor=gridcolor),
-            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor=gridcolor),
-            bgcolor=bgcolor,
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
         ),
         width=width,
@@ -299,8 +302,8 @@ def _configure_3d_layout(
         legend=dict(
             x=0.02,
             y=0.98,
-            bgcolor=legend_bgcolor,
-            bordercolor=legend_bordercolor,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
             borderwidth=1,
         ),
     )
@@ -330,9 +333,9 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     # Create separate traces for different relationship types and directions
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
 
-    # Add all relationship traces using batch operation for better performance
-    if relationship_traces:
-        fig.add_traces(relationship_traces)
+    # Add all relationship traces
+    for trace in relationship_traces:
+        fig.add_trace(trace)
 
     # Add directional arrows for unidirectional relationships
     arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
