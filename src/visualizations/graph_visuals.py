@@ -558,6 +558,9 @@ def _create_directional_arrows(
 ) -> List[go.Scatter3d]:
     """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
 
+    Returns a list of traces designed to be added to the figure in batch using fig.add_traces()
+    for optimal performance, avoiding the overhead of multiple individual add_trace() calls.
+
     Uses a pre-built relationship index for O(1) lookups and computes arrow positions
     in a single vectorized step for performance. Includes comprehensive input validation
     to prevent runtime errors when working with external data sources.
