@@ -245,6 +245,32 @@ def _calculate_visible_relationships(relationship_traces: List[go.Scatter3d]) ->
     except Exception:  # pylint: disable=broad-except
         return 0
 
+def _prepare_layout_config(
+    num_assets: int,
+    relationship_traces: List[go.Scatter3d],
+    base_title: str = "Financial Asset Network",
+    layout_options: Optional[Dict[str, object]] = None,
+) -> Tuple[str, Dict[str, object]]:
+    """Prepare layout configuration with dynamic title based on visualization data.
+
+    This function separates layout configuration logic from the main visualization function,
+    improving modularity and making it easier to customize layouts in different contexts.
+
+    Args:
+        num_assets: Number of assets in the visualization
+        relationship_traces: List of relationship traces to count visible relationships
+        base_title: Base title text (default: "Financial Asset Network")
+        layout_options: Optional layout customization options
+
+    Returns:
+        Tuple of (dynamic_title, layout_options) ready for use with _configure_3d_layout
+    """
+    num_relationships = _calculate_visible_relationships(relationship_traces)
+    dynamic_title = _generate_dynamic_title(num_assets, num_relationships, base_title)
+    options = layout_options or {}
+    return dynamic_title, options
+
+
 def _add_directional_arrows_to_figure(
     fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> None:
