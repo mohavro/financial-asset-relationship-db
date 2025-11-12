@@ -889,7 +889,7 @@ def visualize_3d_graph_with_filters(
         )
     )
 
-    # Count visible relationships
+    # Count visible relationships for dynamic title
     visible_relationships = (
         sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x")) // 3
     )
