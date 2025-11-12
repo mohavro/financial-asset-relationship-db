@@ -107,39 +107,8 @@ def _build_relationship_index(
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
-
-    Raises:
-        TypeError: If graph is not an AssetRelationshipGraph instance or if data types are invalid
-        ValueError: If graph.relationships has invalid structure or malformed data
     """
-    # Validate graph input
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise TypeError(
-            f"Invalid input: graph must be an AssetRelationshipGraph instance, "
-            f"got {type(graph).__name__}"
-        )
-
-    # Validate graph.relationships exists and is a dictionary
-    if not hasattr(graph, "relationships"):
-        raise ValueError("Invalid graph: missing 'relationships' attribute")
-
-    if not isinstance(graph.relationships, dict):
-        raise TypeError(
-            f"Invalid graph data: graph.relationships must be a dictionary, "
-            f"got {type(graph.relationships).__name__}"
-        )
-
-    # Validate asset_ids is iterable
-    try:
-        asset_ids_set = set(asset_ids)
-    except TypeError as exc:
-        raise TypeError(
-            f"Invalid input: asset_ids must be an iterable, got {type(asset_ids).__name__}"
-        ) from exc
-
-    # Validate asset_ids contains only strings
-    if not all(isinstance(aid, str) for aid in asset_ids_set):
-        raise ValueError("Invalid input: asset_ids must contain only string values")
+    asset_ids_set = set(asset_ids)
 
     # Pre-filter relationships to only include relevant source_ids
     relevant_relationships = {
@@ -257,49 +226,6 @@ def _generate_dynamic_title(
         Formatted title string with asset and relationship counts
     """
     return f"{base_title} - {num_assets} Assets, {num_relationships} Relationships"
-
-
-def _calculate_visible_relationships(relationship_traces: List[go.Scatter3d]) -> int:
-    """Calculate the number of visible relationships from traces.
-
-    This helper function extracts the relationship count calculation logic,
-    making it reusable and testable independently of the visualization logic.
-
-    Args:
-        relationship_traces: List of Scatter3d traces representing relationships
-
-    Returns:
-        Number of visible relationships (edges) in the traces
-    """
-    try:
-        return sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
-    except Exception:  # pylint: disable=broad-except
-        return 0
-
-def _prepare_layout_config(
-    num_assets: int,
-    relationship_traces: List[go.Scatter3d],
-    base_title: str = "Financial Asset Network",
-    layout_options: Optional[Dict[str, object]] = None,
-) -> Tuple[str, Dict[str, object]]:
-    """Prepare layout configuration with dynamic title based on visualization data.
-
-    This function separates layout configuration logic from the main visualization function,
-    improving modularity and making it easier to customize layouts in different contexts.
-
-    Args:
-        num_assets: Number of assets in the visualization
-        relationship_traces: List of relationship traces to count visible relationships
-        base_title: Base title text (default: "Financial Asset Network")
-        layout_options: Optional layout customization options
-
-    Returns:
-        Tuple of (dynamic_title, layout_options) ready for use with _configure_3d_layout
-    """
-    num_relationships = _calculate_visible_relationships(relationship_traces)
-    dynamic_title = _generate_dynamic_title(num_assets, num_relationships, base_title)
-    options = layout_options or {}
-    return dynamic_title, options
 
 
 def _add_directional_arrows_to_figure(
@@ -476,8 +402,33 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     total_relationships = sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
     dynamic_title = _generate_dynamic_title(len(asset_ids), total_relationships)
 
-    # Configure layout using the reusable helper function
-    _configure_3d_layout(fig, dynamic_title)
+    fig.update_layout(
+        title={
+            "text": dynamic_title,
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=1200,
+        height=800,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
+    )
+
     return fig
 
 
@@ -632,32 +583,95 @@ def _create_relationship_traces(
     asset_ids: List[str],
     relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> List[go.Scatter3d]:
-    """Create separate traces for different types of relationships with enhanced visibility.
+    """Create separate traces for different types of relationships with enhanced visibility and error handling.
 
-    Returns a list of traces for batch addition to figure using fig.add_traces() for optimal performance.
+    This function efficiently handles the creation of relationship traces by using batch operations
+    for adding traces to the figure, which reduces function call overhead. It includes comprehensive
+    error handling for scenarios where input data might be inconsistent or when relationship_filters
+    might contain invalid types.
+
+    Args:
+        graph: Asset relationship graph instance
+        positions: NumPy array of node positions with shape (n, 3)
+        asset_ids: List of asset ID strings
+        relationship_filters: Optional dictionary mapping relationship types to boolean visibility flags.
+                            If None, all relationships are included. Keys should be relationship type
+                            strings, values should be boolean.
+
+    Returns:
+        List of Plotly Scatter3d traces for batch addition to figure using fig.add_traces()
+
+    Raises:
+        ValueError: If input data is invalid, inconsistent, or filter configuration is malformed
+        TypeError: If relationship_filters contains non-boolean values
     """
+    # Validate graph input
     if not isinstance(graph, AssetRelationshipGraph):
         raise ValueError("Invalid input data: graph must be an AssetRelationshipGraph instance")
     if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
         raise ValueError("Invalid input data: graph must have a relationships dictionary")
+
+    # Validate positions and asset_ids
     if not isinstance(positions, np.ndarray):
         raise ValueError("Invalid input data: positions must be a numpy array")
+    if not isinstance(asset_ids, (list, tuple)):
+        raise ValueError("Invalid input data: asset_ids must be a list or tuple")
     if len(positions) != len(asset_ids):
         raise ValueError("Invalid input data: positions array length must match asset_ids length")
+    if len(asset_ids) == 0:
+        raise ValueError("Invalid input data: asset_ids cannot be empty")
 
+    # Validate relationship_filters if provided
+    if relationship_filters is not None:
+        if not isinstance(relationship_filters, dict):
+            raise ValueError(
+                f"Invalid filter configuration: relationship_filters must be a dictionary or None, "
+                f"got {type(relationship_filters).__name__}"
+            )
+
+        # Check for non-boolean values in filters
+        invalid_filters = [
+            (key, type(value).__name__)
+            for key, value in relationship_filters.items()
+            if not isinstance(value, bool)
+        ]
+        if invalid_filters:
+            invalid_list = ", ".join(f"'{key}': {type_name}" for key, type_name in invalid_filters)
+            raise TypeError(
+                f"Invalid filter configuration: All filter values must be boolean. "
+                f"Found non-boolean values: {invalid_list}"
+            )
+
+        # Warn about empty filter dictionary (likely unintended)
+        if len(relationship_filters) == 0:
+            logger.warning(
+                "Empty relationship_filters dictionary provided. This will include all relationships. "
+                "Consider passing None instead for clarity."
+            )
+
+    # Build asset ID index for O(1) lookups
     asset_id_index = _build_asset_id_index(asset_ids)
 
+    # Collect and group relationships with error handling
     relationship_groups = _collect_and_group_relationships(
         graph, asset_ids, relationship_filters
     )
 
+    # Create traces for each relationship group
     traces: List[go.Scatter3d] = []
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
         if relationships:
-            trace = _create_trace_for_group(
-                rel_type, is_bidirectional, relationships, positions, asset_id_index
-            )
-            traces.append(trace)
+            try:
+                trace = _create_trace_for_group(
+                    rel_type, is_bidirectional, relationships, positions, asset_id_index
+                )
+                traces.append(trace)
+            except Exception as exc:  # pylint: disable=broad-except
+                logger.exception(
+                    "Failed to create trace for relationship type '%s' (bidirectional=%s): %s",
+                    rel_type, is_bidirectional, exc
+                )
+                # Continue processing other relationship groups even if one fails
 
     return traces
 
@@ -699,8 +713,6 @@ def _create_directional_arrows(
     if not np.isfinite(positions).all():
         raise ValueError("Invalid positions: values must be finite numbers")
 
-    # Early return optimization: prevent unnecessary computation and memory allocation
-    # when there are no unidirectional relationships to display
     if not all(isinstance(a, str) and a for a in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
 
@@ -749,23 +761,44 @@ def _create_directional_arrows(
     return [arrow_trace]
 
 
-def _validate_filter_parameters(filter_params: Dict[str, bool]) -> None:
+def _validate_filter_parameters(
+    show_same_sector: bool,
+    show_market_cap: bool,
+    show_correlation: bool,
+    show_corporate_bond: bool,
+    show_commodity_currency: bool,
+    show_income_comparison: bool,
+    show_regulatory: bool,
+    show_all_relationships: bool,
+    toggle_arrows: bool,
+) -> None:
     """Validate that all filter parameters are boolean values.
 
     Args:
-        filter_params: Dictionary mapping filter parameter names to their boolean values.
-            Expected keys: show_same_sector, show_market_cap, show_correlation,
-            show_corporate_bond, show_commodity_currency, show_income_comparison,
-            show_regulatory, show_all_relationships, toggle_arrows
+        show_same_sector: Filter for same sector relationships
+        show_market_cap: Filter for market cap relationships
+        show_correlation: Filter for correlation relationships
+        show_corporate_bond: Filter for corporate bond relationships
+        show_commodity_currency: Filter for commodity currency relationships
+        show_income_comparison: Filter for income comparison relationships
+        show_regulatory: Filter for regulatory relationships
+        show_all_relationships: Master toggle for all relationships
+        toggle_arrows: Toggle for directional arrows
 
     Raises:
-        TypeError: If any parameter is not a boolean or if filter_params is not a dictionary
+        TypeError: If any parameter is not a boolean
     """
-    if not isinstance(filter_params, dict):
-        raise TypeError(
-            f"Invalid filter configuration: filter_params must be a dictionary, "
-            f"got {type(filter_params).__name__}"
-        )
+    filter_params = {
+        "show_same_sector": show_same_sector,
+        "show_market_cap": show_market_cap,
+        "show_correlation": show_correlation,
+        "show_corporate_bond": show_corporate_bond,
+        "show_commodity_currency": show_commodity_currency,
+        "show_income_comparison": show_income_comparison,
+        "show_regulatory": show_regulatory,
+        "show_all_relationships": show_all_relationships,
+        "toggle_arrows": toggle_arrows,
+    }
 
     invalid_params = [
         name for name, value in filter_params.items() if not isinstance(value, bool)
@@ -824,21 +857,19 @@ def visualize_3d_graph_with_filters(
             "with get_3d_visualization_data_enhanced method"
         )
 
-    # Build filter parameters dictionary and validate
-    filter_params = {
-        "show_same_sector": show_same_sector,
-        "show_market_cap": show_market_cap,
-        "show_correlation": show_correlation,
-        "show_corporate_bond": show_corporate_bond,
-        "show_commodity_currency": show_commodity_currency,
-        "show_income_comparison": show_income_comparison,
-        "show_regulatory": show_regulatory,
-        "show_all_relationships": show_all_relationships,
-        "toggle_arrows": toggle_arrows,
-    }
-
+    # Validate filter parameters
     try:
-        _validate_filter_parameters(filter_params)
+        _validate_filter_parameters(
+            show_same_sector,
+            show_market_cap,
+            show_correlation,
+            show_corporate_bond,
+            show_commodity_currency,
+            show_income_comparison,
+            show_regulatory,
+            show_all_relationships,
+            toggle_arrows,
+        )
     except TypeError as exc:
         logger.error("Invalid filter configuration: %s", exc)
         raise
@@ -920,12 +951,18 @@ def visualize_3d_graph_with_filters(
         logger.exception("Failed to create or add node trace: %s", exc)
         raise ValueError("Failed to create node visualization") from exc
 
-    # Configure layout with dynamic title based on visible relationships
+    # Calculate visible relationships count
+    visible_relationships = 0
     try:
-        visible_relationships = _calculate_visible_relationships(relationship_traces)
-        dynamic_title = _prepare_layout_configuration(
-            num_assets=len(asset_ids), num_relationships=visible_relationships
+        visible_relationships = (
+            sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
         )
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Failed to compute visible relationships count: %s", exc)
+
+    # Configure layout
+    try:
+        dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
         _configure_3d_layout(fig, dynamic_title)
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to configure figure layout: %s", exc)
