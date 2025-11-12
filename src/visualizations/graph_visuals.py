@@ -235,6 +235,28 @@ def _create_node_trace(
     )
 
 
+def _generate_dynamic_title(
+    base_title: str,
+    num_assets: Optional[int] = None,
+    num_relationships: Optional[int] = None,
+) -> str:
+    """Generate dynamic title with asset and relationship counts.
+
+    Args:
+        base_title: Base title text (e.g., "Financial Asset Network")
+        num_assets: Number of assets to display (optional)
+        num_relationships: Number of relationships to display (optional)
+
+    Returns:
+        Formatted title string with counts if provided
+    """
+    if num_assets is not None and num_relationships is not None:
+        return f"{base_title} - {num_assets} Assets, {num_relationships} Relationships"
+    if num_assets is not None:
+        return f"{base_title} - {num_assets} Assets"
+    return base_title
+
+
 def _add_directional_arrows_to_figure(
     fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> None:
