@@ -669,8 +669,10 @@ def visualize_3d_graph_with_filters(
         logger.exception("Failed to create filtered relationship traces: %s", exc)
         relationship_traces = []
 
+    # Performance optimization: Use batch operation to add all relationship traces at once
     if relationship_traces:
         try:
+            # This is more efficient than adding traces individually in a loop
             fig.add_traces(relationship_traces)
         except Exception as exc:  # pylint: disable=broad-except
             logger.exception("Failed to add filtered relationship traces to figure: %s", exc)
