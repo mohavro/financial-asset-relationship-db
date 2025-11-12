@@ -168,6 +168,11 @@ def _create_node_trace(
         if not _is_valid_color_format(color):
             raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
 
+    # Edge case validation: Ensure inputs are not empty
+    if len(asset_ids) == 0:
+        raise ValueError("Cannot create node trace with empty inputs (asset_ids length is 0)")
+
+
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
