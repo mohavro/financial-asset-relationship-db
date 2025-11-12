@@ -691,6 +691,49 @@ def _create_directional_arrows(
         showlegend=False,
     )
     return [arrow_trace]
+    # Validate filter parameters (all must be boolean)
+    filter_params = {
+        "show_same_sector": show_same_sector,
+        "show_market_cap": show_market_cap,
+        "show_correlation": show_correlation,
+        "show_corporate_bond": show_corporate_bond,
+        "show_commodity_currency": show_commodity_currency,
+        "show_income_comparison": show_income_comparison,
+        "show_regulatory": show_regulatory,
+        "show_all_relationships": show_all_relationships,
+        "toggle_arrows": toggle_arrows,
+    }
+    for param_name, param_value in filter_params.items():
+        if not isinstance(param_value, bool):
+            raise TypeError(
+                f"Invalid filter configuration: {param_name} must be a boolean, "
+                f"got {type(param_value).__name__}"
+            )
+
+    # Validate and retrieve visualization data with error handling
+    try:
+        positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    except AttributeError as exc:
+        raise ValueError(
+            "Invalid graph data: graph.get_3d_visualization_data_enhanced() method not found or failed"
+        ) from exc
+    except Exception as exc:
+        raise ValueError(
+            f"Failed to retrieve visualization data from graph: {exc}"
+        ) from exc
+
+    # Validate retrieved data
+    try:
+        _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid data retrieved from graph: {exc}"
+        ) from exc
+
+    # Validate that we have data to visualize
+    if len(asset_ids) == 0:
+        raise ValueError("Cannot create visualization: graph contains no assets")
+
 
 
 def _validate_filter_parameters(
