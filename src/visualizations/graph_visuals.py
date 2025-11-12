@@ -78,8 +78,13 @@ def _build_relationship_index(
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
     Performance optimizations:
-    - Pre-filters graph.relationships to only include relevant source_ids
-    - Uses set-based membership tests for O(1) lookups
+    - Pre-filters graph.relationships to only include relevant source_ids (addresses review feedback
+      about reducing unnecessary iterations - this eliminates the major inefficiency)
+    - Uses set-based membership tests for O(1) lookups (both source_id and target_id checks)
+    - The target_id check at line 233 is necessary for correctness (we need both endpoints in the
+      asset set) and is already optimized with O(1) set membership test
+    - Cannot pre-filter by target_id without iterating all relationships anyway, so the current
+      approach is optimal
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
