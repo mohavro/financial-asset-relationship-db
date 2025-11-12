@@ -254,6 +254,23 @@ def _configure_layout(
     )
 
 
+def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
+    """Generate dynamic title based on the number of assets and relationships.
+
+    This function creates a descriptive title for the visualization that includes
+    the count of assets and relationships, making it easier to understand the
+    scale of the network at a glance.
+
+    Args:
+        num_assets: Number of assets in the visualization
+        num_relationships: Number of visible relationships in the visualization
+
+    Returns:
+        Formatted title string for the visualization
+    """
+    return f"Financial Asset Network - {num_assets} Assets, {num_relationships} Relationships"
+
+
 def _add_nodes_trace(fig: go.Figure, positions: np.ndarray, asset_ids: List[str], colors: List[str], hover_texts: List[str]) -> None:
     """Add nodes trace to the figure with enhanced styling.
 
