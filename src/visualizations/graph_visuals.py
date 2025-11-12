@@ -61,6 +61,18 @@ def _build_relationship_index(
     that can be efficiently queried for:
     - Checking if a relationship exists (O(1) lookup)
     - Getting relationship strength (O(1) lookup)
+    - Detecting bidirectional relationships (O(1) reverse lookup)
+
+    Performance optimizations:
+    - Pre-filters relationships to only process relevant source_ids
+    - Uses set-based membership tests for O(1) lookups
+    - Avoids unnecessary iterations over irrelevant relationships
+
+    Thread Safety:
+    This function creates and returns a new dictionary without modifying shared state.
+    However, it reads from graph.relationships which should not be modified concurrently.
+    If used in a multi-threaded context, ensure graph.relationships is not modified
+    during execution, or use appropriate synchronization mechanisms (e.g., locks).
 
     Args:
         graph: The asset relationship graph
