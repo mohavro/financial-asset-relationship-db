@@ -400,6 +400,17 @@ def _validate_visualization_data(
 
     # Validate asset_ids
     if not isinstance(asset_ids, (list, tuple)):
+    # Ensure asset IDs are unique
+    seen: Set[str] = set()
+    duplicates: Set[str] = set()
+    for aid in asset_ids:
+        if aid in seen:
+            duplicates.add(aid)
+        else:
+            seen.add(aid)
+    if duplicates:
+        dup_list = ", ".join(sorted(duplicates))
+        raise ValueError(f"Invalid graph data: duplicate asset_ids found: {dup_list}")
         raise ValueError(
             f"Invalid graph data: asset_ids must be a list or tuple, got {type(asset_ids).__name__}"
         )
