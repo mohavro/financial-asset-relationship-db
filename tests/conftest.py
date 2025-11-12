@@ -1,3 +1,4 @@
+# Placeholder for test configuration
 """Pytest configuration and fixtures for the financial asset relationship database tests."""
 
 from typing import TYPE_CHECKING
@@ -11,11 +12,11 @@ if TYPE_CHECKING:
 def pytest_addoption(parser: "Parser") -> None:
     """
     Register dummy coverage command-line options when pytest-cov is unavailable.
-    
+
     If the `pytest-cov` plugin cannot be imported this registers `--cov` and
     `--cov-report` as benign, appendable options so test runs that include those
     flags do not error. If `pytest-cov` is importable this function has no effect.
-    
+
     Parameters:
         parser (Parser): Pytest argument parser used to add the command-line options.
     """
