@@ -75,6 +75,12 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
+    Error Handling (addressing review feedback):
+    - Validates graph.relationships is a dictionary
+    - Validates each relationship list contains properly structured tuples/lists
+    - Validates data types (strings for IDs/types, numeric for strength)
+    - Provides informative error messages for malformed data
+
     Thread Safety and Data Integrity:
     - Creates and returns a new dictionary (no shared state modification)
     - Reads graph.relationships without mutating it
@@ -107,21 +113,86 @@ def _build_relationship_index(
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
+
+    Raises:
+        TypeError: If graph.relationships is not a dictionary or contains invalid data types
+        ValueError: If relationship data is malformed or contains invalid values
     """
+    # Validate graph.relationships exists and is a dictionary
+    if not hasattr(graph, 'relationships'):
+        raise TypeError(
+            "Invalid graph data: graph object must have a 'relationships' attribute"
+        )
+    if not isinstance(graph.relationships, dict):
+        raise TypeError(
+            f"Invalid graph data: graph.relationships must be a dictionary, "
+            f"got {type(graph.relationships).__name__}"
+        )
+
     asset_ids_set = set(asset_ids)
 
     # Pre-filter relationships to only include relevant source_ids
-    relevant_relationships = {
-        source_id: rels
-        for source_id, rels in graph.relationships.items()
-        if source_id in asset_ids_set
-    }
+    try:
+        relevant_relationships = {
+            source_id: rels
+            for source_id, rels in graph.relationships.items()
+            if source_id in asset_ids_set
+        }
+    except AttributeError as exc:
+        raise TypeError(
+            "Invalid graph data: graph.relationships must be a dictionary with items() method"
+        ) from exc
 
     relationship_index: Dict[Tuple[str, str, str], float] = {}
     for source_id, rels in relevant_relationships.items():
-        for target_id, rel_type, strength in rels:
+        # Validate that rels is iterable
+        if not isinstance(rels, (list, tuple)):
+            raise TypeError(
+                f"Invalid relationship data for source '{source_id}': "
+                f"expected list or tuple, got {type(rels).__name__}"
+            )
+
+        for idx, rel in enumerate(rels):
+            # Validate relationship structure (must be a tuple/list with 3 elements)
+            if not isinstance(rel, (tuple, list)) or len(rel) != 3:
+                raise ValueError(
+                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
+                    f"expected (target_id, rel_type, strength) tuple/list with 3 elements, "
+                    f"got {type(rel).__name__} with {len(rel) if isinstance(rel, (tuple, list)) else 'unknown'} elements"
+                )
+
+            target_id, rel_type, strength = rel
+
+            # Validate data types
+            if not isinstance(target_id, str) or not target_id:
+                raise TypeError(
+                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
+                    f"target_id must be a non-empty string, got {type(target_id).__name__}"
+                )
+            if not isinstance(rel_type, str) or not rel_type:
+                raise TypeError(
+                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
+                    f"rel_type must be a non-empty string, got {type(rel_type).__name__}"
+                )
+
+            # Validate and convert strength to float
+            try:
+                strength_float = float(strength)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
+                    f"strength must be numeric (got {type(strength).__name__} with value {strength!r})"
+                ) from exc
+
+            # Validate strength is finite
+            if not np.isfinite(strength_float):
+                raise ValueError(
+                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
+                    f"strength must be a finite number (got {strength_float})"
+                )
+
             if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+                relationship_index[(source_id, target_id, rel_type)] = strength_float
 
     return relationship_index
 
@@ -583,95 +654,32 @@ def _create_relationship_traces(
     asset_ids: List[str],
     relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> List[go.Scatter3d]:
-    """Create separate traces for different types of relationships with enhanced visibility and error handling.
+    """Create separate traces for different types of relationships with enhanced visibility.
 
-    This function efficiently handles the creation of relationship traces by using batch operations
-    for adding traces to the figure, which reduces function call overhead. It includes comprehensive
-    error handling for scenarios where input data might be inconsistent or when relationship_filters
-    might contain invalid types.
-
-    Args:
-        graph: Asset relationship graph instance
-        positions: NumPy array of node positions with shape (n, 3)
-        asset_ids: List of asset ID strings
-        relationship_filters: Optional dictionary mapping relationship types to boolean visibility flags.
-                            If None, all relationships are included. Keys should be relationship type
-                            strings, values should be boolean.
-
-    Returns:
-        List of Plotly Scatter3d traces for batch addition to figure using fig.add_traces()
-
-    Raises:
-        ValueError: If input data is invalid, inconsistent, or filter configuration is malformed
-        TypeError: If relationship_filters contains non-boolean values
+    Returns a list of traces for batch addition to figure using fig.add_traces() for optimal performance.
     """
-    # Validate graph input
     if not isinstance(graph, AssetRelationshipGraph):
         raise ValueError("Invalid input data: graph must be an AssetRelationshipGraph instance")
     if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
         raise ValueError("Invalid input data: graph must have a relationships dictionary")
-
-    # Validate positions and asset_ids
     if not isinstance(positions, np.ndarray):
         raise ValueError("Invalid input data: positions must be a numpy array")
-    if not isinstance(asset_ids, (list, tuple)):
-        raise ValueError("Invalid input data: asset_ids must be a list or tuple")
     if len(positions) != len(asset_ids):
         raise ValueError("Invalid input data: positions array length must match asset_ids length")
-    if len(asset_ids) == 0:
-        raise ValueError("Invalid input data: asset_ids cannot be empty")
 
-    # Validate relationship_filters if provided
-    if relationship_filters is not None:
-        if not isinstance(relationship_filters, dict):
-            raise ValueError(
-                f"Invalid filter configuration: relationship_filters must be a dictionary or None, "
-                f"got {type(relationship_filters).__name__}"
-            )
-
-        # Check for non-boolean values in filters
-        invalid_filters = [
-            (key, type(value).__name__)
-            for key, value in relationship_filters.items()
-            if not isinstance(value, bool)
-        ]
-        if invalid_filters:
-            invalid_list = ", ".join(f"'{key}': {type_name}" for key, type_name in invalid_filters)
-            raise TypeError(
-                f"Invalid filter configuration: All filter values must be boolean. "
-                f"Found non-boolean values: {invalid_list}"
-            )
-
-        # Warn about empty filter dictionary (likely unintended)
-        if len(relationship_filters) == 0:
-            logger.warning(
-                "Empty relationship_filters dictionary provided. This will include all relationships. "
-                "Consider passing None instead for clarity."
-            )
-
-    # Build asset ID index for O(1) lookups
     asset_id_index = _build_asset_id_index(asset_ids)
 
-    # Collect and group relationships with error handling
     relationship_groups = _collect_and_group_relationships(
         graph, asset_ids, relationship_filters
     )
 
-    # Create traces for each relationship group
     traces: List[go.Scatter3d] = []
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
         if relationships:
-            try:
-                trace = _create_trace_for_group(
-                    rel_type, is_bidirectional, relationships, positions, asset_id_index
-                )
-                traces.append(trace)
-            except Exception as exc:  # pylint: disable=broad-except
-                logger.exception(
-                    "Failed to create trace for relationship type '%s' (bidirectional=%s): %s",
-                    rel_type, is_bidirectional, exc
-                )
-                # Continue processing other relationship groups even if one fails
+            trace = _create_trace_for_group(
+                rel_type, is_bidirectional, relationships, positions, asset_id_index
+            )
+            traces.append(trace)
 
     return traces
 
