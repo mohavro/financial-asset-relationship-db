@@ -503,17 +503,27 @@ def _build_edge_coordinates_optimized(
 
 
 def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectional: bool) -> List[Optional[str]]:
-    """Build hover text list for relationships with pre-allocation for performance."""
+    """Build hover text list for relationships with optimized string building.
+
+    Uses a reusable list buffer to accumulate string parts, avoiding repeated
+    list allocations. This approach minimizes memory overhead and improves
+    performance for large numbers of relationships.
+    """
     direction_text = "↔" if is_bidirectional else "→"
 
     num_rels = len(relationships)
     hover_texts: List[Optional[str]] = [None] * (num_rels * 3)
+    # Reusable buffer for building hover text strings
+    text_parts: List[str] = []
 
     for i, rel in enumerate(relationships):
-        hover_text = ''.join([
+        # Clear and reuse the buffer for each relationship
+        text_parts.clear()
+        text_parts.extend([
             rel['source_id'], ' ', direction_text, ' ', rel['target_id'],
             '<br>Type: ', rel_type, '<br>Strength: ', f"{rel['strength']:.2f}"
         ])
+        hover_text = ''.join(text_parts)
         base_idx = i * 3
         hover_texts[base_idx] = hover_text
         hover_texts[base_idx + 1] = hover_text
