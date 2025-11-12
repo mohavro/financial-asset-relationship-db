@@ -229,7 +229,11 @@ def _build_relationship_index(
                     f"must be numeric (got {type(strength).__name__} with value '{strength}')"
                 ) from exc
 
-            # Add to index if target is in asset_ids_set
+            # Add to index if target is in asset_ids_set (O(1) set membership test)
+            # Note: We pre-filtered by source_id above (line 172), which eliminates the major
+            # inefficiency. This target_id check is necessary for correctness (we only want
+            # relationships where BOTH source and target are in the asset set) and is efficient
+            # due to O(1) set lookup. Further pre-filtering would require iterating all relationships.
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = strength_float
 
