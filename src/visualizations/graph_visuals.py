@@ -187,13 +187,14 @@ def _create_node_trace(
         ),
 
         text=asset_ids,
-        text=asset_ids,
         hovertext=hover_texts,
         hoverinfo="text",
         textposition="top center",
         textfont=dict(size=12, color="black"),
         name="Assets",
         visible=True,
+    )
+
 
 def _generate_dynamic_title(
     num_assets: int,
