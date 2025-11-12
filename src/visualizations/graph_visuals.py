@@ -382,7 +382,7 @@ def _validate_visualization_data(
             f"Invalid graph data: positions must be a numpy array, got {type(positions).__name__}"
         )
     if positions.ndim != 2 or positions.shape[1] != 3:
-        raise ValueError("Invalid graph data: positions must be a (n, 3) numpy array")
+        raise ValueError(f"Invalid graph data: Expected positions to be a (n, 3) numpy array, got array with shape {positions.shape}")
     if not np.issubdtype(positions.dtype, np.number):
         raise ValueError("Invalid graph data: positions must contain numeric values")
     if not np.isfinite(positions).all():
