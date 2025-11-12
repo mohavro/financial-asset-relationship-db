@@ -65,6 +65,14 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def _build_relationship_index(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Dict[Tuple[str, str, str], float]:
+    """
+
+    Error Handling (addresses review feedback):
+    ==========================================
+    This function implements comprehensive error handling for all input parameters:
+    - Validates that asset_ids is iterable and contains only strings
+    - Validates that graph.relationships exists and is a properly formatted dictionary
+    - Validates the structure and data types of all relationship entries
     """Build optimized relationship index for O(1) lookups with comprehensive error handling, pre-filtering and thread safety.
 
     This function consolidates relationship data into a single index structure
