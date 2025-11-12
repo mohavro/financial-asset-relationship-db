@@ -50,10 +50,10 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
 
     Thread Safety:
-    This function creates and returns a new dictionary without modifying shared state.
-    However, it reads from graph.relationships which should not be modified concurrently.
-    If used in a multi-threaded context, ensure graph.relationships is not modified
-    during execution, or use appropriate synchronization mechanisms (e.g., locks).
+    Creates and returns a new dictionary without modifying shared state.
+    Snapshots graph.relationships.items() before iteration to avoid concurrent
+    modification issues during traversal; for full thread safety, guard writes to
+    graph.relationships with appropriate synchronization (e.g., a lock).
 
     Args:
         graph: The asset relationship graph
