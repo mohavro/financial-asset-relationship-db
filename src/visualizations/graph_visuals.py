@@ -240,10 +240,16 @@ def _create_node_trace(
     """Create node trace for 3D visualization with comprehensive input validation.
 
     Validates all inputs to ensure:
-    - positions is a non-empty 2D numpy array with shape (n, 3) containing finite numeric values
-    - asset_ids is a non-empty list/tuple of non-empty strings with length matching positions
-    - colors is a non-empty list/tuple of valid color strings with length matching positions
-    - hover_texts is a non-empty list/tuple of strings with length matching positions
+    - positions is a NumPy array with correct dimensions (n, 3) where n > 0
+    - positions contains only finite numeric values (no NaN or Inf)
+    - positions dtype is numeric (int or float)
+    - asset_ids is a list or tuple of the same length as positions
+    - asset_ids contains only non-empty strings
+    - asset_ids has no duplicate values
+    - colors is a list or tuple of the same length as positions
+    - colors contains only valid color format strings (hex, rgb/rgba, or named colors)
+    - hover_texts is a list or tuple of the same length as positions
+    - hover_texts contains only non-empty strings
     - All arrays have consistent lengths
     - No duplicate asset IDs
 
