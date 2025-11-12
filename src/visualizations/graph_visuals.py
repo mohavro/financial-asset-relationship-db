@@ -61,7 +61,6 @@ def _build_relationship_index(
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
-    - Detecting bidirectional relationships (O(1) reverse lookup)
     """
     asset_ids_set = set(asset_ids)
     relationship_index: Dict[Tuple[str, str, str], float] = {}
