@@ -615,6 +615,8 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
         is_bidirectional: Whether relationships are bidirectional
 
     Returns:
+    # Performance optimization: Use batch operation (add_traces) instead of adding traces
+    # individually in a loop, which reduces function call overhead for large graphs
         List of hover texts
     """
     direction_text = "↔" if is_bidirectional else "→"
