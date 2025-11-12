@@ -385,6 +385,8 @@ def _validate_visualization_data(
         raise ValueError("Invalid graph data: colors must contain non-empty strings")
     if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
         raise ValueError(f"Invalid graph data: hover_texts must be a list/tuple of length {n}")
+    if not all(isinstance(h, str) for h in hover_texts):
+        raise ValueError("Invalid graph data: hover_texts must contain strings")
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
