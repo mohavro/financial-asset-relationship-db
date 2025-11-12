@@ -48,25 +48,6 @@ def _is_valid_color_format(color: str) -> bool:
     # rgb/rgba functions
     if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
         return True
-def _sanitize_colors(colors: List[str], default_color: str = "#888888") -> List[str]:
-    """Sanitize color list by replacing invalid colors with a default color.
-
-    This function provides a defensive approach to color validation, ensuring that
-    invalid color values don't cause runtime errors during visualization rendering.
-
-    Args:
-        colors: List of color strings to validate and sanitize
-        default_color: Default color to use for invalid entries (default: "#888888" gray)
-
-    Returns:
-        List of validated colors with invalid entries replaced by default_color
-    """
-    sanitized = []
-    for i, color in enumerate(colors):
-        if not _is_valid_color_format(color):
-            logger.warning("Invalid color format at index %d: '%s'. Using default color.", i, color)
-            sanitized.append(default_color)
-        else:
 
     # Fallback: allow named colors; Plotly will validate at render time
     return True
@@ -88,37 +69,60 @@ def _build_relationship_index(
     - Getting relationship strength (O(1) lookup)
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
+    ⚠️ THREAD SAFETY WARNING ⚠️
+    This function is ONLY thread-safe when the graph object is IMMUTABLE.
+    If the graph.relationships dictionary can be modified by ANY thread during execution,
+    this function is NOT thread-safe and WILL cause data races, inconsistent states, or runtime errors.
+
+    THREAD-SAFE CONDITIONS (all must be true):
+    ✓ The graph.relationships dictionary is NOT modified during function execution
+    ✓ The graph object is immutable (frozen after creation)
+    ✓ Multiple threads only READ from the graph, never WRITE to it
+
+    NOT THREAD-SAFE CONDITIONS (any of these makes it unsafe):
+    ✗ graph.relationships is modified by any thread during execution
+    ✗ The graph object is mutable and can be changed by other parts of the application
+    ✗ Any thread writes to graph.relationships while this function is reading it
+
+    RECOMMENDATIONS FOR MULTI-THREADED ENVIRONMENTS:
+    1. PREFERRED APPROACH - Use Immutable Graph Objects:
+       - Freeze graph.relationships after creation (make it read-only)
+       - Use immutable data structures (e.g., frozendict, tuple-based structures)
+       - This guarantees thread safety without performance overhead
+       - Example:
+         ```python
+         from types import MappingProxyType
+         # Make relationships read-only
+         graph.relationships = MappingProxyType(graph.relationships)
+         # Now safe for concurrent reads
+         index = _build_relationship_index(graph, asset_ids)
+         ```
+
+    2. ALTERNATIVE APPROACH - Implement External Synchronization:
+       - Use threading.Lock or threading.RLock to protect ALL graph access
+       - Acquire lock BEFORE calling this function
+       - Release lock AFTER function completes
+       - Ensure ALL code that reads or writes graph.relationships uses the same lock
+       - Example:
+         ```python
+         import threading
+         graph_lock = threading.Lock()
+
+         # Protect all graph access with the lock
+         with graph_lock:
+             index = _build_relationship_index(graph, asset_ids)
+         ```
+
+    3. AVOID - Concurrent Modifications:
+       - NEVER modify graph.relationships while any thread may be reading it
+       - This will cause unpredictable behavior and data corruption
+       - If you must modify the graph, ensure exclusive access using locks
+
     Performance optimizations (addressing review feedback):
     - Pre-filters graph.relationships to only include relevant source_ids
     - Uses set-based membership tests for O(1) lookups
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
-
-    Thread Safety and Data Integrity:
-    - Creates and returns a new dictionary (no shared state modification)
-    - Reads graph.relationships without mutating it
-    - Function itself does not modify any shared state
-
-    Thread safety guarantees:
-    This function is thread-safe for concurrent execution ONLY under these conditions:
-    1. The graph.relationships dictionary is NOT modified during execution
-    2. Multiple threads can safely call this function simultaneously IF AND ONLY IF
-       the graph object remains immutable
-
-    NOT thread-safe when:
-    - graph.relationships is modified by any thread during execution
-    - This can cause data races, inconsistent states, or runtime errors
-
-    Recommendations for Multi-Threaded Environments:
-    1. PREFERRED: Use immutable graph objects (freeze graph.relationships after creation)
-    2. ALTERNATIVE: Implement external synchronization:
-       - Use threading.Lock or similar mechanism to protect graph access
-       - Ensure all reads/writes to graph.relationships are synchronized
-    3. AVOID: Modifying graph.relationships while any thread may be reading it
-
-    For multi-threaded environments with mutable graphs:
-    Note: If your application modifies the graph concurrently, you MUST implement
-    external locking or use immutable data structures to prevent race conditions.
 
     Args:
         graph: The asset relationship graph (should be immutable in multi-threaded contexts)
@@ -836,33 +840,6 @@ def _validate_filter_parameters(filter_params: Dict[str, bool]) -> None:
         )
 
 
-def _validate_relationship_filters(relationship_filters: Optional[Dict[str, bool]]) -> None:
-    """Validate relationship filter configuration.
-
-    Args:
-        relationship_filters: Optional dictionary mapping relationship types to visibility flags
-
-    Raises:
-        TypeError: If relationship_filters is not None and not a dictionary
-        ValueError: If relationship_filters contains invalid relationship types or non-boolean values
-    """
-    if relationship_filters is None:
-        return
-
-    if not isinstance(relationship_filters, dict):
-        raise TypeError(
-            f"Invalid filter configuration: relationship_filters must be a dictionary or None, "
-            f"got {type(relationship_filters).__name__}"
-        )
-
-    # Validate all values are boolean
-    invalid_values = [k for k, v in relationship_filters.items() if not isinstance(v, bool)]
-    if invalid_values:
-        raise ValueError(
-            f"Invalid filter configuration: relationship_filters must contain only boolean values. "
-            f"Invalid keys: {', '.join(invalid_values)}"
-
-
 def visualize_3d_graph_with_filters(
     graph: AssetRelationshipGraph,
     show_same_sector: bool = True,
@@ -902,14 +879,6 @@ def visualize_3d_graph_with_filters(
     """
     # Validate graph input
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(
-    # Validate filter configuration structure
-    try:
-        if not show_all_relationships:
-            # Validate that at least one relationship type is enabled
-            individual_filters = [show_same_sector, show_market_cap, show_correlation,
-                                  show_corporate_bond, show_commodity_currency,
-                                  show_income_comparison, show_regulatory]
-            if not any(individual_filters):
         graph, "get_3d_visualization_data_enhanced"
     ):
         raise ValueError(
