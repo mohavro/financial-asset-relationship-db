@@ -287,7 +287,7 @@ def _validate_visualization_data(
     colors: List[str],
     hover_texts: List[str],
 ) -> None:
-    """Validate visualization data integrity to prevent runtime errors."""
+    """Validate visualization data integrity including color formats to prevent runtime errors."""
     # Validate positions array
     if not isinstance(positions, np.ndarray):
         raise ValueError(
