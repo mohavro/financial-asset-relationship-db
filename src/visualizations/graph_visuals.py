@@ -89,15 +89,14 @@ def _build_relationship_index(
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
     Performance optimizations (addressing review feedback):
-    - Pre-filters graph.relationships to only include relevant source_ids
-    - Uses set-based membership tests for O(1) lookups
-    - Avoids unnecessary iterations over irrelevant relationships
-    - Reduces continue statements by filtering upfront
+    - Pre-filters source_ids via set intersection to iterate only relevant keys
+    - Avoids constructing intermediate dictionaries while still reducing iterations when many source_ids are absent
+    - Validates both source_id and target_id against asset_ids_set to include only relevant relationships
 
     Thread Safety:
-    - This function is thread-safe as it only reads from the input graph and
-      creates a new local dictionary without modifying any shared state.
-    - The returned dictionary is a new object.
+    - Builds and returns a new local dictionary; no shared state is mutated
+    - Iterates over a snapshot of graph.relationships keys to avoid iterator invalidation if the graph is mutated elsewhere
+    - If graph is mutated concurrently at a finer granularity (e.g., rels list), callers should coordinate concurrent writes
 
     Args:
         graph: The asset relationship graph
