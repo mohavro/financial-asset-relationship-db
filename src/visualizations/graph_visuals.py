@@ -181,11 +181,6 @@ def _create_node_trace(
     # Delegates to shared validator to ensure consistency across all visualization functions
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
 
-    # Additional color format validation (beyond non-empty string checks)
-    for i, color in enumerate(colors):
-        if not _is_valid_color_format(color):
-            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
-
     # Edge case validation: Ensure inputs are not empty
     if len(asset_ids) == 0:
         raise ValueError("Cannot create node trace with empty inputs (asset_ids length is 0)")
