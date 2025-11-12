@@ -1114,7 +1114,13 @@ def visualize_3d_graph_with_filters(
     # Create figure
     fig = go.Figure()
 
-    # Build relationship traces with comprehensive error handling
+    # Build relationship traces with comprehensive error handling:
+    # - TypeError/ValueError: Invalid filter configuration or data structure issues
+    #   These are critical errors that indicate misconfiguration, so we re-raise them
+    # - Other exceptions: Unexpected errors during trace creation
+    #   These are logged but don't prevent visualization (empty trace list is used)
+    # This ensures the visualization can still be displayed even if some traces fail,
+    # while catching configuration errors early
     try:
         relationship_traces = _create_relationship_traces(
             graph, positions, asset_ids, relationship_filters
