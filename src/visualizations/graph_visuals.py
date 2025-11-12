@@ -78,7 +78,7 @@ def _build_relationship_index(
     Thread Safety and Data Integrity:
     - Creates and returns a new dictionary (no shared state modification)
     - Reads graph.relationships without mutating it
-    - Safe for concurrent reads when graph.relationships remains unchanged
+    - Function itself does not modify any shared state
 
     Thread safety guarantees:
     - ✓ Safe: Multiple threads calling this function with the same immutable graph
