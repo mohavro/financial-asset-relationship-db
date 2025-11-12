@@ -222,6 +222,21 @@ def _configure_layout(
         ),
         width=width,
         height=height,
+
+def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
+    """Generate dynamic title based on the number of assets and relationships.
+
+    This helper function improves modularity by separating title generation logic
+    from the main visualization function, making it easier to customize titles
+    without modifying the core visualization logic.
+
+    Args:
+        num_assets: Number of assets in the visualization
+        num_relationships: Number of relationships in the visualization
+
+    Returns:
+        Formatted title string
+    """
         showlegend=True,
         hovermode="closest",
         legend=dict(
