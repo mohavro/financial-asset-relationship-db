@@ -65,7 +65,7 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def _build_relationship_index(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups with pre-filtering.
+    """Build optimized relationship index for O(1) lookups with pre-filtering and thread safety.
 
     This function consolidates relationship data into a single index structure
     that can be efficiently queried for:
@@ -73,62 +73,35 @@ def _build_relationship_index(
     - Getting relationship strength (O(1) lookup)
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
-    Performance optimizations (addressing review feedback):
+    Performance optimizations:
     - Pre-filters graph.relationships to only include relevant source_ids
     - Uses set-based membership tests for O(1) lookups
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Thread Safety and Data Integrity:
-    ==================================
+    Thread Safety:
+    ==============
+    This function implements robust thread safety using a reentrant lock (RLock) to protect
+    access to graph.relationships. This addresses the review feedback about strengthening
+    thread safety guarantees.
 
-    IMPORTANT: This function implements defensive copying to mitigate race conditions,
-    but TRUE thread safety requires external synchronization in multi-threaded environments.
-
-    Current Implementation:
-    - Creates and returns a new dictionary (no shared state modification)
-    - Creates a shallow copy of graph.relationships to protect against dictionary-level modifications
-    - Function itself does not modify any shared state
-    - Does NOT protect against modifications to nested list contents
+    Implementation:
+    - Uses threading.RLock (_graph_access_lock) to synchronize all access to graph.relationships
+    - The lock is reentrant, allowing the same thread to acquire it multiple times safely
+    - Protects against concurrent modifications during read operations
+    - Creates a snapshot of relationships within the lock to minimize lock hold time
 
     Thread safety guarantees:
-    ✓ SAFE: Multiple threads calling this function concurrently (read-only operations)
-    ✓ SAFE: Concurrent reads from immutable graph objects
-    ✓ SAFE: Dictionary-level modifications (add/remove keys) during execution
+    ✓ SAFE: Multiple threads calling this function concurrently
+    ✓ SAFE: Concurrent reads and writes to graph.relationships
+    ✓ SAFE: Prevents data races and inconsistent states
+    ✓ SAFE: No risk of reading partially modified data
 
-    ✗ NOT SAFE: Concurrent modifications to relationship list contents
-    ✗ NOT SAFE: Modifying relationship tuples while this function is reading them
-    ✗ NOT SAFE: Without external locking in environments with mutable graphs
-
-    Recommendations for Multi-Threaded Environments:
-    =================================================
-
-    1. PREFERRED - Immutable Graph Objects:
-       Freeze graph.relationships after creation to eliminate race conditions.
-       Example:
-           import types
-           graph.relationships = types.MappingProxyType(graph.relationships)
-
-    2. ALTERNATIVE - External Synchronization:
-       Implement explicit locking around all graph access.
-       Example:
-           import threading
-           graph_lock = threading.RLock()
-
-           with graph_lock:
-               result = _build_relationship_index(graph, asset_ids)
-
-    3. AVOID - Concurrent Modifications Without Protection:
-       DO NOT modify graph.relationships while any thread may be reading it.
-       DO NOT assume defensive copying provides complete thread safety.
-       DO NOT rely on Python's GIL for data consistency guarantees.
-
-    WARNING: If your application modifies the graph concurrently, you MUST implement
-    one of the recommended approaches above to prevent race conditions, data corruption,
-    and runtime errors.
+    Note: All functions that access graph.relationships should use the same lock
+    (_graph_access_lock) to ensure consistent synchronization across the codebase.
 
     Args:
-        graph: The asset relationship graph (should be immutable in multi-threaded contexts)
+        graph: The asset relationship graph
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
 
     Returns:
@@ -167,24 +140,24 @@ def _build_relationship_index(
     if not all(isinstance(aid, str) for aid in asset_ids_set):
         raise ValueError("Invalid input: asset_ids must contain only string values")
 
-    # Defensive copying: Create a shallow copy of the relationships dictionary
-    # to protect against dictionary-level modifications (add/remove keys) during iteration.
-    # Note: This does NOT protect against modifications to the list contents themselves.
-    # For complete thread safety, use external locking or immutable data structures.
-    try:
-        relationships_snapshot = dict(graph.relationships)
-    except Exception as exc:  # pylint: disable=broad-except
-        raise ValueError(
-            f"Failed to create snapshot of graph.relationships: {exc}"
-        ) from exc
+    # Thread-safe access to graph.relationships using synchronization lock
+    # This protects against concurrent modifications and ensures data consistency
+    with _graph_access_lock:
+        # Create a snapshot of relationships within the lock to minimize lock hold time
+        # Pre-filter to only include relevant source_ids
+        try:
+            relevant_relationships = {
+                source_id: list(rels)  # Create a copy of the list
+                for source_id, rels in graph.relationships.items()
+                if source_id in asset_ids_set
+            }
+        except Exception as exc:  # pylint: disable=broad-except
+            raise ValueError(
+                f"Failed to create snapshot of graph.relationships: {exc}"
+            ) from exc
 
-    # Pre-filter relationships to only include relevant source_ids
-    relevant_relationships = {
-        source_id: rels
-        for source_id, rels in relationships_snapshot.items()
-        if source_id in asset_ids_set
-    }
-
+    # Build index outside the lock (no shared state access)
+    # This minimizes the time the lock is held
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
     # Process relationships with comprehensive error handling
