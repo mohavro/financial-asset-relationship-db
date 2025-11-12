@@ -148,6 +148,8 @@ def _configure_layout(
     width: int = 1200,
     height: int = 800,
     gridcolor: str = "rgba(200, 200, 200, 0.3)",
+    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
+    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
     bgcolor: str = "rgba(248, 248, 248, 0.95)",
 ) -> None:
     """Configure the layout for 3D visualization.
@@ -159,6 +161,8 @@ def _configure_layout(
         height: Figure height in pixels (default: 800)
         gridcolor: Grid color for axes (default: "rgba(200, 200, 200, 0.3)")
         bgcolor: Background color for scene (default: "rgba(248, 248, 248, 0.95)")
+        legend_bgcolor: Background color for legend (default: "rgba(255, 255, 255, 0.8)")
+        legend_bordercolor: Border color for legend (default: "rgba(0, 0, 0, 0.3)")
     """
     fig.update_layout(
         title={
@@ -181,8 +185,8 @@ def _configure_layout(
         legend=dict(
             x=0.02,
             y=0.98,
-            bgcolor="rgba(255, 255, 255, 0.8)",
-            bordercolor="rgba(0, 0, 0, 0.3)",
+            bgcolor=legend_bgcolor,
+            bordercolor=legend_bordercolor,
             borderwidth=1,
         ),
     )
