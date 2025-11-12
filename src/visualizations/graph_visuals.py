@@ -317,3 +317,4 @@ def _configure_3d_layout(
             borderwidth=1,
         ),
     )
+    """
