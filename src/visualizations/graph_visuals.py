@@ -79,6 +79,29 @@ def _create_node_trace(
 
     Returns:
         Plotly Scatter3d trace for nodes
+    # Validate positions array
+    if not isinstance(positions, np.ndarray):
+        raise ValueError("positions must be a NumPy array")
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("positions must be a 2D array with shape (n, 3) for 3D coordinates")
+    if not np.issubdtype(positions.dtype, np.number):
+        raise ValueError("positions must contain numeric values")
+    if not np.isfinite(positions).all():
+        raise ValueError("positions must contain finite numeric values")
+
+    # Validate list parameters
+    if not isinstance(asset_ids, list):
+        raise ValueError("asset_ids must be a list")
+    if not isinstance(colors, list):
+        raise ValueError("colors must be a list")
+    if not isinstance(hover_texts, list):
+        raise ValueError("hover_texts must be a list")
+
+    # Validate lengths match
+    n = positions.shape[0]
+    if len(asset_ids) != n or len(colors) != n or len(hover_texts) != n:
+        raise ValueError("asset_ids, colors, and hover_texts must have the same length as positions")
+
 
     Raises:
         ValueError: If input parameters are invalid or have mismatched dimensions
