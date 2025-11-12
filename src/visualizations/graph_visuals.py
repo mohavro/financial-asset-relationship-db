@@ -292,6 +292,8 @@ def _validate_visualization_data(
         raise ValueError(
             f"Invalid graph data: hover_texts must be a list/tuple of length {n}"
         )
+    # Performance optimization: Use batch operation to add all relationship traces at once
+    # instead of adding them individually in a loop (reduces overhead)
     if not all(isinstance(h, str) for h in hover_texts):
         raise ValueError("Invalid graph data: hover_texts must contain strings")
 
