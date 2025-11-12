@@ -476,9 +476,8 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     total_relationships = sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
     dynamic_title = _generate_dynamic_title(len(asset_ids), total_relationships)
 
-    fig.update_layout(
     # Configure layout using the reusable helper function
-
+    _configure_3d_layout(fig, dynamic_title)
     return fig
 
 
