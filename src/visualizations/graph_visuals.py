@@ -978,7 +978,30 @@ def visualize_3d_graph_with_filters(
     """Create 3D visualization with selective relationship filtering.
 
     This function dynamically creates and adds relationship traces based on optional filters,
-    with comprehensive error handling to manage potential issues from invalid filter
+    It implements comprehensive error handling at multiple levels to ensure robustness:
+
+    Error Handling Strategy:
+    ------------------------
+    1. **Input Validation**: Validates graph instance and filter parameter types
+    2. **Filter Configuration**: Validates filter dictionary structure and warns on edge cases
+    3. **Data Retrieval**: Catches exceptions from graph.get_3d_visualization_data_enhanced()
+    4. **Data Validation**: Validates positions, asset_ids, colors, and hover_texts integrity
+    5. **Trace Creation**: Handles errors in relationship trace generation with fallback to empty traces
+    6. **Trace Addition**: Catches exceptions when adding traces to figure
+    7. **Arrow Generation**: Handles errors in directional arrow creation (when toggle_arrows=True)
+    8. **Node Visualization**: Ensures node trace creation succeeds or raises clear error
+    9. **Layout Configuration**: Falls back to default title if dynamic title generation fails
+
+    All errors are logged with detailed context for debugging. Critical errors (graph validation,
+    node creation) raise exceptions, while non-critical errors (relationship traces, arrows)
+    gracefully degrade to partial visualizations.
+
+    Edge Cases Handled:
+    -------------------
+    - All relationship filters disabled (logs warning, shows nodes only)
+    - Invalid filter configurations (raises TypeError with specific parameter names)
+    - Data inconsistencies in graph.relationships (raises ValueError with details)
+    - Malformed visualization data (raises ValueError during validation)
     configurations or data inconsistencies.
 
     Args:
