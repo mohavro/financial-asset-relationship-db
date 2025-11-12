@@ -578,7 +578,8 @@ def visualize_3d_graph_with_filters(
     )
     # Performance optimization: Use batch operation to add all relationship traces at once
     if relationship_traces:
-
+        # Performance optimization: Use batch operation to add all relationship traces at once
+        # instead of adding them individually in a loop (reduces overhead)
         fig.add_traces(relationship_traces)
 
     if toggle_arrows:
