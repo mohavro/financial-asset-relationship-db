@@ -725,11 +725,14 @@ def visualize_3d_graph_with_filters(
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to compute visible relationships count: %s", exc)
 
-    fig.update_layout(
-        title={
-            "text": f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships",
-            "x": 0.5,
-            "xanchor": "center",
+    # Generate dynamic title based on asset and relationship counts
+    dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
+
+    # Configure layout with dynamic title
+    _configure_3d_layout(
+        fig,
+        dynamic_title,
+        options={
             "font": {"size": 16},
         },
         scene=dict(
