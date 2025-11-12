@@ -361,9 +361,13 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
     fig.add_trace(node_trace)
 
+    # Calculate total relationships for dynamic title
+    total_relationships = sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
+    dynamic_title = _generate_dynamic_title(len(asset_ids), total_relationships)
+
     fig.update_layout(
         title={
-            "text": "Financial Asset Relationship Network - Enhanced 3D Visualization",
+            "text": dynamic_title,
             "x": 0.5,
             "xanchor": "center",
             "font": {"size": 16},
