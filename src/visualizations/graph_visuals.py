@@ -44,7 +44,6 @@ def _build_relationship_index(
     # Accept named colors (Plotly will validate these at runtime)
     return True
 
-    - Getting relationship strength (O(1) lookup)
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
     Args:
