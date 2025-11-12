@@ -317,7 +317,11 @@ def _validate_visualization_data(
             f"Invalid graph data: colors must be a list/tuple of length {n}, got {type(colors).__name__} with length {len(colors) if isinstance(colors, (list, tuple)) else 'N/A'}"
         )
     if not all(isinstance(c, str) and c for c in colors):
-        raise ValueError("Invalid graph data: colors must contain non-empty strings")
+        invalid_color_indices = [i for i, c in enumerate(colors) if not isinstance(c, str) or not c]
+        examples = [repr(colors[i]) for i in invalid_color_indices[:3]]
+        raise ValueError(
+            f"Invalid graph data: colors must contain non-empty strings. Found {len(invalid_color_indices)} invalid entries at indices {invalid_color_indices[:5]} with examples {examples}"
+        )
     if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
         raise ValueError(
             f"Invalid graph data: hover_texts must be a list/tuple of length {n}"
