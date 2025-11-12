@@ -1,6 +1,6 @@
 /**
  * Comprehensive unit tests for the API client library (app/lib/api.ts).
- * 
+ *
  * Tests cover:
  * - All API methods (health check, assets, relationships, metrics, visualization)
  * - Request parameter handling
@@ -19,7 +19,7 @@ let mockedAxios: jest.Mocked<typeof axios>;
 let api: typeof import('../../app/lib/api')['api'];
 
 describe('API Client', () => {
-  let mockAxiosInstance: any;
+  let mockAxiosInstance: jest.Mocked<Pick<typeof axios, 'get' | 'post' | 'put' | 'delete'>>;
 
   beforeEach(async () => {
     jest.resetModules();
