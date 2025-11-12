@@ -1,5 +1,5 @@
 import re
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
