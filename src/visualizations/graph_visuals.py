@@ -480,11 +480,23 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
 
     return hover_texts
 
+    """Get line style configuration for a relationship with color validation.
+
+    Args:
+        rel_type: Relationship type identifier
+        is_bidirectional: Whether the relationship is bidirectional
+
 
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
-    """Get line style configuration for a relationship."""
     return dict(
-        color=REL_TYPE_COLORS[rel_type],
+    Returns:
+        Dictionary with line style configuration including validated color
+    """
+    color = REL_TYPE_COLORS[rel_type]
+    if not _is_valid_color_format(color):
+        logger.warning("Invalid color format for relationship type '%s': '%s'. Using default gray.", rel_type, color)
+        color = "#888888"
+        color=color,
         width=4 if is_bidirectional else 2,
         dash="solid" if is_bidirectional else "dash",
     )
