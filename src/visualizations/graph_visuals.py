@@ -119,7 +119,10 @@ def _create_node_trace(
     - hover_texts is a list/tuple of strings with length matching positions
 
     Args:
-        positions: NumPy array of node positions with shape (n, 3)
+        positions: NumPy array of node positions with shape (n, 3) containing finite numeric values
+        asset_ids: List of asset ID strings (must be non-empty strings, length must match positions)
+        colors: List of node colors (length must match positions)
+        hover_texts: List of hover texts (length must match positions)
 
     Returns:
         Plotly Scatter3d trace for nodes
@@ -127,7 +130,8 @@ def _create_node_trace(
     Raises:
         ValueError: If input parameters are invalid, have mismatched dimensions, or contain invalid data
     """
-    # Input validation: Check basic types and structure before detailed validation
+    # Input validation: Perform basic type checks before delegating to comprehensive validator
+    # This provides early failure with clear error messages for common mistakes
     if not isinstance(positions, np.ndarray):
         raise ValueError(f"positions must be a numpy array, got {type(positions).__name__}")
     if not isinstance(asset_ids, (list, tuple)):
@@ -135,6 +139,23 @@ def _create_node_trace(
     if not isinstance(colors, (list, tuple)):
         raise ValueError(f"colors must be a list or tuple, got {type(colors).__name__}")
     if not isinstance(hover_texts, (list, tuple)):
+        raise ValueError(f"hover_texts must be a list or tuple, got {type(hover_texts).__name__}")
+
+    # Validate dimensions and alignment before detailed validation
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError(f"positions must have shape (n, 3), got {positions.shape}")
+    if len(asset_ids) != len(colors) or len(asset_ids) != len(hover_texts):
+        raise ValueError(
+            f"Length mismatch: asset_ids({len(asset_ids)}), colors({len(colors)}), "
+            f"hover_texts({len(hover_texts)}) must all be equal"
+        )
+    if positions.shape[0] != len(asset_ids):
+        raise ValueError(
+            f"positions length ({positions.shape[0]}) must match asset_ids length ({len(asset_ids)})"
+        )
+
+    # Comprehensive validation: detailed checks on content, numeric types, and finite values
+    # Delegates to shared validator to ensure consistency across all visualization functions
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
 
     # Additional color format validation (beyond non-empty string checks)
@@ -625,33 +646,7 @@ def visualize_3d_graph_with_filters(
     show_all_relationships: bool = True,
     toggle_arrows: bool = True,
 ) -> go.Figure:
-    """Create 3D visualization with selective relationship filtering
-
-    Args:
-        graph: Asset relationship graph to visualize
-        show_same_sector: Show same sector relationships
-        show_market_cap: Show market cap similar relationships
-        show_correlation: Show correlation relationships
-        show_corporate_bond: Show corporate bond to equity relationships
-        show_commodity_currency: Show commodity currency relationships
-        show_income_comparison: Show income comparison relationships
-        show_regulatory: Show regulatory impact relationships
-        show_all_relationships: If True, show all relationships regardless of individual filters
-        toggle_arrows: If True, show directional arrows for unidirectional relationships
-
-    Returns:
-        Plotly Figure object with 3D visualization
-
-    Raises:
-        ValueError: If graph data is invalid or filter configuration is inconsistent
-        TypeError: If filter parameters are not boolean values
-    """
-    filter_params = [show_same_sector, show_market_cap, show_correlation, show_corporate_bond,
-                     show_commodity_currency, show_income_comparison, show_regulatory,
-                     show_all_relationships, toggle_arrows]
-    if not all(isinstance(param, bool) for param in filter_params):
-        raise TypeError("All filter parameters must be boolean values")
-
+    """Create 3D visualization with selective relationship filtering"""
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(
         graph, "get_3d_visualization_data_enhanced"
     ):
@@ -670,26 +665,8 @@ def visualize_3d_graph_with_filters(
     else:
         relationship_filters = None
 
-    # Validate filter configuration - at least one relationship type should be enabled
-    if not show_all_relationships and relationship_filters:
-        if not any(relationship_filters.values()):
-            logger.warning(
-                "All relationship filters are disabled. Visualization will only show nodes without edges."
-            )
+    positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
-    # Safely retrieve visualization data with error handling
-    try:
-        positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
-    except AttributeError as exc:
-        raise ValueError(
-            "Graph object does not support get_3d_visualization_data_enhanced method"
-        ) from exc
-    except Exception as exc:
-        raise ValueError(
-            f"Failed to retrieve visualization data from graph: {exc}"
-        ) from exc
-
-    # Validate retrieved data
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
 
     fig = go.Figure()
@@ -699,15 +676,8 @@ def visualize_3d_graph_with_filters(
         relationship_traces = _create_relationship_traces(
             graph, positions, asset_ids, relationship_filters
         )
-    except (ValueError, TypeError) as exc:
-        # Specific handling for data validation or type errors
-        logger.error(
-            "Invalid filter configuration or data inconsistency detected: %s. "
-            "Proceeding without relationship traces.",
-            exc
-        )
-        relationship_traces = []
     except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Failed to create filtered relationship traces: %s", exc)
         relationship_traces = []
 
     # Performance optimization: Use batch operation to add all relationship traces at once
