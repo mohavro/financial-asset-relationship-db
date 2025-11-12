@@ -1,5 +1,4 @@
 from collections import defaultdict
-import re
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
@@ -64,34 +63,6 @@ def _build_relationship_index(
     return relationship_index
 
 
-def _is_valid_color(color: str) -> bool:
-    """Check if a string is a valid color format for Plotly.
-
-    Validates common color formats:
-    - Named colors (e.g., 'red', 'blue')
-    - Hex colors (e.g., '#FF0000', '#F00')
-    - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-
-    Args:
-        color: String to validate as a color
-
-    Returns:
-        True if the color format is valid, False otherwise
-    """
-    if not isinstance(color, str) or not color:
-        return False
-
-    # Check for hex color format (#RGB or #RRGGBB)
-    if re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$', color):
-        return True
-
-    # Check for rgb/rgba format
-    if re.match(r'^rgba?\s*\([^)]+\)$', color):
-        return True
-
-    # Accept any non-empty string as potentially valid named color
-    return True
-
 def _create_node_trace(
     positions: np.ndarray,
     asset_ids: List[str],
@@ -147,20 +118,6 @@ def _create_node_trace(
             f"hover_texts has {n_hover_texts} elements. All must have the same length."
         )
 
-    # Validate colors content (must be valid color format strings)
-    for i, color in enumerate(colors):
-        if not isinstance(color, str) or not color:
-            raise ValueError(f"colors[{i}] must be a non-empty string, got {type(color).__name__}")
-        if not _is_valid_color(color):
-            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
-
-    # Validate hover_texts content (must be strings, can be empty)
-    for i, hover_text in enumerate(hover_texts):
-        if not isinstance(hover_text, str):
-            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
-
-
-
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
@@ -181,7 +138,6 @@ def _create_node_trace(
         name="Assets",
         visible=True,
     )
-
 
 
 def _configure_layout(
@@ -222,21 +178,6 @@ def _configure_layout(
         ),
         width=width,
         height=height,
-
-def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
-    """Generate dynamic title based on the number of assets and relationships.
-
-    This helper function improves modularity by separating title generation logic
-    from the main visualization function, making it easier to customize titles
-    without modifying the core visualization logic.
-
-    Args:
-        num_assets: Number of assets in the visualization
-        num_relationships: Number of relationships in the visualization
-
-    Returns:
-        Formatted title string
-    """
         showlegend=True,
         hovermode="closest",
         legend=dict(
@@ -299,10 +240,10 @@ def _configure_3d_layout(
             "font": {"size": 16},
         },
         scene=dict(
-            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor=gridcolor),
-            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor=gridcolor),
-            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor=gridcolor),
-            bgcolor=bgcolor,
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
         ),
         width=width,
@@ -399,29 +340,9 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     if arrow_traces:
         fig.add_traces(arrow_traces)
 
-    # Add nodes with enhanced styling
-    fig.add_trace(
-        go.Scatter3d(
-            x=positions[:, 0],
-            y=positions[:, 1],
-            z=positions[:, 2],
-            mode="markers+text",
-            marker=dict(
-                size=15,
-                color=colors,
-                opacity=0.9,
-                line=dict(color="rgba(0,0,0,0.8)", width=2),
-                symbol="circle",
-            ),
-            text=asset_ids,
-            hovertext=hover_texts,
-            hoverinfo="text",
-            textposition="top center",
-            textfont=dict(size=12, color="black"),
-            name="Assets",
-            visible=True,
-        )
-    )
+    # Add nodes with enhanced styling using the reusable helper function
+    node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
+    fig.add_trace(node_trace)
 
     fig.update_layout(
         title={
@@ -626,29 +547,12 @@ def _create_trace_for_group(
         z=edges_z,
         mode="lines",
         line=_get_line_style(rel_type, is_bidirectional),
-def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
-    """Generate dynamic title based on asset and relationship counts.
-
-    Args:
-        num_assets: Number of assets in the visualization
-        num_relationships: Number of visible relationships
-
-    Returns:
-        Formatted title string
-    """
-    return f"Financial Asset Network - {num_assets} Assets, {num_relationships} Relationships"
-
-
         hovertext=hover_texts,
         hoverinfo="text",
         name=_format_trace_name(rel_type, is_bidirectional),
         visible=True,
         legendgroup=rel_type,
     )
-
-    # Generate dynamic title and configure layout using helper functions
-    title_text = _generate_dynamic_title(len(asset_ids), visible_relationships)
-    _configure_layout(fig, title_text)
 
 
 def _create_relationship_traces(
@@ -871,39 +775,40 @@ def visualize_3d_graph_with_filters(
         if arrow_traces:
             fig.add_traces(arrow_traces)
 
-    # Add nodes with enhanced styling
-    fig.add_trace(
-        go.Scatter3d(
-            x=positions[:, 0],
-            y=positions[:, 1],
-            z=positions[:, 2],
-            mode="markers+text",
-            marker=dict(
-                size=15,
-                color=colors,
-                opacity=0.9,
-                line=dict(color="rgba(0,0,0,0.8)", width=2),
-                symbol="circle",
-            ),
-            text=asset_ids,
-            hovertext=hover_texts,
-            hoverinfo="text",
-            textposition="top center",
-            textfont=dict(size=12, color="black"),
-            name="Assets",
-            visible=True,
-        )
-    )
+    # Add nodes with enhanced styling using the reusable helper function
+    node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
+    fig.add_trace(node_trace)
 
     # Count visible relationships for dynamic title
     visible_relationships = (
         sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x")) // 3
     )
 
-    # Use helper functions for better modularity and reusability (addresses review feedback)
-    # Generate dynamic title based on asset and relationship counts
-    dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
-    # Configure layout using the reusable helper function
-    _configure_3d_layout(fig, dynamic_title)
+    fig.update_layout(
+        title={
+            "text": f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships",
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=1200,
+        height=800,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
+    )
 
     return fig
