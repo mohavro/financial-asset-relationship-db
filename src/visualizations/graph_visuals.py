@@ -863,6 +863,7 @@ def visualize_3d_graph_with_filters(
         }
     else:
 
+    # Use batch operation (add_traces) for better performance with multiple traces
     # Validate visualization data to prevent runtime errors
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
         # Show all relationships if the master toggle is on
