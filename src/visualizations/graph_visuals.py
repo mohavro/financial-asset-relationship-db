@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+import re
 import numpy as np
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
