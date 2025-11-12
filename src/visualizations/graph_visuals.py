@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 import numpy as np
 import plotly.graph_objects as go
