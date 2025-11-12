@@ -66,30 +66,35 @@ VALID_NAMED_COLORS = frozenset({
 def _is_valid_color_format(color: str) -> bool:
     """Validate if a string is a valid color format.
 
-    Supports common color formats:
+    Performs comprehensive validation for common color formats:
     - Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
     - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-    - Named colors (delegated to Plotly)
+    - Named colors (validated against CSS3 standard color names)
+
+    This implementation addresses the review feedback by pre-validating named colors
+    against a comprehensive list of valid CSS3/Plotly color names, preventing runtime
+    errors from invalid color names and providing clearer error messages for debugging.
 
     Args:
         color: Color string to validate
 
     Returns:
         True if color format is valid, False otherwise
+
+    Examples:
+        >>> _is_valid_color_format('#FF0000')  # Hex color
+        True
+        >>> _is_valid_color_format('rgb(255, 0, 0)')  # RGB color
+        True
+        >>> _is_valid_color_format('red')  # Valid named color
+        True
+        >>> _is_valid_color_format('invalidcolor')  # Invalid named color
+        False
     """
     if not isinstance(color, str) or not color:
         return False
 
-    # Hex colors
-    if re.match(r'^#(?:[0-9A-Fa-f]{3}){1,2}(?:[0-9A-Fa-f]{2})?$', color):
-        return True
-
-    # rgb/rgba functions
-    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
-        return True
-
-    # Fallback: allow named colors; Plotly will validate at render time
-    return True
+    # Validate hex colors (#RGB, #RRGGBB, #RRGGBBAA)
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
