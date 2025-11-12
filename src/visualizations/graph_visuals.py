@@ -46,7 +46,7 @@ def _is_valid_color_format(color: str) -> bool:
         return True
 
     # rgb/rgba functions
-    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
+    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
         return True
 
     # Fallback: allow named colors; Plotly will validate at render time
@@ -75,30 +75,9 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Thread safety:
-    This function is thread-safe for concurrent reads ONLY under these conditions:
-
-    SAFE scenarios:
-    - Multiple threads call this function simultaneously on the same graph object
-    - The graph.relationships dictionary is NOT modified during execution
-    - Read-only access to graph data (no concurrent writes)
-
-    UNSAFE scenarios (will cause data races, inconsistent results, or RuntimeError):
-    - Any thread modifies graph.relationships while this function executes
-    - Concurrent additions/removals of relationships
-    - Dictionary size changes during iteration (raises RuntimeError)
-
-    To ensure thread safety in multi-threaded environments:
-    1. Use immutable graph objects (recommended for visualization workflows)
-    2. Implement external synchronization with threading.Lock:
-       ```python
-       with graph_lock:
-           index = _build_relationship_index(graph, asset_ids)
-       ```
-    3. Separate modification and visualization phases (no concurrent writes during reads)
-    4. Use copy-on-write patterns if graph must be modified during visualization
-
-    The function itself does not modify shared state and creates new local data structures.
+    Thread safety (addressing review feedback):
+    - Creates and returns a new dictionary (no shared state modification)
+    - Reads graph.relationships without mutating it
 
     Args:
         graph: The asset relationship graph
@@ -106,8 +85,34 @@ def _build_relationship_index(
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
+
+    Raises:
+        ValueError: If graph is invalid, lacks relationships attribute, or asset_ids is invalid
     """
-    asset_ids_set = set(asset_ids)
+    # Input validation: Check graph integrity
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise ValueError(
+            f"Invalid input data: graph must be an AssetRelationshipGraph instance, got {type(graph).__name__}"
+        )
+    if not hasattr(graph, "relationships"):
+        raise ValueError("Invalid input data: graph must have a 'relationships' attribute")
+    if not isinstance(graph.relationships, dict):
+        raise ValueError(
+            f"Invalid input data: graph.relationships must be a dictionary, got {type(graph.relationships).__name__}"
+        )
+
+    # Input validation: Check asset_ids integrity
+    try:
+        asset_ids_list = list(asset_ids)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Invalid input data: asset_ids must be an iterable") from exc
+
+    if not asset_ids_list:
+        raise ValueError("Invalid input data: asset_ids must be a non-empty iterable")
+    if not all(isinstance(aid, str) and aid for aid in asset_ids_list):
+        raise ValueError("Invalid input data: asset_ids must contain non-empty strings")
+
+    asset_ids_set = set(asset_ids_list)
 
     # Pre-filter relationships to only include relevant source_ids
     relevant_relationships = {
@@ -138,10 +143,6 @@ def _create_node_trace(
     - asset_ids is a list/tuple of non-empty strings with length matching positions
     - colors is a list/tuple of valid color strings with length matching positions
     - hover_texts is a list/tuple of strings with length matching positions
-    # Edge case: Check for empty inputs before detailed validation
-    if isinstance(positions, np.ndarray) and positions.shape[0] == 0:
-        raise ValueError("positions array cannot be empty")
-
 
     Args:
         positions: NumPy array of node positions with shape (n, 3) containing finite numeric values
@@ -164,11 +165,6 @@ def _create_node_trace(
     if not isinstance(colors, (list, tuple)):
         raise ValueError(f"colors must be a list or tuple, got {type(colors).__name__}")
     if not isinstance(hover_texts, (list, tuple)):
-
-    # Edge case: Ensure we have at least one node to visualize
-    if len(asset_ids) == 0:
-        raise ValueError("Cannot create node trace with empty asset_ids list")
-
         raise ValueError(f"hover_texts must be a list or tuple, got {type(hover_texts).__name__}")
 
     # Validate dimensions and alignment before detailed validation
@@ -501,12 +497,9 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
 
 
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
-    """Get line style configuration for a relationship with validated color."""
-    color = REL_TYPE_COLORS[rel_type]
-    if not _is_valid_color_format(color):
-        raise ValueError(f"Invalid color format for relationship type '{rel_type}': '{color}'")
+    """Get line style configuration for a relationship."""
     return dict(
-        color=color,
+        color=REL_TYPE_COLORS[rel_type],
         width=4 if is_bidirectional else 2,
         dash="solid" if is_bidirectional else "dash",
     )
