@@ -1,4 +1,5 @@
 import logging
+import math
 import re
 import threading
 from collections import defaultdict
@@ -27,74 +28,34 @@ REL_TYPE_COLORS = defaultdict(
     },
 )
 
-# Valid CSS3/Plotly named colors for validation
-# Comprehensive list of standard CSS3 color names supported by Plotly
-VALID_NAMED_COLORS = frozenset({
-    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
-    'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood',
-    'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
-    'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki',
-    'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon',
-    'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise',
-    'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
-    'firebrick', 'floralwhite', 'forestgreen', 'fuchsia',
-    'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'grey', 'green', 'greenyellow',
-    'honeydew', 'hotpink',
-    'indianred', 'indigo', 'ivory',
-    'khaki',
-    'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral',
-    'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgrey', 'lightgreen', 'lightpink',
-    'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey',
-    'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen',
-    'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple',
-    'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise',
-    'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin',
-    'navajowhite', 'navy',
-    'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid',
-    'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff',
-    'peru', 'pink', 'plum', 'powderblue', 'purple',
-    'rebeccapurple', 'red', 'rosybrown', 'royalblue',
-    'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue',
-    'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue',
-    'tan', 'teal', 'thistle', 'tomato', 'turquoise',
-    'violet',
-    'wheat', 'white', 'whitesmoke',
-    'yellow', 'yellowgreen',
-})
-
 
 def _is_valid_color_format(color: str) -> bool:
     """Validate if a string is a valid color format.
 
-    Performs comprehensive validation for common color formats:
+    Supports common color formats:
     - Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
     - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-    - Named colors (validated against CSS3 standard color names)
-
-    This implementation addresses the review feedback by pre-validating named colors
-    against a comprehensive list of valid CSS3/Plotly color names, preventing runtime
-    errors from invalid color names and providing clearer error messages for debugging.
+    - Named colors (delegated to Plotly)
 
     Args:
         color: Color string to validate
 
     Returns:
         True if color format is valid, False otherwise
-
-    Examples:
-        >>> _is_valid_color_format('#FF0000')  # Hex color
-        True
-        >>> _is_valid_color_format('rgb(255, 0, 0)')  # RGB color
-        True
-        >>> _is_valid_color_format('red')  # Valid named color
-        True
-        >>> _is_valid_color_format('invalidcolor')  # Invalid named color
-        False
     """
     if not isinstance(color, str) or not color:
         return False
 
-    # Validate hex colors (#RGB, #RRGGBB, #RRGGBBAA)
+    # Hex colors
+    if re.match(r'^#(?:[0-9A-Fa-f]{3}){1,2}(?:[0-9A-Fa-f]{2})?$', color):
+        return True
+
+    # rgb/rgba functions
+    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
+        return True
+
+    # Fallback: allow named colors; Plotly will validate at render time
+    return True
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
@@ -105,15 +66,7 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def _build_relationship_index(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Dict[Tuple[str, str, str], float]:
-    """
-
-    Error Handling (addresses review feedback):
-    ==========================================
-    This function implements comprehensive error handling for all input parameters:
-    - Validates that asset_ids is iterable and contains only strings
-    - Validates that graph.relationships exists and is a properly formatted dictionary
-    - Validates the structure and data types of all relationship entries
-    """Build optimized relationship index for O(1) lookups with comprehensive error handling, pre-filtering and thread safety.
+    """Build optimized relationship index for O(1) lookups with pre-filtering and thread safety.
 
     This function consolidates relationship data into a single index structure
     that can be efficiently queried for:
@@ -147,14 +100,6 @@ def _build_relationship_index(
 
     Note: All functions that access graph.relationships should use the same lock
     (_graph_access_lock) to ensure consistent synchronization across the codebase.
-    Error Handling:
-    ===============
-    This function implements comprehensive error handling to ensure robustness:
-    - Validates that asset_ids is iterable and contains only strings
-    - Validates that graph.relationships exists and is a properly formatted dictionary
-    - Validates each relationship tuple has the correct structure (3 elements)
-    - Validates data types for target_id (string), rel_type (string), and strength (numeric)
-
 
     Args:
         graph: The asset relationship graph
@@ -217,22 +162,16 @@ def _build_relationship_index(
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
     # Process relationships with comprehensive error handling
-    # Validate source_id keys are strings
-    for source_id in relevant_relationships.keys():
-        if not isinstance(source_id, str):
-            raise TypeError(
-                f"Invalid graph data: source_id must be a string, "
-                f"got {type(source_id).__name__}"
-            )
-        # Validate source_id is a string
-        if not isinstance(source_id, str):
-            raise TypeError(
-                f"Invalid graph data: source_id must be a string, "
-                f"got {type(source_id).__name__}"
-            )
-
-        # Validate source_id is not empty
     for source_id, rels in relevant_relationships.items():
+        # Validate source_id is a non-empty string
+        if not isinstance(source_id, str):
+            raise TypeError(
+                f"Invalid graph data: source_id must be a string, "
+                f"got {type(source_id).__name__}"
+            )
+        if not source_id:
+            raise ValueError("Invalid graph data: source_id cannot be an empty string")
+
         # Validate that rels is iterable
         if not isinstance(rels, (list, tuple)):
             raise TypeError(
@@ -257,18 +196,28 @@ def _build_relationship_index(
 
             target_id, rel_type, strength = rel
 
-            # Validate target_id type
+            # Validate target_id type and non-empty
             if not isinstance(target_id, str):
                 raise TypeError(
                     f"Invalid graph data: target_id at index {idx} for source_id '{source_id}' "
                     f"must be a string, got {type(target_id).__name__}"
                 )
+            if not target_id:
+                raise ValueError(
+                    f"Invalid graph data: target_id at index {idx} for source_id '{source_id}' "
+                    f"cannot be an empty string"
+                )
 
-            # Validate rel_type type
+            # Validate rel_type type and non-empty
             if not isinstance(rel_type, str):
                 raise TypeError(
                     f"Invalid graph data: rel_type at index {idx} for source_id '{source_id}' "
                     f"must be a string, got {type(rel_type).__name__}"
+                )
+            if not rel_type:
+                raise ValueError(
+                    f"Invalid graph data: rel_type at index {idx} for source_id '{source_id}' "
+                    f"cannot be an empty string"
                 )
 
             # Validate and convert strength to float
@@ -279,6 +228,13 @@ def _build_relationship_index(
                     f"Invalid graph data: strength at index {idx} for source_id '{source_id}' "
                     f"must be numeric (got {type(strength).__name__} with value '{strength}')"
                 ) from exc
+
+            # Validate strength is finite (not NaN or Inf)
+            if not math.isfinite(strength_float):
+                raise ValueError(
+                    f"Invalid graph data: strength at index {idx} for source_id '{source_id}' "
+                    f"must be a finite number (got {strength_float})"
+                )
 
             # Add to index if target is in asset_ids_set
             if target_id in asset_ids_set:
@@ -296,16 +252,10 @@ def _create_node_trace(
     """Create node trace for 3D visualization with comprehensive input validation.
 
     Validates all inputs to ensure:
-    - positions is a NumPy array with correct dimensions (n, 3) where n > 0
-    - positions contains only finite numeric values (no NaN or Inf)
-    - positions dtype is numeric (int or float)
-    - asset_ids is a list or tuple of the same length as positions
-    - asset_ids contains only non-empty strings
-    - asset_ids has no duplicate values
-    - colors is a list or tuple of the same length as positions
-    - colors contains only valid color format strings (hex, rgb/rgba, or named colors)
-    - hover_texts is a list or tuple of the same length as positions
-    - hover_texts contains only non-empty strings
+    - positions is a non-empty 2D numpy array with shape (n, 3) containing finite numeric values
+    - asset_ids is a non-empty list/tuple of non-empty strings with length matching positions
+    - colors is a non-empty list/tuple of valid color strings with length matching positions
+    - hover_texts is a non-empty list/tuple of strings with length matching positions
     - All arrays have consistent lengths
     - No duplicate asset IDs
 
@@ -523,47 +473,11 @@ def _validate_positions_array(positions: np.ndarray) -> None:
         )
 
 
-def _validate_asset_ids_list(asset_ids: List[str]) -> None:
-    """Validate asset_ids list structure and content."""
-    if not isinstance(asset_ids, (list, tuple)):
-        raise ValueError(
-            f"Invalid graph data: asset_ids must be a list or tuple, got {type(asset_ids).__name__}"
-        )
-    if not all(isinstance(a, str) and a for a in asset_ids):
-        raise ValueError("Invalid graph data: asset_ids must contain non-empty strings")
-
-
-def _validate_colors_list(colors: List[str], expected_length: int) -> None:
-    """Validate colors list structure, content, and format."""
-    if not isinstance(colors, (list, tuple)) or len(colors) != expected_length:
-        colors_type = type(colors).__name__
-        colors_len = len(colors) if isinstance(colors, (list, tuple)) else 'N/A'
-        raise ValueError(
-            f"Invalid graph data: colors must be a list/tuple of length {expected_length}, "
-            f"got {colors_type} with length {colors_len}"
-        )
-    if not all(isinstance(c, str) and c for c in colors):
-        raise ValueError("Invalid graph data: colors must contain non-empty strings")
-
-    for i, color in enumerate(colors):
-        if not _is_valid_color_format(color):
-            raise ValueError(f"Invalid graph data: colors[{i}] has invalid color format: '{color}'")
-
-
-def _validate_hover_texts_list(hover_texts: List[str], expected_length: int) -> None:
-    """Validate hover_texts list structure and content."""
-    if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != expected_length:
-        raise ValueError(
-            f"Invalid graph data: hover_texts must be a list/tuple of length {expected_length}"
-        )
-    if not all(isinstance(h, str) and h for h in hover_texts):
-        raise ValueError("Invalid graph data: hover_texts must contain non-empty strings")
-
-
 def _validate_asset_ids_uniqueness(asset_ids: List[str]) -> None:
     """Validate that asset IDs are unique."""
     unique_count = len(set(asset_ids))
     if unique_count != len(asset_ids):
+        # Find duplicates deterministically for better error messages
         seen_ids: Set[str] = set()
         dup_ids: List[str] = []
         for aid in asset_ids:
@@ -574,7 +488,6 @@ def _validate_asset_ids_uniqueness(asset_ids: List[str]) -> None:
         dup_str = ", ".join(dup_ids)
         raise ValueError(f"Invalid graph data: duplicate asset_ids detected: {dup_str}")
 
-
 def _validate_visualization_data(
     positions: np.ndarray,
     asset_ids: List[str],
@@ -582,17 +495,61 @@ def _validate_visualization_data(
     hover_texts: List[str],
 ) -> None:
     """Validate visualization data integrity to prevent runtime errors."""
-    _validate_positions_array(positions)
-    _validate_asset_ids_list(asset_ids)
+    # Validate positions array
+    if not isinstance(positions, np.ndarray):
+        raise ValueError(
+            f"Invalid graph data: positions must be a numpy array, got {type(positions).__name__}"
+        )
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError(
+            f"Invalid graph data: Expected positions to be a (n, 3) numpy array, got array with shape {positions.shape}"
+        )
+    if not np.issubdtype(positions.dtype, np.number):
+        raise ValueError(
+            f"Invalid graph data: positions must contain numeric values, got dtype {positions.dtype}"
+        )
+    if not np.isfinite(positions).all():
+        nan_count = int(np.isnan(positions).sum())
+        inf_count = int(np.isinf(positions).sum())
+        raise ValueError(
+            f"Invalid graph data: positions must contain finite values (no NaN or Inf). Found {nan_count} NaN and {inf_count} Inf"
+        )
 
+    # Validate asset_ids
+    if not isinstance(asset_ids, (list, tuple)):
+        raise ValueError(
+            f"Invalid graph data: asset_ids must be a list or tuple, got {type(asset_ids).__name__}"
+        )
+    if not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("Invalid graph data: asset_ids must contain non-empty strings")
+
+    # Validate length consistency
     n = len(asset_ids)
     if positions.shape[0] != n:
         raise ValueError(
             f"Invalid graph data: positions length ({positions.shape[0]}) must match asset_ids length ({n})"
         )
+    if not isinstance(colors, (list, tuple)) or len(colors) != n:
+        colors_type = type(colors).__name__
+        colors_len = len(colors) if isinstance(colors, (list, tuple)) else 'N/A'
+        raise ValueError(
+            f"Invalid graph data: colors must be a list/tuple of length {n}, "
+            f"got {colors_type} with length {colors_len}"
+        )
+    if not all(isinstance(c, str) and c for c in colors):
+        raise ValueError("Invalid graph data: colors must contain non-empty strings")
+    # Validate color formats
+    for i, color in enumerate(colors):
+        if not _is_valid_color_format(color):
+            raise ValueError(f"Invalid graph data: colors[{i}] has invalid color format: '{color}'")
+    if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
+        raise ValueError(
+            f"Invalid graph data: hover_texts must be a list/tuple of length {n}"
+        )
+    if not all(isinstance(h, str) and h for h in hover_texts):
+        raise ValueError("Invalid graph data: hover_texts must contain non-empty strings")
 
-    _validate_colors_list(colors, n)
-    _validate_hover_texts_list(hover_texts, n)
+    # Validate unique asset IDs
     _validate_asset_ids_uniqueness(asset_ids)
 
 
