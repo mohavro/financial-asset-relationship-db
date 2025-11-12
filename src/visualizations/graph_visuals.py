@@ -243,7 +243,11 @@ def _add_directional_arrows_to_figure(
 
 
 def _configure_3d_layout(
-    fig: go.Figure, title: str, width: int = 1200, height: int = 800
+    fig: go.Figure,
+    title: str,
+    width: int = 1200,
+    height: int = 800,
+    gridcolor: str = "rgba(200, 200, 200, 0.3)",
 ) -> None:
     """Configure the 3D layout for the figure.
 
