@@ -149,6 +149,17 @@ def _create_node_trace(
         x=positions[:, 0],
         y=positions[:, 1],
         z=positions[:, 2],
+
+    # Validate colors content (addresses review feedback)
+    for i, color in enumerate(colors):
+        if not isinstance(color, str) or not color:
+            raise ValueError(f"colors[{i}] must be a non-empty string, got {type(color).__name__}")
+        if not _is_valid_color(color):
+            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
+
+    # Validate hover_texts content (addresses review feedback)
+    for i, hover_text in enumerate(hover_texts):
+        if not isinstance(hover_text, str):
         mode="markers+text",
         marker=dict(
             size=15,
