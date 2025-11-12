@@ -698,44 +698,23 @@ def _create_directional_arrows(
     return [arrow_trace]
 
 
-def _validate_filter_parameters(
-    show_same_sector: bool,
-    show_market_cap: bool,
-    show_correlation: bool,
-    show_corporate_bond: bool,
-    show_commodity_currency: bool,
-    show_income_comparison: bool,
-    show_regulatory: bool,
-    show_all_relationships: bool,
-    toggle_arrows: bool,
-) -> None:
+def _validate_filter_parameters(filter_params: Dict[str, bool]) -> None:
     """Validate that all filter parameters are boolean values.
 
     Args:
-        show_same_sector: Filter for same sector relationships
-        show_market_cap: Filter for market cap relationships
-        show_correlation: Filter for correlation relationships
-        show_corporate_bond: Filter for corporate bond relationships
-        show_commodity_currency: Filter for commodity currency relationships
-        show_income_comparison: Filter for income comparison relationships
-        show_regulatory: Filter for regulatory relationships
-        show_all_relationships: Master toggle for all relationships
-        toggle_arrows: Toggle for directional arrows
+        filter_params: Dictionary mapping filter parameter names to their boolean values.
+            Expected keys: show_same_sector, show_market_cap, show_correlation,
+            show_corporate_bond, show_commodity_currency, show_income_comparison,
+            show_regulatory, show_all_relationships, toggle_arrows
 
     Raises:
-        TypeError: If any parameter is not a boolean
+        TypeError: If any parameter is not a boolean or if filter_params is not a dictionary
     """
-    filter_params = {
-        "show_same_sector": show_same_sector,
-        "show_market_cap": show_market_cap,
-        "show_correlation": show_correlation,
-        "show_corporate_bond": show_corporate_bond,
-        "show_commodity_currency": show_commodity_currency,
-        "show_income_comparison": show_income_comparison,
-        "show_regulatory": show_regulatory,
-        "show_all_relationships": show_all_relationships,
-        "toggle_arrows": toggle_arrows,
-    }
+    if not isinstance(filter_params, dict):
+        raise TypeError(
+            f"Invalid filter configuration: filter_params must be a dictionary, "
+            f"got {type(filter_params).__name__}"
+        )
 
     invalid_params = [
         name for name, value in filter_params.items() if not isinstance(value, bool)
@@ -794,19 +773,21 @@ def visualize_3d_graph_with_filters(
             "with get_3d_visualization_data_enhanced method"
         )
 
-    # Validate filter parameters
+    # Build filter parameters dictionary and validate
+    filter_params = {
+        "show_same_sector": show_same_sector,
+        "show_market_cap": show_market_cap,
+        "show_correlation": show_correlation,
+        "show_corporate_bond": show_corporate_bond,
+        "show_commodity_currency": show_commodity_currency,
+        "show_income_comparison": show_income_comparison,
+        "show_regulatory": show_regulatory,
+        "show_all_relationships": show_all_relationships,
+        "toggle_arrows": toggle_arrows,
+    }
+
     try:
-        _validate_filter_parameters(
-            show_same_sector,
-            show_market_cap,
-            show_correlation,
-            show_corporate_bond,
-            show_commodity_currency,
-            show_income_comparison,
-            show_regulatory,
-            show_all_relationships,
-            toggle_arrows,
-        )
+        _validate_filter_parameters(filter_params)
     except TypeError as exc:
         logger.error("Invalid filter configuration: %s", exc)
         raise
