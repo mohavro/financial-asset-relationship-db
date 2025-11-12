@@ -945,18 +945,12 @@ def visualize_3d_graph_with_filters(
         logger.exception("Failed to create or add node trace: %s", exc)
         raise ValueError("Failed to create node visualization") from exc
 
-    # Calculate visible relationships count
-    visible_relationships = 0
+    # Configure layout with dynamic title based on visible relationships
     try:
-        visible_relationships = (
-            sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
+        visible_relationships = _calculate_visible_relationships(relationship_traces)
+        dynamic_title = _prepare_layout_configuration(
+            num_assets=len(asset_ids), num_relationships=visible_relationships
         )
-    except Exception as exc:  # pylint: disable=broad-except
-        logger.exception("Failed to compute visible relationships count: %s", exc)
-
-    # Configure layout
-    try:
-        dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
         _configure_3d_layout(fig, dynamic_title)
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to configure figure layout: %s", exc)
