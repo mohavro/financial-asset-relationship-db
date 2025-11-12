@@ -641,6 +641,7 @@ def _create_directional_arrows(
     # Build relationship index once for O(1) lookups (optimization per review comment)
     relationship_index = _build_relationship_index(graph, asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
+    # Batch add traces to reduce per-call overhead
 
     source_indices: List[int] = []
     target_indices: List[int] = []
