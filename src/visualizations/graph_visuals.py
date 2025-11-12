@@ -23,6 +23,40 @@ REL_TYPE_COLORS = defaultdict(
     },
 )
 
+# CSS/Plotly named colors (comprehensive list for validation)
+VALID_NAMED_COLORS = {
+    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
+    'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood',
+    'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
+    'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki',
+    'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon',
+    'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise',
+    'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
+    'firebrick', 'floralwhite', 'forestgreen', 'fuchsia',
+    'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'grey', 'green', 'greenyellow',
+    'honeydew', 'hotpink',
+    'indianred', 'indigo', 'ivory',
+    'khaki',
+    'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral',
+    'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgrey', 'lightgreen', 'lightpink',
+    'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey',
+    'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen',
+    'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple',
+    'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise',
+    'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin',
+    'navajowhite', 'navy',
+    'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid',
+    'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff',
+    'peru', 'pink', 'plum', 'powderblue', 'purple',
+    'rebeccapurple', 'red', 'rosybrown', 'royalblue',
+    'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue',
+    'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue',
+    'tan', 'teal', 'thistle', 'tomato', 'transparent', 'turquoise',
+    'violet',
+    'wheat', 'white', 'whitesmoke',
+    'yellow', 'yellowgreen'
+}
+
 
 def _is_valid_color_format(color: str) -> bool:
     """Validate if a string is a valid color format.
@@ -30,7 +64,8 @@ def _is_valid_color_format(color: str) -> bool:
     Supports common color formats:
     - Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
     - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-    - Named colors (delegated to Plotly)
+    - HSL/HSLA (e.g., 'hsl(120,100%,50%)', 'hsla(120,100%,50%,0.5)')
+    - CSS/Plotly named colors (e.g., 'red', 'blue', 'transparent')
 
     Args:
         color: Color string to validate
@@ -41,16 +76,30 @@ def _is_valid_color_format(color: str) -> bool:
     if not isinstance(color, str) or not color:
         return False
 
-    # Hex colors
+    # Normalize color string for validation
+    color_lower = color.lower().strip()
+
+    # Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
     if re.match(r'^#(?:[0-9A-Fa-f]{3}){1,2}(?:[0-9A-Fa-f]{2})?$', color):
         return True
 
-    # rgb/rgba functions
-    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
+    # rgb/rgba functions with numeric values (0-255)
+    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color_lower):
         return True
 
-    # Fallback: allow named colors; Plotly will validate at render time
-    return True
+    # rgb/rgba functions with percentage values
+    if re.match(r'^rgba?\(\s*\d+%\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d.]+\s*)?\)$', color_lower):
+        return True
+
+    # hsl/hsla functions
+    if re.match(r'^hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d.]+\s*)?\)$', color_lower):
+        return True
+
+    # CSS/Plotly named colors
+    if color_lower in VALID_NAMED_COLORS:
+        return True
+
+    return False
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
@@ -85,34 +134,8 @@ def _build_relationship_index(
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
-
-    Raises:
-        ValueError: If graph is invalid, lacks relationships attribute, or asset_ids is invalid
     """
-    # Input validation: Check graph integrity
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise ValueError(
-            f"Invalid input data: graph must be an AssetRelationshipGraph instance, got {type(graph).__name__}"
-        )
-    if not hasattr(graph, "relationships"):
-        raise ValueError("Invalid input data: graph must have a 'relationships' attribute")
-    if not isinstance(graph.relationships, dict):
-        raise ValueError(
-            f"Invalid input data: graph.relationships must be a dictionary, got {type(graph.relationships).__name__}"
-        )
-
-    # Input validation: Check asset_ids integrity
-    try:
-        asset_ids_list = list(asset_ids)
-    except (TypeError, ValueError) as exc:
-        raise ValueError("Invalid input data: asset_ids must be an iterable") from exc
-
-    if not asset_ids_list:
-        raise ValueError("Invalid input data: asset_ids must be a non-empty iterable")
-    if not all(isinstance(aid, str) and aid for aid in asset_ids_list):
-        raise ValueError("Invalid input data: asset_ids must contain non-empty strings")
-
-    asset_ids_set = set(asset_ids_list)
+    asset_ids_set = set(asset_ids)
 
     # Pre-filter relationships to only include relevant source_ids
     relevant_relationships = {
@@ -185,6 +208,7 @@ def _create_node_trace(
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
 
     # Additional color format validation (beyond non-empty string checks)
+    # This prevents runtime errors in Plotly rendering by ensuring all colors are valid
     for i, color in enumerate(colors):
         if not _is_valid_color_format(color):
             raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
@@ -201,27 +225,6 @@ def _create_node_trace(
             line=dict(color="rgba(0,0,0,0.8)", width=2),
             symbol="circle",
         ),
-
-def _generate_dynamic_title(
-    base_title: str,
-    num_assets: Optional[int] = None,
-    num_relationships: Optional[int] = None,
-) -> str:
-    """Generate dynamic title with asset and relationship counts.
-
-    Args:
-        base_title: Base title text (e.g., "Financial Asset Network")
-        num_assets: Number of assets to display (optional)
-        num_relationships: Number of relationships to display (optional)
-
-    Returns:
-        Formatted title string with counts if provided
-    """
-    if num_assets is not None and num_relationships is not None:
-        return f"{base_title} - {num_assets} Assets, {num_relationships} Relationships"
-    if num_assets is not None:
-        return f"{base_title} - {num_assets} Assets"
-    return base_title
         text=asset_ids,
         hovertext=hover_texts,
         hoverinfo="text",
@@ -518,13 +521,9 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
 
 
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
-    """Get line style configuration for a relationship with color validation."""
-    color = REL_TYPE_COLORS[rel_type]
-    if not _is_valid_color_format(color):
-        logger.warning("Invalid color format '%s' for relationship type '%s', using default gray", color, rel_type)
-        color = "#888888"
+    """Get line style configuration for a relationship."""
     return dict(
-        color=color,
+        color=REL_TYPE_COLORS[rel_type],
         width=4 if is_bidirectional else 2,
         dash="solid" if is_bidirectional else "dash",
     )
