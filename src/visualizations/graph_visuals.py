@@ -1,6 +1,5 @@
 import logging
 import re
-import threading
 from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -9,9 +8,6 @@ import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 logger = logging.getLogger(__name__)
-
-# Thread-safe lock for protecting concurrent access to graph.relationships
-_graph_relationships_lock = threading.RLock()
 
 # Color and style mapping for relationship types (shared constant)
 REL_TYPE_COLORS = defaultdict(
@@ -56,11 +52,13 @@ def _is_valid_color_format(color: str) -> bool:
     # Fallback: allow named colors; Plotly will validate at render time
     return True
 
+
 def _sanitize_colors(colors: List[str], default_color: str = "#888888") -> List[str]:
     """Sanitize color list by replacing invalid colors with a default color.
 
     This function provides a defensive approach to color validation, ensuring that
     invalid color values don't cause runtime errors during visualization rendering.
+    It addresses the review feedback about validating colors in marker configuration.
 
     Args:
         colors: List of color strings to validate and sanitize
@@ -101,35 +99,34 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Thread Safety Implementation:
-    This function implements explicit thread-safe access to graph.relationships
-    using a module-level RLock (_graph_relationships_lock). The lock ensures that:
-    1. Multiple threads can safely read graph.relationships concurrently
-    2. No data races occur when accessing relationship data
-    3. Consistent state is maintained during index building
-
-    The RLock (reentrant lock) allows the same thread to acquire the lock multiple
-    times, which is useful if this function is called from code that already holds
-    the lock.
+    Thread Safety and Data Integrity:
+    - Creates and returns a new dictionary (no shared state modification)
+    - Reads graph.relationships without mutating it
+    - Function itself does not modify any shared state
 
     Thread safety guarantees:
-    - SAFE: Multiple threads can call this function simultaneously
-    - SAFE: Concurrent reads of graph.relationships are protected by the lock
-    - SAFE: Function can be called from code that already holds _graph_relationships_lock
+    This function is thread-safe for concurrent execution ONLY under these conditions:
+    1. The graph.relationships dictionary is NOT modified during execution
+    2. Multiple threads can safely call this function simultaneously IF AND ONLY IF
+       the graph object remains immutable
 
-    Locking mechanism:
-    - Uses threading.RLock for reentrant locking capability
-    - Lock is acquired before accessing graph.relationships
-    - Lock is automatically released via context manager (with statement)
-    - Lock scope is minimized to only cover relationship data access
+    NOT thread-safe when:
+    - graph.relationships is modified by any thread during execution
+    - This can cause data races, inconsistent states, or runtime errors
 
-    Performance considerations:
-    - Lock contention may occur under high concurrent load
-    - Consider using immutable graph objects if performance is critical
-    - Lock is held only during relationship data copying, not during processing
+    Recommendations for Multi-Threaded Environments:
+    1. PREFERRED: Use immutable graph objects (freeze graph.relationships after creation)
+    2. ALTERNATIVE: Implement external synchronization:
+       - Use threading.Lock or similar mechanism to protect graph access
+       - Ensure all reads/writes to graph.relationships are synchronized
+    3. AVOID: Modifying graph.relationships while any thread may be reading it
+
+    For multi-threaded environments with mutable graphs:
+    Note: If your application modifies the graph concurrently, you MUST implement
+    external locking or use immutable data structures to prevent race conditions.
 
     Args:
-        graph: The asset relationship graph (thread-safe access is guaranteed)
+        graph: The asset relationship graph (should be immutable in multi-threaded contexts)
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
 
     Returns:
@@ -168,16 +165,13 @@ def _build_relationship_index(
     if not all(isinstance(aid, str) for aid in asset_ids_set):
         raise ValueError("Invalid input: asset_ids must contain only string values")
 
-    # Thread-safe access to graph.relationships with synchronization lock
-    with _graph_access_lock:
-        # Pre-filter relationships to only include relevant source_ids
-        relevant_relationships = {
-            source_id: rels
-            for source_id, rels in graph.relationships.items()
-            if source_id in asset_ids_set
-        }
+    # Pre-filter relationships to only include relevant source_ids
+    relevant_relationships = {
+        source_id: rels
+        for source_id, rels in graph.relationships.items()
+        if source_id in asset_ids_set
+    }
 
-    # Build index outside the lock (no shared state access needed here)
     relationship_index: Dict[Tuple[str, str, str], float] = {}
     for source_id, rels in relevant_relationships.items():
         for target_id, rel_type, strength in rels:
@@ -246,6 +240,11 @@ def _create_node_trace(
     # Edge case validation: Ensure inputs are not empty
     if len(asset_ids) == 0:
         raise ValueError("Cannot create node trace with empty inputs (asset_ids length is 0)")
+
+    # Sanitize colors to prevent runtime errors (addresses review feedback)
+    # This provides a defensive fallback mechanism for invalid color values
+    sanitized_colors = _sanitize_colors(list(colors))
+
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
@@ -253,7 +252,7 @@ def _create_node_trace(
         mode="markers+text",
         marker=dict(
             size=15,
-            color=colors,
+            color=sanitized_colors,
             opacity=0.9,
             line=dict(color="rgba(0,0,0,0.8)", width=2),
             symbol="circle",
