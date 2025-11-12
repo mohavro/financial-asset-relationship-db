@@ -568,7 +568,7 @@ def _create_trace_for_group(
     )
 
 
-def _create_relationship_traces(
+def _create_relationship_traces_with_count(
     graph: AssetRelationshipGraph,
     positions: np.ndarray,
     asset_ids: List[str],
