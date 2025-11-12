@@ -72,16 +72,16 @@ def _create_node_trace(
     """Create node trace for 3D visualization.
 
     Args:
-        positions: NumPy array of node positions with shape (n, 3)
-        asset_ids: List of asset ID strings (must be non-empty strings)
-        colors: List of node colors (must match length of asset_ids)
-        hover_texts: List of hover texts (must match length of asset_ids)
+        positions: NumPy array of node positions with shape (n, 3) containing finite numeric values
+        asset_ids: List of asset ID strings (must be non-empty strings, length must match positions)
+        colors: List of node colors (length must match positions)
+        hover_texts: List of hover texts (length must match positions)
 
     Returns:
         Plotly Scatter3d trace for nodes
 
     Raises:
-        ValueError: If input parameters are invalid or have mismatched dimensions
+        ValueError: If input parameters are invalid, have mismatched dimensions, or contain invalid data
     """
     # Validate positions array
     if not isinstance(positions, np.ndarray):
@@ -280,6 +280,7 @@ def _add_directional_arrows_to_figure(
     """
     arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
     if arrow_traces:
+        # Use batch operation for better performance
         fig.add_traces(arrow_traces)
 
 
@@ -313,10 +314,10 @@ def _configure_3d_layout(
             "font": {"size": 16},
         },
         scene=dict(
-            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor=gridcolor),
-            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor=gridcolor),
-            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor=gridcolor),
-            bgcolor=bgcolor,
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
         ),
         width=width,
@@ -326,8 +327,8 @@ def _configure_3d_layout(
         legend=dict(
             x=0.02,
             y=0.98,
-            bgcolor=legend_bgcolor,
-            bordercolor=legend_bordercolor,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
             borderwidth=1,
         ),
     )
@@ -391,7 +392,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
-    # Validate visualization data to prevent runtime errors
+    # Validate visualization data to prevent runtime errors (addresses review feedback)
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
 
     fig = go.Figure()
@@ -681,7 +682,7 @@ def _create_relationship_traces(
     # Build asset ID index once for O(1) lookups throughout processing
     asset_id_index = _build_asset_id_index(asset_ids)
 
-    # Collect and group relationships in a single pass
+    # Collect and group relationships in a single pass (addressing review feedback)
     relationship_groups = _collect_and_group_relationships(
         graph, asset_ids, relationship_filters
     )
