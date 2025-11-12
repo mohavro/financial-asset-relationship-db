@@ -82,6 +82,9 @@ htmlcov/
 .tox/
 .hypothesis/
 
+# Frontend test coverage
+frontend/coverage/
+
 # Type checking
 .mypy_cache/
 .dmypy.json
