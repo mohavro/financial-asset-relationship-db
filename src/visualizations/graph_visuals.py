@@ -225,7 +225,10 @@ def _add_nodes_trace(fig: go.Figure, positions: np.ndarray, asset_ids: List[str]
 def _add_directional_arrows_to_figure(
     fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> None:
-    """Add directional arrows to the figure for unidirectional relationships.
+    """Add directional arrows to the figure for unidirectional relationships using batch operations.
+
+    Uses Plotly's add_traces (plural) method for efficient batch addition of traces,
+    which reduces overhead compared to multiple add_trace calls.
 
     Args:
         fig: Plotly figure to add arrows to
@@ -234,8 +237,9 @@ def _add_directional_arrows_to_figure(
         asset_ids: List of asset IDs
     """
     arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
-    for trace in arrow_traces:
-        fig.add_trace(trace)
+    if arrow_traces:
+        # Use batch operation for better performance
+        fig.add_traces(arrow_traces)
 
 
 def _configure_3d_layout(
