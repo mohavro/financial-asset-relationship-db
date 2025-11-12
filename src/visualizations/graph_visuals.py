@@ -424,6 +424,34 @@ def _configure_3d_layout(
     )
 
 
+def _validate_positions_array(positions: np.ndarray) -> None:
+    """Validate positions array structure and values."""
+    if not isinstance(positions, np.ndarray):
+        raise ValueError(
+            f"Invalid graph data: positions must be a numpy array, got {type(positions).__name__}"
+        )
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError(
+            f"Invalid graph data: Expected positions to be a (n, 3) numpy array, got array with shape {positions.shape}"
+        )
+    if not np.issubdtype(positions.dtype, np.number):
+        raise ValueError(
+            f"Invalid graph data: positions must contain numeric values, got dtype {positions.dtype}"
+        )
+    if not np.isfinite(positions).all():
+        nan_count = int(np.isnan(positions).sum())
+        inf_count = int(np.isinf(positions).sum())
+        raise ValueError(
+            f"Invalid graph data: positions must contain finite values (no NaN or Inf). Found {nan_count} NaN and {inf_count} Inf"
+        )
+
+
+def _validate_asset_ids_uniqueness(asset_ids: List[str]) -> None:
+    """Validate that asset IDs are unique."""
+    unique_count = len(set(asset_ids))
+    if unique_count != len(asset_ids):
+        # Find duplicates deterministically for better error messages
+
 def _validate_visualization_data(
     positions: np.ndarray,
     asset_ids: List[str],
