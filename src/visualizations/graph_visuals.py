@@ -79,6 +79,16 @@ def _create_node_trace(
     Returns:
         Plotly Scatter3d trace for nodes
 
+    Validates:
+    - positions: 2D NumPy array with shape (n, 3) containing finite numeric values
+    - asset_ids: List/tuple of n non-empty strings
+    - colors: List/tuple of n valid color format strings (hex, rgb, rgba, hsl, hsla)
+    - hover_texts: List/tuple of n strings (can be empty strings)
+    - All inputs must have matching lengths
+
+    Raises ValueError if any validation fails.
+
+
     Raises:
         ValueError: If input parameters are invalid, have mismatched dimensions, or contain invalid data
     """
