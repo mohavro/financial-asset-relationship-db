@@ -93,6 +93,7 @@ def _build_relationship_index(
     # Iterate only over relevant sources without building an intermediate dict
     # Snapshot keys to avoid concurrent mutation issues; copy rel lists per source
     relevant_sources = asset_ids_set.intersection(set(graph.relationships.keys()))
+    # Build index from filtered relationships (local dict, thread-safe)
     for source_id in relevant_sources:
         rels = tuple(graph.relationships.get(source_id, ()))
         for target_id, rel_type, strength in rels:
