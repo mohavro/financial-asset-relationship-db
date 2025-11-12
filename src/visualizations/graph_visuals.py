@@ -23,33 +23,6 @@ REL_TYPE_COLORS = defaultdict(
     },
 )
 
-# Common CSS/Plotly named colors (comprehensive whitelist for validation)
-VALID_NAMED_COLORS = frozenset({
-    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black',
-    'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse',
-    'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue',
-    'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki',
-    'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon',
-    'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise',
-    'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
-    'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite',
-    'gold', 'goldenrod', 'gray', 'grey', 'green', 'greenyellow', 'honeydew', 'hotpink',
-    'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen',
-    'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow',
-    'lightgray', 'lightgrey', 'lightgreen', 'lightpink', 'lightsalmon', 'lightseagreen',
-    'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow',
-    'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue',
-    'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen',
-    'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose',
-    'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange',
-    'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred',
-    'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red',
-    'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell',
-    'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow',
-    'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet',
-    'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen'
-})
-
 
 def _is_valid_color_format(color: str) -> bool:
     """Validate if a string is a valid color format.
@@ -57,8 +30,7 @@ def _is_valid_color_format(color: str) -> bool:
     Supports common color formats:
     - Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
     - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-    - HSL/HSLA (e.g., 'hsl(120,100%,50%)', 'hsla(120,100%,50%,0.5)')
-    - Named colors (comprehensive CSS/Plotly color names)
+    - Named colors (delegated to Plotly)
 
     Args:
         color: Color string to validate
@@ -69,47 +41,16 @@ def _is_valid_color_format(color: str) -> bool:
     if not isinstance(color, str) or not color:
         return False
 
-    color_lower = color.lower().strip()
-
-    # Hex colors: #RGB, #RRGGBB, #RRGGBBAA
-    if re.match(r'^#(?:[0-9a-f]{3}){1,2}(?:[0-9a-f]{2})?$', color_lower):
+    # Hex colors
+    if re.match(r'^#(?:[0-9A-Fa-f]{3}){1,2}(?:[0-9A-Fa-f]{2})?$', color):
         return True
 
-    # RGB/RGBA functions with validation of value ranges
-    rgb_match = re.match(
-        r'^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$',
-        color_lower
-    )
-    if rgb_match:
-        r, g, b = int(rgb_match.group(1)), int(rgb_match.group(2)), int(rgb_match.group(3))
-        if not (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255):
-            return False
-        if rgb_match.group(4):  # Alpha channel
-            alpha = float(rgb_match.group(4))
-            if not (0.0 <= alpha <= 1.0):
-                return False
+    # rgb/rgba functions
+    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
         return True
 
-    # HSL/HSLA functions
-    hsl_match = re.match(
-        r'^hsla?\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*(?:,\s*([\d.]+)\s*)?\)$',
-        color_lower
-    )
-    if hsl_match:
-        h, s, l = int(hsl_match.group(1)), int(hsl_match.group(2)), int(hsl_match.group(3))
-        if not (0 <= h <= 360 and 0 <= s <= 100 and 0 <= l <= 100):
-            return False
-        if hsl_match.group(4):  # Alpha channel
-            alpha = float(hsl_match.group(4))
-            if not (0.0 <= alpha <= 1.0):
-                return False
-        return True
-
-    # Named colors (case-insensitive)
-    if color_lower in VALID_NAMED_COLORS:
-        return True
-
-    return False
+    # Fallback: allow named colors; Plotly will validate at render time
+    return True
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
@@ -876,6 +817,34 @@ def _validate_filter_parameters(filter_params: Dict[str, bool]) -> None:
         )
 
 
+def _validate_relationship_filters(relationship_filters: Optional[Dict[str, bool]]) -> None:
+    """Validate relationship filter configuration.
+
+    Args:
+        relationship_filters: Optional dictionary mapping relationship types to visibility flags
+
+    Raises:
+        TypeError: If relationship_filters is not None and not a dictionary
+        ValueError: If relationship_filters contains invalid relationship types or non-boolean values
+    """
+    if relationship_filters is None:
+        return
+
+    if not isinstance(relationship_filters, dict):
+        raise TypeError(
+            f"Invalid filter configuration: relationship_filters must be a dictionary or None, "
+            f"got {type(relationship_filters).__name__}"
+        )
+
+    # Validate all values are boolean
+    invalid_values = [k for k, v in relationship_filters.items() if not isinstance(v, bool)]
+    if invalid_values:
+        raise ValueError(
+            f"Invalid filter configuration: relationship_filters must contain only boolean values. "
+            f"Invalid keys: {', '.join(invalid_values)}"
+        )
+
+
 def visualize_3d_graph_with_filters(
     graph: AssetRelationshipGraph,
     show_same_sector: bool = True,
@@ -941,9 +910,20 @@ def visualize_3d_graph_with_filters(
         logger.error("Invalid filter configuration: %s", exc)
         raise
 
-    # Build filter configuration
+    # Build filter configuration with validation
     try:
         if not show_all_relationships:
+            # Validate that at least one relationship type is enabled
+            individual_filters = [
+                show_same_sector, show_market_cap, show_correlation,
+                show_corporate_bond, show_commodity_currency,
+                show_income_comparison, show_regulatory
+            ]
+            if not any(individual_filters):
+                logger.warning(
+                    "All relationship filters are disabled. Visualization will show nodes only."
+                )
+
             relationship_filters = {
                 "same_sector": show_same_sector,
                 "market_cap_similar": show_market_cap,
@@ -953,15 +933,23 @@ def visualize_3d_graph_with_filters(
                 "income_comparison": show_income_comparison,
                 "regulatory_impact": show_regulatory,
             }
+            # Validate the constructed filter dictionary
+            _validate_relationship_filters(relationship_filters)
         else:
             relationship_filters = None
-    except Exception as exc:  # pylint: disable=broad-except
+    except (TypeError, ValueError) as exc:
         logger.exception("Failed to build filter configuration: %s", exc)
         raise ValueError("Invalid filter configuration") from exc
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Unexpected error building filter configuration: %s", exc)
+        raise ValueError("Failed to build filter configuration") from exc
 
     # Retrieve visualization data with error handling
     try:
         positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    except AttributeError as exc:
+        logger.exception("Graph missing required method: %s", exc)
+        raise ValueError("Graph does not support visualization data retrieval") from exc
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to retrieve visualization data from graph: %s", exc)
         raise ValueError("Failed to retrieve graph visualization data") from exc
@@ -973,6 +961,11 @@ def visualize_3d_graph_with_filters(
         logger.error("Invalid visualization data: %s", exc)
         raise
 
+    # Validate data is not empty
+    if len(asset_ids) == 0:
+        logger.warning("Graph contains no assets to visualize")
+        raise ValueError("Cannot create visualization: graph contains no assets")
+
     # Create figure
     fig = go.Figure()
 
@@ -981,9 +974,16 @@ def visualize_3d_graph_with_filters(
         relationship_traces = _create_relationship_traces(
             graph, positions, asset_ids, relationship_filters
         )
-    except Exception as exc:  # pylint: disable=broad-except
+    except (TypeError, ValueError) as exc:
         logger.exception(
             "Failed to create filtered relationship traces (filters: %s): %s",
+            relationship_filters,
+            exc
+        )
+        relationship_traces = []
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception(
+            "Unexpected error creating relationship traces (filters: %s): %s",
             relationship_filters,
             exc
         )
@@ -1000,8 +1000,11 @@ def visualize_3d_graph_with_filters(
     if toggle_arrows:
         try:
             arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
-        except Exception as exc:  # pylint: disable=broad-except
+        except (TypeError, ValueError) as exc:
             logger.exception("Failed to create directional arrows: %s", exc)
+            arrow_traces = []
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.exception("Unexpected error creating directional arrows: %s", exc)
             arrow_traces = []
 
         if arrow_traces:
@@ -1014,8 +1017,11 @@ def visualize_3d_graph_with_filters(
     try:
         node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
         fig.add_trace(node_trace)
+    except ValueError as exc:
+        logger.exception("Failed to create node trace: %s", exc)
+        raise ValueError("Failed to create node visualization") from exc
     except Exception as exc:  # pylint: disable=broad-except
-        logger.exception("Failed to create or add node trace: %s", exc)
+        logger.exception("Unexpected error creating or adding node trace: %s", exc)
         raise ValueError("Failed to create node visualization") from exc
 
     # Configure layout using centralized helper function
@@ -1025,7 +1031,11 @@ def visualize_3d_graph_with_filters(
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to configure figure layout: %s", exc)
         # Use fallback title if dynamic title generation fails
-        fallback_title = "Financial Asset Network"
-        _configure_3d_layout(fig, fallback_title)
+        try:
+            fallback_title = "Financial Asset Network"
+            _configure_3d_layout(fig, fallback_title)
+        except Exception as fallback_exc:  # pylint: disable=broad-except
+            logger.exception("Failed to apply fallback layout configuration: %s", fallback_exc)
+            # Continue with default Plotly layout
 
     return fig
