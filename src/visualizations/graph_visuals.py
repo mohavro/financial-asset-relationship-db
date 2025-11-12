@@ -613,6 +613,19 @@ def _create_trace_for_group(
         z=edges_z,
         mode="lines",
         line=_get_line_style(rel_type, is_bidirectional),
+def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
+    """Generate dynamic title based on asset and relationship counts.
+
+    Args:
+        num_assets: Number of assets in the visualization
+        num_relationships: Number of visible relationships
+
+    Returns:
+        Formatted title string
+    """
+    return f"Financial Asset Network - {num_assets} Assets, {num_relationships} Relationships"
+
+
         hovertext=hover_texts,
         hoverinfo="text",
         name=_format_trace_name(rel_type, is_bidirectional),
