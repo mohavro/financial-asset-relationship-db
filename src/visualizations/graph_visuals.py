@@ -28,7 +28,7 @@ def _is_valid_color_format(color: str) -> bool:
     - Named colors (e.g., 'red', 'blue')
     - Hex colors (e.g., '#FF0000', '#F00')
     - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-}
+
     Args:
         color: Color string to validate
 
