@@ -344,6 +344,11 @@ def _validate_visualization_data(
     if not all(isinstance(h, str) for h in hover_texts):
         raise ValueError("Invalid graph data: hover_texts must contain strings")
 
+    # Validate color formats to prevent runtime errors during rendering
+    for i, color in enumerate(colors):
+        if not _is_valid_color_format(color):
+            raise ValueError(f"Invalid graph data: colors[{i}] has invalid color format: '{color}'")
+
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
