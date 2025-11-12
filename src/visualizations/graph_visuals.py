@@ -10,9 +10,6 @@ from src.logic.asset_graph import AssetRelationshipGraph
 
 logger = logging.getLogger(__name__)
 
-# Thread lock for protecting concurrent access to graph.relationships
-_graph_access_lock = threading.RLock()
-
 # Color and style mapping for relationship types (shared constant)
 REL_TYPE_COLORS = defaultdict(
     lambda: "#888888",
@@ -50,35 +47,11 @@ def _is_valid_color_format(color: str) -> bool:
         return True
 
     # rgb/rgba functions
-    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
+    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
         return True
 
     # Fallback: allow named colors; Plotly will validate at render time
     return True
-
-
-def _sanitize_colors(colors: List[str], default_color: str = "#888888") -> List[str]:
-    """Sanitize color list by replacing invalid colors with a default color.
-
-    This function provides a defensive approach to color validation, ensuring that
-    invalid color values don't cause runtime errors during visualization rendering.
-    It addresses the review feedback about validating colors in marker configuration.
-
-    Args:
-        colors: List of color strings to validate and sanitize
-        default_color: Default color to use for invalid entries (default: "#888888" gray)
-
-    Returns:
-        List of validated colors with invalid entries replaced by default_color
-    """
-    sanitized = []
-    for i, color in enumerate(colors):
-        if not _is_valid_color_format(color):
-            logger.warning("Invalid color format at index %d: '%s'. Using default color.", i, color)
-            sanitized.append(default_color)
-        else:
-            sanitized.append(color)
-    return sanitized
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
@@ -104,21 +77,52 @@ def _build_relationship_index(
     - Reduces continue statements by filtering upfront
 
     Thread Safety and Data Integrity:
+    ==================================
+
+    IMPORTANT: This function implements defensive copying to mitigate race conditions,
+    but TRUE thread safety requires external synchronization in multi-threaded environments.
+
+    Current Implementation:
     - Creates and returns a new dictionary (no shared state modification)
-    - Reads graph.relationships without mutating it
+    - Creates a shallow copy of graph.relationships to protect against dictionary-level modifications
     - Function itself does not modify any shared state
-    - Uses threading.RLock (_graph_access_lock) to synchronize access to graph.relationships
-    - Protects against concurrent modifications during read operations
+    - Does NOT protect against modifications to nested list contents
 
     Thread safety guarantees:
-    This function is now thread-safe for concurrent execution:
-    1. Uses a reentrant lock (_graph_access_lock) to protect graph.relationships access
-    2. Multiple threads can safely call this function simultaneously
-    3. Prevents data races and inconsistent states from concurrent modifications
-    4. The lock is reentrant (RLock), allowing the same thread to acquire it multiple times
+    ✓ SAFE: Multiple threads calling this function concurrently (read-only operations)
+    ✓ SAFE: Concurrent reads from immutable graph objects
+    ✓ SAFE: Dictionary-level modifications (add/remove keys) during execution
 
-    Note: All functions that access graph.relationships should use the same lock
-    to ensure consistent synchronization across the codebase.
+    ✗ NOT SAFE: Concurrent modifications to relationship list contents
+    ✗ NOT SAFE: Modifying relationship tuples while this function is reading them
+    ✗ NOT SAFE: Without external locking in environments with mutable graphs
+
+    Recommendations for Multi-Threaded Environments:
+    =================================================
+
+    1. PREFERRED - Immutable Graph Objects:
+       Freeze graph.relationships after creation to eliminate race conditions.
+       Example:
+           import types
+           graph.relationships = types.MappingProxyType(graph.relationships)
+
+    2. ALTERNATIVE - External Synchronization:
+       Implement explicit locking around all graph access.
+       Example:
+           import threading
+           graph_lock = threading.RLock()
+
+           with graph_lock:
+               result = _build_relationship_index(graph, asset_ids)
+
+    3. AVOID - Concurrent Modifications Without Protection:
+       DO NOT modify graph.relationships while any thread may be reading it.
+       DO NOT assume defensive copying provides complete thread safety.
+       DO NOT rely on Python's GIL for data consistency guarantees.
+
+    WARNING: If your application modifies the graph concurrently, you MUST implement
+    one of the recommended approaches above to prevent race conditions, data corruption,
+    and runtime errors.
 
     Args:
         graph: The asset relationship graph (should be immutable in multi-threaded contexts)
@@ -160,22 +164,78 @@ def _build_relationship_index(
     if not all(isinstance(aid, str) for aid in asset_ids_set):
         raise ValueError("Invalid input: asset_ids must contain only string values")
 
-    # Thread-safe access to graph.relationships with synchronization lock
-    # Protects against concurrent modifications during read operations
-    with _graph_access_lock:
-        # Pre-filter relationships to only include relevant source_ids
-        relevant_relationships = {
-            source_id: rels
-            for source_id, rels in graph.relationships.items()
-            if source_id in asset_ids_set
-        }
+    # Defensive copying: Create a shallow copy of the relationships dictionary
+    # to protect against dictionary-level modifications (add/remove keys) during iteration.
+    # Note: This does NOT protect against modifications to the list contents themselves.
+    # For complete thread safety, use external locking or immutable data structures.
+    try:
+        relationships_snapshot = dict(graph.relationships)
+    except Exception as exc:  # pylint: disable=broad-except
+        raise ValueError(
+            f"Failed to create snapshot of graph.relationships: {exc}"
+        ) from exc
 
-    # Build index outside the lock (no shared state access)
+    # Pre-filter relationships to only include relevant source_ids
+    relevant_relationships = {
+        source_id: rels
+        for source_id, rels in relationships_snapshot.items()
+        if source_id in asset_ids_set
+    }
+
     relationship_index: Dict[Tuple[str, str, str], float] = {}
+
+    # Process relationships with comprehensive error handling
     for source_id, rels in relevant_relationships.items():
-        for target_id, rel_type, strength in rels:
+        # Validate that rels is iterable
+        if not isinstance(rels, (list, tuple)):
+            raise TypeError(
+                f"Invalid graph data: relationships for source_id '{source_id}' must be a list or tuple, "
+                f"got {type(rels).__name__}"
+            )
+
+        # Process each relationship with validation
+        for idx, rel in enumerate(rels):
+            # Validate relationship structure
+            if not isinstance(rel, (list, tuple)):
+                raise TypeError(
+                    f"Invalid graph data: relationship at index {idx} for source_id '{source_id}' "
+                    f"must be a list or tuple, got {type(rel).__name__}"
+                )
+
+            if len(rel) != 3:
+                raise ValueError(
+                    f"Invalid graph data: relationship at index {idx} for source_id '{source_id}' "
+                    f"must have exactly 3 elements (target_id, rel_type, strength), got {len(rel)} elements"
+                )
+
+            target_id, rel_type, strength = rel
+
+            # Validate target_id type
+            if not isinstance(target_id, str):
+                raise TypeError(
+                    f"Invalid graph data: target_id at index {idx} for source_id '{source_id}' "
+                    f"must be a string, got {type(target_id).__name__}"
+                )
+
+            # Validate rel_type type
+            if not isinstance(rel_type, str):
+                raise TypeError(
+                    f"Invalid graph data: rel_type at index {idx} for source_id '{source_id}' "
+                    f"must be a string, got {type(rel_type).__name__}"
+                )
+
+            # Validate and convert strength to float
+            try:
+                strength_float = float(strength)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid graph data: strength at index {idx} for source_id '{source_id}' "
+                    f"must be numeric (got {type(strength).__name__} with value '{strength}')"
+                ) from exc
+
+            # Add to index if target is in asset_ids_set
             if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+                relationship_index[(source_id, target_id, rel_type)] = strength_float
 
     return relationship_index
 
@@ -239,11 +299,6 @@ def _create_node_trace(
     # Edge case validation: Ensure inputs are not empty
     if len(asset_ids) == 0:
         raise ValueError("Cannot create node trace with empty inputs (asset_ids length is 0)")
-
-    # Sanitize colors to prevent runtime errors (addresses review feedback)
-    # This provides a defensive fallback mechanism for invalid color values
-    sanitized_colors = _sanitize_colors(list(colors))
-
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
@@ -251,7 +306,7 @@ def _create_node_trace(
         mode="markers+text",
         marker=dict(
             size=15,
-            color=sanitized_colors,
+            color=colors,
             opacity=0.9,
             line=dict(color="rgba(0,0,0,0.8)", width=2),
             symbol="circle",
@@ -845,6 +900,45 @@ def _validate_filter_parameters(filter_params: Dict[str, bool]) -> None:
         )
 
 
+def _validate_relationship_filters(relationship_filters: Optional[Dict[str, bool]]) -> None:
+    """Validate relationship filter dictionary structure and values.
+
+    Args:
+        relationship_filters: Optional dictionary mapping relationship types to boolean visibility flags
+
+    Raises:
+        TypeError: If relationship_filters is not None and not a dictionary
+        ValueError: If relationship_filters contains invalid keys or non-boolean values
+    """
+    if relationship_filters is None:
+        return
+
+    if not isinstance(relationship_filters, dict):
+        raise TypeError(
+            f"Invalid filter configuration: relationship_filters must be a dictionary or None, "
+            f"got {type(relationship_filters).__name__}"
+        )
+
+    # Validate all values are boolean
+    invalid_values = [
+        key for key, value in relationship_filters.items()
+        if not isinstance(value, bool)
+    ]
+    if invalid_values:
+        raise ValueError(
+            f"Invalid filter configuration: relationship_filters must contain only boolean values. "
+            f"Invalid keys: {', '.join(invalid_values)}"
+        )
+
+    # Validate keys are strings
+    invalid_keys = [key for key in relationship_filters.keys() if not isinstance(key, str)]
+    if invalid_keys:
+        raise ValueError(
+            f"Invalid filter configuration: relationship_filters keys must be strings. "
+            f"Invalid keys: {invalid_keys}"
+        )
+
+
 def visualize_3d_graph_with_filters(
     graph: AssetRelationshipGraph,
     show_same_sector: bool = True,
@@ -910,7 +1004,7 @@ def visualize_3d_graph_with_filters(
         logger.error("Invalid filter configuration: %s", exc)
         raise
 
-    # Build filter configuration
+    # Build filter configuration with validation
     try:
         if not show_all_relationships:
             relationship_filters = {
@@ -922,11 +1016,22 @@ def visualize_3d_graph_with_filters(
                 "income_comparison": show_income_comparison,
                 "regulatory_impact": show_regulatory,
             }
+            # Validate the constructed filter dictionary
+            _validate_relationship_filters(relationship_filters)
+
+            # Check if all filters are disabled (would result in empty visualization)
+            if not any(relationship_filters.values()):
+                logger.warning(
+                    "All relationship filters are disabled. Visualization will show no relationships."
+                )
         else:
             relationship_filters = None
-    except Exception as exc:  # pylint: disable=broad-except
+    except (TypeError, ValueError) as exc:
         logger.exception("Failed to build filter configuration: %s", exc)
-        raise ValueError("Invalid filter configuration") from exc
+        raise ValueError(f"Invalid filter configuration: {exc}") from exc
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Unexpected error building filter configuration: %s", exc)
+        raise ValueError("Failed to build filter configuration") from exc
 
     # Retrieve visualization data with error handling
     try:
@@ -950,9 +1055,16 @@ def visualize_3d_graph_with_filters(
         relationship_traces = _create_relationship_traces(
             graph, positions, asset_ids, relationship_filters
         )
+    except (TypeError, ValueError) as exc:
+        logger.exception(
+            "Failed to create filtered relationship traces due to invalid data (filters: %s): %s",
+            relationship_filters,
+            exc
+        )
+        raise ValueError(f"Failed to create relationship traces: {exc}") from exc
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception(
-            "Failed to create filtered relationship traces (filters: %s): %s",
+            "Unexpected error creating filtered relationship traces (filters: %s): %s",
             relationship_filters,
             exc
         )
@@ -969,8 +1081,11 @@ def visualize_3d_graph_with_filters(
     if toggle_arrows:
         try:
             arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
+        except (TypeError, ValueError) as exc:
+            logger.exception("Failed to create directional arrows due to invalid data: %s", exc)
+            arrow_traces = []
         except Exception as exc:  # pylint: disable=broad-except
-            logger.exception("Failed to create directional arrows: %s", exc)
+            logger.exception("Unexpected error creating directional arrows: %s", exc)
             arrow_traces = []
 
         if arrow_traces:
