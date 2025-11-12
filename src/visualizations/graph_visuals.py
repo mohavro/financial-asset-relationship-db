@@ -154,7 +154,6 @@ def _create_node_trace(
     )
 
 
-
 def _add_directional_arrows_to_figure(
     fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> None:
@@ -163,6 +162,59 @@ def _add_directional_arrows_to_figure(
     if arrow_traces:
         fig.add_traces(arrow_traces)
 
+
+def _configure_3d_layout(
+    fig: go.Figure,
+    title: str,
+    options: Optional[Dict[str, object]] = None,
+) -> None:
+    """Configure the 3D layout for the figure.
+
+    Args:
+        fig: Target Plotly figure
+        title: Title text
+        options: Optional mapping to override defaults. Supported keys:
+            - width (int)
+            - height (int)
+            - gridcolor (str)
+            - bgcolor (str)
+            - legend_bgcolor (str)
+            - legend_bordercolor (str)
+    """
+    opts = options or {}
+    width = int(opts.get("width", 1200))
+    height = int(opts.get("height", 800))
+    gridcolor = str(opts.get("gridcolor", "rgba(200, 200, 200, 0.3)"))
+    bgcolor = str(opts.get("bgcolor", "rgba(248, 248, 248, 0.95)"))
+    legend_bgcolor = str(opts.get("legend_bgcolor", "rgba(255, 255, 255, 0.8)"))
+    legend_bordercolor = str(opts.get("legend_bordercolor", "rgba(0, 0, 0, 0.3)"))
+
+    fig.update_layout(
+        title={
+            "text": title,
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor=gridcolor),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor=gridcolor),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor=gridcolor),
+            bgcolor=bgcolor,
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=width,
+        height=height,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor=legend_bgcolor,
+            bordercolor=legend_bordercolor,
+            borderwidth=1,
+        ),
+    )
 
 
 def _validate_visualization_data(
