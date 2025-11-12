@@ -65,7 +65,7 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def _build_relationship_index(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups with pre-filtering and thread safety.
+    """Build optimized relationship index for O(1) lookups with comprehensive error handling, pre-filtering and thread safety.
 
     This function consolidates relationship data into a single index structure
     that can be efficiently queried for:
@@ -99,6 +99,14 @@ def _build_relationship_index(
 
     Note: All functions that access graph.relationships should use the same lock
     (_graph_access_lock) to ensure consistent synchronization across the codebase.
+    Error Handling:
+    ===============
+    This function implements comprehensive error handling to ensure robustness:
+    - Validates that asset_ids is iterable and contains only strings
+    - Validates that graph.relationships exists and is a properly formatted dictionary
+    - Validates each relationship tuple has the correct structure (3 elements)
+    - Validates data types for target_id (string), rel_type (string), and strength (numeric)
+
 
     Args:
         graph: The asset relationship graph
