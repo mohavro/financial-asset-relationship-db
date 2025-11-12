@@ -325,6 +325,10 @@ def _configure_3d_layout(
         title: Title text for the figure
         width: Figure width in pixels
         height: Figure height in pixels
+        gridcolor: Color for grid lines in RGBA format
+        bgcolor: Background color for the scene in RGBA format
+        legend_bgcolor: Background color for the legend in RGBA format
+        legend_bordercolor: Border color for the legend in RGBA format
     """
     fig.update_layout(
         title={
