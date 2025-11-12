@@ -75,7 +75,7 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Thread safety considerations:
+    Thread Safety and Data Integrity:
     - This function is thread-safe ONLY when the graph object is immutable or not
       modified concurrently by other threads during execution
     - Creates and returns a new dictionary (no shared state modification)
