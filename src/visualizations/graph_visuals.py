@@ -68,8 +68,6 @@ def _build_relationship_index(
     - Checking if a relationship exists (O(1) lookup)
     - Getting relationship strength (O(1) lookup)
 
-    - Detecting bidirectional relationships (O(1) reverse lookup)
-
     Args:
         graph: The asset relationship graph
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
