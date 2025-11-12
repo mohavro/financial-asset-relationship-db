@@ -78,6 +78,12 @@ def _build_relationship_index(
     Thread safety considerations:
     - This function is safe for concurrent reads ONLY if the graph.relationships
       dictionary is not modified during execution
+    - Safe for concurrent reads when graph.relationships is not being modified
+    - If graph.relationships can be modified concurrently, external synchronization
+      (e.g., locks) or immutable graph objects should be used by the caller
+    - The function itself does not modify any shared state
+    - Returns a new dictionary that is independent of the input graph
+
     - The function creates a new dictionary without modifying shared state
     - However, if graph.relationships is mutable and can be modified by other
       threads/coroutines during execution, this may lead to:
