@@ -595,6 +595,7 @@ def _create_relationship_traces_with_count(
     traces: List[go.Scatter3d] = []
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
         if relationships:
+    total_relationships = 0
             trace = _create_trace_for_group(
                 rel_type, is_bidirectional, relationships, positions, asset_id_index
             )
