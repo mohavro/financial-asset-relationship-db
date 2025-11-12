@@ -342,13 +342,11 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
 
     # Add all relationship traces
-    for trace in relationship_traces:
-        fig.add_trace(trace)
+    fig.add_traces(relationship_traces)
 
     # Add directional arrows for unidirectional relationships
     arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
-    for trace in arrow_traces:
-        fig.add_trace(trace)
+    fig.add_traces(arrow_traces)
 
     # Add nodes with enhanced styling
     fig.add_trace(
