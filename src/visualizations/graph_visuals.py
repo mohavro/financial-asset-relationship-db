@@ -451,6 +451,15 @@ def _validate_asset_ids_uniqueness(asset_ids: List[str]) -> None:
     unique_count = len(set(asset_ids))
     if unique_count != len(asset_ids):
         # Find duplicates deterministically for better error messages
+        seen_ids: Set[str] = set()
+        dup_ids: List[str] = []
+        for aid in asset_ids:
+            if aid in seen_ids and aid not in dup_ids:
+                dup_ids.append(aid)
+            else:
+                seen_ids.add(aid)
+        dup_str = ", ".join(dup_ids)
+        raise ValueError(f"Invalid graph data: duplicate asset_ids detected: {dup_str}")
 
 def _validate_visualization_data(
     positions: np.ndarray,
