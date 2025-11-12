@@ -1132,9 +1132,6 @@ def visualize_3d_graph_with_filters(
             relationship_filters,
             exc
         )
-    # ERROR HANDLING: Add directional arrows with graceful degradation
-    # If arrow creation fails, visualization continues without arrows
-    # Prevents complete failure due to arrow rendering issues
         relationship_traces = []
 
     # Add relationship traces with error handling
