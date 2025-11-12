@@ -72,14 +72,50 @@ def _create_node_trace(
     """Create node trace for 3D visualization.
 
     Args:
-        positions: NumPy array of node positions
-        asset_ids: List of asset IDs
-        colors: List of node colors
-        hover_texts: List of hover texts
+        positions: NumPy array of node positions with shape (n, 3)
+        asset_ids: List of asset ID strings (must be non-empty strings)
+        colors: List of node colors (must match length of asset_ids)
+        hover_texts: List of hover texts (must match length of asset_ids)
 
     Returns:
         Plotly Scatter3d trace for nodes
+
+    Raises:
+        ValueError: If input parameters are invalid or have mismatched dimensions
     """
+    # Validate positions array
+    if not isinstance(positions, np.ndarray):
+        raise ValueError("positions must be a NumPy array")
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError(f"positions must be a 2D array with 3 columns, got shape {positions.shape}")
+    if not np.issubdtype(positions.dtype, np.number):
+        raise ValueError("positions must contain numeric values")
+    if not np.isfinite(positions).all():
+        raise ValueError("positions must contain finite numeric values (no NaN or inf)")
+
+    # Validate input lists
+    if not isinstance(asset_ids, (list, tuple)):
+        raise ValueError("asset_ids must be a list or tuple")
+    if not isinstance(colors, (list, tuple)):
+        raise ValueError("colors must be a list or tuple")
+    if not isinstance(hover_texts, (list, tuple)):
+        raise ValueError("hover_texts must be a list or tuple")
+
+    # Validate asset_ids contains non-empty strings
+    if not all(isinstance(aid, str) and aid for aid in asset_ids):
+        raise ValueError("asset_ids must contain non-empty strings")
+
+    # Validate length alignment
+    n_positions = positions.shape[0]
+    n_asset_ids = len(asset_ids)
+    n_colors = len(colors)
+    n_hover_texts = len(hover_texts)
+
+    if not (n_positions == n_asset_ids == n_colors == n_hover_texts):
+        raise ValueError(
+            f"Length mismatch: positions has {n_positions} rows, "
+            f"asset_ids has {n_asset_ids} elements, colors has {n_colors} elements, "
+            f"hover_texts has {n_hover_texts} elements. All must have the same length."
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
