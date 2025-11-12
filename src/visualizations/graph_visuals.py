@@ -79,6 +79,11 @@ def _build_relationship_index(
             continue
 
     Raises:
+        ValueError: If positions is not a (n, 3) numpy array, or if asset_ids, colors,
+                   or hover_texts are not lists/tuples of matching length, or if positions
+                   contains non-finite values
+
+    Raises:
         ValueError: If inputs are not in the expected format or have mismatched lengths
 
         if not isinstance(rels, (list, tuple)):
