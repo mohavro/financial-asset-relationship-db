@@ -140,6 +140,46 @@ def _create_node_trace(
     )
 
 
+def _add_node_trace(
+    fig: go.Figure,
+    positions: np.ndarray,
+    asset_ids: List[str],
+    colors: List[str],
+    hover_texts: List[str],
+) -> None:
+    """Add node trace to the figure with enhanced styling.
+
+    Args:
+        fig: Plotly figure to add trace to
+        positions: NumPy array of node positions
+        asset_ids: List of asset IDs
+        colors: List of colors for nodes
+        hover_texts: List of hover texts for nodes
+    """
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
+
+
 def _configure_layout(
     fig: go.Figure,
     title_text: str,
@@ -187,6 +227,40 @@ def _configure_layout(
             bordercolor=legend_bordercolor,
             borderwidth=1,
         ),
+    )
+
+
+def _add_nodes_trace(fig: go.Figure, positions: np.ndarray, asset_ids: List[str], colors: List[str], hover_texts: List[str]) -> None:
+    """Add nodes trace to the figure with enhanced styling.
+
+    Args:
+        fig: Plotly figure to add trace to
+        positions: Node positions array
+        asset_ids: List of asset IDs
+        colors: List of node colors
+        hover_texts: List of hover texts
+    """
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
     )
 
 
@@ -306,13 +380,9 @@ def _validate_visualization_data(
     if positions.shape[0] != n:
         raise ValueError(f"Invalid graph data: positions length ({positions.shape[0]}) must match asset_ids length ({n})")
     if not isinstance(colors, (list, tuple)) or len(colors) != n:
-        raise ValueError(f"Invalid graph data: colors must be a list/tuple of length {n}, got {type(colors).__name__} with length {len(colors) if isinstance(colors, (list, tuple)) else 'N/A'}")
-    if not all(isinstance(c, str) and c for c in colors):
-        raise ValueError("Invalid graph data: colors must contain non-empty strings")
+        raise ValueError(f"Invalid graph data: colors must be a list/tuple of length {n}")
     if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
         raise ValueError(f"Invalid graph data: hover_texts must be a list/tuple of length {n}")
-    if not all(isinstance(h, str) for h in hover_texts):
-        raise ValueError("Invalid graph data: hover_texts must contain strings")
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
@@ -340,9 +410,29 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     if arrow_traces:
         fig.add_traces(arrow_traces)
 
-    # Add nodes with enhanced styling using the reusable helper function
-    node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
-    fig.add_trace(node_trace)
+    # Add nodes with enhanced styling
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
 
     fig.update_layout(
         title={
@@ -775,9 +865,29 @@ def visualize_3d_graph_with_filters(
         if arrow_traces:
             fig.add_traces(arrow_traces)
 
-    # Add nodes with enhanced styling using the reusable helper function
-    node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
-    fig.add_trace(node_trace)
+    # Add nodes with enhanced styling
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
 
     # Count visible relationships for dynamic title
     visible_relationships = (
