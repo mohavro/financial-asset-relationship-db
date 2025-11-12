@@ -500,9 +500,10 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
     hover_texts: List[Optional[str]] = [None] * (num_rels * 3)
 
     for i, rel in enumerate(relationships):
+        strength_str = f"{rel['strength']:.2f}"
         hover_text = ''.join([
             rel['source_id'], ' ', direction_text, ' ', rel['target_id'],
-            '<br>Type: ', rel_type, '<br>Strength: ', f"{rel['strength']:.2f}"
+            '<br>Type: ', rel_type, '<br>Strength: ', strength_str
         ])
         base_idx = i * 3
         hover_texts[base_idx] = hover_text
