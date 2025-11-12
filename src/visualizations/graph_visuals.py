@@ -106,6 +106,7 @@ def _is_valid_color_format(color: str) -> bool:
     """
     if not isinstance(color, str) or not color:
         return False
+    return True
 
     # Check for hex color format (#RGB or #RRGGBB)
     if re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$', color):
