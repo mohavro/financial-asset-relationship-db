@@ -522,19 +522,8 @@ def _validate_visualization_data(
     if not all(isinstance(h, str) and h for h in hover_texts):
         raise ValueError("Invalid graph data: hover_texts must contain non-empty strings")
 
-    # Ensure asset IDs are unique to prevent plotting overlap and indexing errors
-    unique_count = len(set(asset_ids))
-    if unique_count != n:
-        # Find duplicates deterministically for better error messages
-        seen_ids: Set[str] = set()
-        dup_ids: List[str] = []
-        for aid in asset_ids:
-            if aid in seen_ids and aid not in dup_ids:
-                dup_ids.append(aid)
-            else:
-                seen_ids.add(aid)
-        dup_str = ", ".join(dup_ids)
-        raise ValueError(f"Invalid graph data: duplicate asset_ids detected: {dup_str}")
+    # Delegate to helper function to reduce local variable count
+    _validate_unique_asset_ids(asset_ids)
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
