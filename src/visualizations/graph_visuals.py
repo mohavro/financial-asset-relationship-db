@@ -114,6 +114,17 @@ def _create_node_trace(
     colors: List[str],
     hover_texts: List[str],
 ) -> go.Scatter3d:
+    # Validate colors content (must be valid color format strings)
+    for i, color in enumerate(colors):
+        if not isinstance(color, str) or not color:
+            raise ValueError(
+                f"colors[{i}] must be a non-empty string, got {type(color).__name__}"
+            )
+        if not _is_valid_color(color):
+            raise ValueError(
+                f"colors[{i}] has invalid color format: '{color}'"
+            )
+
     """Create node trace for 3D visualization.
 
     Args:
