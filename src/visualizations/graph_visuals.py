@@ -1,5 +1,6 @@
 import logging
 import re
+import threading
 from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -8,6 +9,9 @@ import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
 logger = logging.getLogger(__name__)
+
+# Thread lock for protecting concurrent access to graph.relationships
+_graph_access_lock = threading.RLock()
 
 # Color and style mapping for relationship types (shared constant)
 REL_TYPE_COLORS = defaultdict(
