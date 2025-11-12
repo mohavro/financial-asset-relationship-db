@@ -426,6 +426,15 @@ def _validate_visualization_data(
     if not isinstance(colors, (list, tuple)) or len(colors) != n:
         colors_type = type(colors).__name__
         colors_len = len(colors) if isinstance(colors, (list, tuple)) else 'N/A'
+    # Ensure asset_ids are unique to prevent plotting overlap and indexing errors
+    unique_count = len(set(asset_ids))
+    if unique_count != n:
+        # Find duplicates deterministically for better error messages
+        seen_ids: Set[str] = set()
+        dup_ids: List[str] = []
+        for aid in asset_ids:
+            if aid in seen_ids and aid not in dup_ids:
+                dup_ids.append(aid)
         raise ValueError(
             f"Invalid graph data: colors must be a list/tuple of length {n}, "
             f"got {colors_type} with length {colors_len}"
