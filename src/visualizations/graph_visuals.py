@@ -790,9 +790,7 @@ def visualize_3d_graph_with_filters(
         graph, positions, asset_ids, relationship_filters
     )
 
-    # Add all relationship traces
-    for trace in relationship_traces:
-        fig.add_trace(trace)
+    fig.add_traces(relationship_traces)
 
     # Add directional arrows if enabled
     if toggle_arrows:
