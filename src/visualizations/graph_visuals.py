@@ -116,6 +116,8 @@ def _create_node_trace(
     if not np.isfinite(positions).all():
         raise ValueError("positions must contain finite numeric values (no NaN or inf)")
 
+        )
+
     # Validate input lists
     if not isinstance(asset_ids, (list, tuple)):
         raise ValueError("asset_ids must be a list or tuple")
