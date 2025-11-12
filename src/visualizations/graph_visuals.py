@@ -1051,7 +1051,9 @@ def visualize_3d_graph_with_filters(
         logger.error("Invalid filter configuration: %s", exc)
         raise
 
-    # Build filter configuration with validation
+    # Build filter configuration with validation (Error Handling Layer 2)
+    # Validates relationship filter structure and catches configuration errors
+    # to prevent invalid filter settings from causing runtime failures
     try:
         if not show_all_relationships:
             relationship_filters = {
