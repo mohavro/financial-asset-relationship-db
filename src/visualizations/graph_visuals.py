@@ -817,6 +817,33 @@ def _validate_filter_parameters(filter_params: Dict[str, bool]) -> None:
         )
 
 
+def _validate_relationship_filters(relationship_filters: Optional[Dict[str, bool]]) -> None:
+    """Validate relationship filter configuration.
+
+    Args:
+        relationship_filters: Optional dictionary mapping relationship types to visibility flags
+
+    Raises:
+        TypeError: If relationship_filters is not None and not a dictionary
+        ValueError: If relationship_filters contains invalid relationship types or non-boolean values
+    """
+    if relationship_filters is None:
+        return
+
+    if not isinstance(relationship_filters, dict):
+        raise TypeError(
+            f"Invalid filter configuration: relationship_filters must be a dictionary or None, "
+            f"got {type(relationship_filters).__name__}"
+        )
+
+    # Validate all values are boolean
+    invalid_values = [k for k, v in relationship_filters.items() if not isinstance(v, bool)]
+    if invalid_values:
+        raise ValueError(
+            f"Invalid filter configuration: relationship_filters must contain only boolean values. "
+            f"Invalid keys: {', '.join(invalid_values)}"
+
+
 def visualize_3d_graph_with_filters(
     graph: AssetRelationshipGraph,
     show_same_sector: bool = True,
