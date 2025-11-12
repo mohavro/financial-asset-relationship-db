@@ -886,6 +886,9 @@ def visualize_3d_graph_with_filters(
 
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
+    # Validate visualization data to prevent runtime errors
+    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+
 
     fig = go.Figure()
 
