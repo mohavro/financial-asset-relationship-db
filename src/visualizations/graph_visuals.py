@@ -369,10 +369,10 @@ def _configure_3d_layout(
             "font": {"size": 16},
         },
         scene=dict(
-            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
-            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
-            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
-            bgcolor="rgba(248, 248, 248, 0.95)",
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor=gridcolor),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor=gridcolor),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor=gridcolor),
+            bgcolor=bgcolor,
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
         ),
         width=width,
@@ -382,8 +382,8 @@ def _configure_3d_layout(
         legend=dict(
             x=0.02,
             y=0.98,
-            bgcolor="rgba(255, 255, 255, 0.8)",
-            bordercolor="rgba(0, 0, 0, 0.3)",
+            bgcolor=legend_bgcolor,
+            bordercolor=legend_bordercolor,
             borderwidth=1,
         ),
     )
