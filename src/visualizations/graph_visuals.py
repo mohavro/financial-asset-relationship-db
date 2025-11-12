@@ -150,10 +150,59 @@ def _build_relationship_index(
     }
 
     relationship_index: Dict[Tuple[str, str, str], float] = {}
+
+    # Process relationships with comprehensive error handling
     for source_id, rels in relevant_relationships.items():
-        for target_id, rel_type, strength in rels:
+        # Validate that rels is iterable
+        if not isinstance(rels, (list, tuple)):
+            raise TypeError(
+                f"Invalid graph data: relationships for source_id '{source_id}' must be a list or tuple, "
+                f"got {type(rels).__name__}"
+            )
+
+        # Process each relationship with validation
+        for idx, rel in enumerate(rels):
+            # Validate relationship structure
+            if not isinstance(rel, (list, tuple)):
+                raise TypeError(
+                    f"Invalid graph data: relationship at index {idx} for source_id '{source_id}' "
+                    f"must be a list or tuple, got {type(rel).__name__}"
+                )
+
+            if len(rel) != 3:
+                raise ValueError(
+                    f"Invalid graph data: relationship at index {idx} for source_id '{source_id}' "
+                    f"must have exactly 3 elements (target_id, rel_type, strength), got {len(rel)} elements"
+                )
+
+            target_id, rel_type, strength = rel
+
+            # Validate target_id type
+            if not isinstance(target_id, str):
+                raise TypeError(
+                    f"Invalid graph data: target_id at index {idx} for source_id '{source_id}' "
+                    f"must be a string, got {type(target_id).__name__}"
+                )
+
+            # Validate rel_type type
+            if not isinstance(rel_type, str):
+                raise TypeError(
+                    f"Invalid graph data: rel_type at index {idx} for source_id '{source_id}' "
+                    f"must be a string, got {type(rel_type).__name__}"
+                )
+
+            # Validate and convert strength to float
+            try:
+                strength_float = float(strength)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid graph data: strength at index {idx} for source_id '{source_id}' "
+                    f"must be numeric (got {type(strength).__name__} with value '{strength}')"
+                ) from exc
+
+            # Add to index if target is in asset_ids_set
             if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+                relationship_index[(source_id, target_id, rel_type)] = strength_float
 
     return relationship_index
 
