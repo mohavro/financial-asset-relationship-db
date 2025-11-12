@@ -283,8 +283,11 @@ def _validate_visualization_data(
             f"Invalid graph data: positions length ({positions.shape[0]}) must match asset_ids length ({n})"
         )
     if not isinstance(colors, (list, tuple)) or len(colors) != n:
+        colors_type = type(colors).__name__
+        colors_len = len(colors) if isinstance(colors, (list, tuple)) else 'N/A'
         raise ValueError(
-            f"Invalid graph data: colors must be a list/tuple of length {n}, got {type(colors).__name__} with length {len(colors) if isinstance(colors, (list, tuple)) else 'N/A'}"
+            f"Invalid graph data: colors must be a list/tuple of length {n}, "
+            f"got {colors_type} with length {colors_len}"
         )
     if not all(isinstance(c, str) and c for c in colors):
         raise ValueError("Invalid graph data: colors must contain non-empty strings")
