@@ -310,8 +310,8 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     # Create separate traces for different relationship types and directions
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
 
-    # Batch add traces
-    if relationship_traces:
+    # Batch add traces with error handling
+    try:
         fig.add_traces(relationship_traces)
 
     # Add directional arrows for unidirectional relationships
