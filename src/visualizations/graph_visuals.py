@@ -148,7 +148,6 @@ def _create_node_trace(
     for i, hover_text in enumerate(hover_texts):
         if not isinstance(hover_text, str):
             raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
-        )
 
     # Validate colors content (must be valid color format strings)
     for i, color in enumerate(colors):
