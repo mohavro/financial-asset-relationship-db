@@ -23,40 +23,6 @@ REL_TYPE_COLORS = defaultdict(
     },
 )
 
-# CSS/Plotly named colors (comprehensive list for validation)
-VALID_NAMED_COLORS = {
-    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
-    'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood',
-    'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan',
-    'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki',
-    'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon',
-    'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise',
-    'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
-    'firebrick', 'floralwhite', 'forestgreen', 'fuchsia',
-    'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'grey', 'green', 'greenyellow',
-    'honeydew', 'hotpink',
-    'indianred', 'indigo', 'ivory',
-    'khaki',
-    'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral',
-    'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgrey', 'lightgreen', 'lightpink',
-    'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey',
-    'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen',
-    'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple',
-    'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise',
-    'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin',
-    'navajowhite', 'navy',
-    'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid',
-    'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff',
-    'peru', 'pink', 'plum', 'powderblue', 'purple',
-    'rebeccapurple', 'red', 'rosybrown', 'royalblue',
-    'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue',
-    'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue',
-    'tan', 'teal', 'thistle', 'tomato', 'transparent', 'turquoise',
-    'violet',
-    'wheat', 'white', 'whitesmoke',
-    'yellow', 'yellowgreen'
-}
-
 
 def _is_valid_color_format(color: str) -> bool:
     """Validate if a string is a valid color format.
@@ -64,8 +30,7 @@ def _is_valid_color_format(color: str) -> bool:
     Supports common color formats:
     - Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
     - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-    - HSL/HSLA (e.g., 'hsl(120,100%,50%)', 'hsla(120,100%,50%,0.5)')
-    - CSS/Plotly named colors (e.g., 'red', 'blue', 'transparent')
+    - Named colors (delegated to Plotly)
 
     Args:
         color: Color string to validate
@@ -76,30 +41,16 @@ def _is_valid_color_format(color: str) -> bool:
     if not isinstance(color, str) or not color:
         return False
 
-    # Normalize color string for validation
-    color_lower = color.lower().strip()
-
-    # Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
+    # Hex colors
     if re.match(r'^#(?:[0-9A-Fa-f]{3}){1,2}(?:[0-9A-Fa-f]{2})?$', color):
         return True
 
-    # rgb/rgba functions with numeric values (0-255)
-    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color_lower):
+    # rgb/rgba functions
+    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
         return True
 
-    # rgb/rgba functions with percentage values
-    if re.match(r'^rgba?\(\s*\d+%\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d.]+\s*)?\)$', color_lower):
-        return True
-
-    # hsl/hsla functions
-    if re.match(r'^hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d.]+\s*)?\)$', color_lower):
-        return True
-
-    # CSS/Plotly named colors
-    if color_lower in VALID_NAMED_COLORS:
-        return True
-
-    return False
+    # Fallback: allow named colors; Plotly will validate at render time
+    return True
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
@@ -127,6 +78,9 @@ def _build_relationship_index(
     Thread safety (addressing review feedback):
     - Creates and returns a new dictionary (no shared state modification)
     - Reads graph.relationships without mutating it
+    - Safe for concurrent reads if graph.relationships is not modified during execution
+    - For concurrent write scenarios, callers should use immutable graph objects or
+      implement external synchronization (e.g., locks)
 
     Args:
         graph: The asset relationship graph
@@ -208,7 +162,6 @@ def _create_node_trace(
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
 
     # Additional color format validation (beyond non-empty string checks)
-    # This prevents runtime errors in Plotly rendering by ensuring all colors are valid
     for i, color in enumerate(colors):
         if not _is_valid_color_format(color):
             raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
@@ -233,28 +186,6 @@ def _create_node_trace(
         name="Assets",
         visible=True,
     )
-
-
-def _generate_dynamic_title(
-    base_title: str,
-    num_assets: Optional[int] = None,
-    num_relationships: Optional[int] = None,
-) -> str:
-    """Generate dynamic title with asset and relationship counts.
-
-    Args:
-        base_title: Base title text (e.g., "Financial Asset Network")
-        num_assets: Number of assets to display (optional)
-        num_relationships: Number of relationships to display (optional)
-
-    Returns:
-        Formatted title string with counts if provided
-    """
-    if num_assets is not None and num_relationships is not None:
-        return f"{base_title} - {num_assets} Assets, {num_relationships} Relationships"
-    if num_assets is not None:
-        return f"{base_title} - {num_assets} Assets"
-    return base_title
 
 
 def _add_directional_arrows_to_figure(
