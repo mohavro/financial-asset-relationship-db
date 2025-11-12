@@ -46,7 +46,7 @@ def _is_valid_color_format(color: str) -> bool:
         return True
 
     # rgb/rgba functions
-    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
+    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
         return True
 
     # Fallback: allow named colors; Plotly will validate at render time
@@ -75,20 +75,17 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Thread safety considerations:
-    - This function is safe for concurrent reads ONLY if the graph.relationships
-      dictionary is not modified during execution
-    - The function itself does not modify any shared state
-    - Returns a new dictionary that is independent of the input graph
-    - However, if graph.relationships can be modified concurrently, this may lead to:
-      * Inconsistent snapshots of relationship data
-      * Race conditions if relationships are added/removed concurrently
-      * Potential RuntimeError if dictionary size changes during iteration
-    - For true thread safety in multi-threaded environments, callers should:
-      * Use immutable graph objects, OR
-      * Implement external synchronization (e.g., locks) to prevent concurrent
-        modifications to graph.relationships, OR
-      * Ensure graph.relationships is only read (never modified) during execution
+    Thread safety:
+    This function is safe for concurrent reads ONLY if:
+    1. The graph.relationships dictionary is not modified during execution
+    2. Multiple threads only call this function without modifying the graph
+
+    If the graph object can be modified concurrently:
+    - Implement external locking mechanisms (e.g., threading.Lock)
+    - Use immutable graph objects
+    - Ensure graph modifications happen in a separate phase from visualization
+
+    The function itself does not modify shared state and creates new local data structures.
 
     Args:
         graph: The asset relationship graph
@@ -97,37 +94,22 @@ def _build_relationship_index(
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
     """
-    if graph is None:
-        raise ValueError("graph must not be None")
-    if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
-        raise ValueError("Invalid graph: missing relationships dictionary")
-    try:
-        asset_ids_list = list(asset_ids)
-    except TypeError as exc:
-        raise ValueError("asset_ids must be an iterable of strings") from exc
-    if not asset_ids_list:
-        return {}
-    if not all(isinstance(a, str) and a for a in asset_ids_list):
-        raise ValueError("asset_ids must contain non-empty strings")
+    asset_ids_set = set(asset_ids)
 
-    asset_ids_set = set(asset_ids_list)
+    # Pre-filter relationships to only include relevant source_ids
+    relevant_relationships = {
+        source_id: rels
+        for source_id, rels in graph.relationships.items()
+        if source_id in asset_ids_set
+    }
 
     relationship_index: Dict[Tuple[str, str, str], float] = {}
-    for source_id, rels in graph.relationships.items():
-        if not isinstance(source_id, str) or not source_id:
-            continue
-        if source_id not in asset_ids_set:
-            continue
-        if not isinstance(rels, (list, tuple, set)):
-            continue
-        for rel in rels:
-            if not isinstance(rel, (list, tuple)) or len(rel) < 3:
-                continue
-            target_id, rel_type, strength = rel[0], rel[1], rel[2]
-            if not isinstance(target_id, str) or not target_id:
-                continue
-            if not isinstance(rel_type, str) or not rel_type:
-                continue
+    for source_id, rels in relevant_relationships.items():
+        for target_id, rel_type, strength in rels:
+            if target_id in asset_ids_set:
+                relationship_index[(source_id, target_id, rel_type)] = float(strength)
+
+    return relationship_index
 
 
 def _create_node_trace(
