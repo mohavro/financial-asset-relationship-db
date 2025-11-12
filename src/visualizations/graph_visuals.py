@@ -228,6 +228,23 @@ def _generate_dynamic_title(
     return f"{base_title} - {num_assets} Assets, {num_relationships} Relationships"
 
 
+def _calculate_visible_relationships(relationship_traces: List[go.Scatter3d]) -> int:
+    """Calculate the number of visible relationships from traces.
+
+    This helper function extracts the relationship count calculation logic,
+    making it reusable and testable independently of the visualization logic.
+
+    Args:
+        relationship_traces: List of Scatter3d traces representing relationships
+
+    Returns:
+        Number of visible relationships (edges) in the traces
+    """
+    try:
+        return sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
+    except Exception:  # pylint: disable=broad-except
+        return 0
+
 def _add_directional_arrows_to_figure(
     fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> None:
