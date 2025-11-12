@@ -67,7 +67,7 @@ def _create_node_trace(
     positions: np.ndarray,
     asset_ids: List[str],
     colors: List[str],
-    hover_texts: List[str]
+    hover_texts: List[str],
 ) -> go.Scatter3d:
     """Create node trace for 3D visualization.
 
@@ -75,7 +75,7 @@ def _create_node_trace(
         positions: NumPy array of node positions
         asset_ids: List of asset IDs
         colors: List of node colors
-        hover_texts: List of hover text for nodes
+        hover_texts: List of hover texts
 
     Returns:
         Plotly Scatter3d trace for nodes
@@ -102,16 +102,57 @@ def _create_node_trace(
     )
 
 
-def _create_layout_config(title_text: str) -> dict:
-    """Create layout configuration for 3D visualization.
+def _add_node_trace(
+    fig: go.Figure,
+    positions: np.ndarray,
+    asset_ids: List[str],
+    colors: List[str],
+    hover_texts: List[str],
+) -> None:
+    """Add node trace to the figure with enhanced styling.
 
     Args:
-        title_text: Title text for the visualization
-
-    Returns:
-        Dictionary with layout configuration
+        fig: Plotly figure to add trace to
+        positions: NumPy array of node positions
+        asset_ids: List of asset IDs
+        colors: List of colors for nodes
+        hover_texts: List of hover texts for nodes
     """
-    return dict(
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
+
+
+def _configure_layout(
+    fig: go.Figure,
+    title_text: str,
+) -> None:
+    """Configure the layout for 3D visualization.
+
+    Args:
+        fig: Plotly figure to configure
+        title_text: Title text for the visualization
+    """
+    fig.update_layout(
         title={
             "text": title_text,
             "x": 0.5,
@@ -139,6 +180,106 @@ def _create_layout_config(title_text: str) -> dict:
     )
 
 
+def _add_nodes_trace(fig: go.Figure, positions: np.ndarray, asset_ids: List[str], colors: List[str], hover_texts: List[str]) -> None:
+    """Add nodes trace to the figure with enhanced styling.
+
+    Args:
+        fig: Plotly figure to add trace to
+        positions: Node positions array
+        asset_ids: List of asset IDs
+        colors: List of node colors
+        hover_texts: List of hover texts
+    """
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
+
+
+def _add_directional_arrows_to_figure(
+    fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
+) -> None:
+    """Add directional arrows to the figure for unidirectional relationships.
+
+    Args:
+        fig: Plotly figure to add arrows to
+        graph: The asset relationship graph
+        positions: Node positions array
+        asset_ids: List of asset IDs
+    """
+    arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
+    for trace in arrow_traces:
+        fig.add_trace(trace)
+
+
+def _configure_3d_layout(
+    fig: go.Figure,
+    title: str,
+    width: int = 1200,
+    height: int = 800,
+    gridcolor: str = "rgba(200, 200, 200, 0.3)",
+    bgcolor: str = "rgba(248, 248, 248, 0.95)",
+    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
+    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
+) -> None:
+    """Configure the 3D layout for the figure.
+
+    Args:
+        fig: Plotly figure to configure
+        title: Title text for the figure
+        width: Figure width in pixels
+        height: Figure height in pixels
+        gridcolor: Color for grid lines in RGBA format
+        bgcolor: Background color for the scene in RGBA format
+        legend_bgcolor: Background color for the legend in RGBA format
+        legend_bordercolor: Border color for the legend in RGBA format
+    """
+    fig.update_layout(
+        title={
+            "text": title,
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor=gridcolor),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor=gridcolor),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor=gridcolor),
+            bgcolor=bgcolor,
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=width,
+        height=height,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor=legend_bgcolor,
+            bordercolor=legend_bordercolor,
+            borderwidth=1,
+        ),
+    )
+
+
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, "get_3d_visualization_data_enhanced"):
@@ -146,10 +287,19 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
-    # Validate visualization data to prevent runtime errors
-    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
-
     fig = go.Figure()
+    # Validate visualization data to prevent runtime errors
+    if not isinstance(positions, np.ndarray) or positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid graph data provided: positions must be a (n, 3) numpy array")
+    if not isinstance(asset_ids, (list, tuple)) or not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("Invalid graph data provided: asset_ids must be a sequence of non-empty strings")
+    n = len(asset_ids)
+    if positions.shape[0] != n:
+        raise ValueError("Invalid graph data provided: positions length must match asset_ids length")
+    if not isinstance(colors, (list, tuple)) or len(colors) != n:
+        raise ValueError("Invalid graph data provided: colors length must match asset_ids length")
+    if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
+        raise ValueError("Invalid graph data provided: hover_texts length must match asset_ids length")
 
     # Create separate traces for different relationship types and directions
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
@@ -164,12 +314,55 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
         fig.add_trace(trace)
 
     # Add nodes with enhanced styling
-    fig.add_trace(_create_node_trace(positions, asset_ids, colors, hover_texts))
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,  # Larger nodes for better visibility
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
 
-    # Apply layout configuration
-    fig.update_layout(**_create_layout_config(
-        "Financial Asset Relationship Network - Enhanced 3D Visualization"
-    ))
+    fig.update_layout(
+        title={
+            "text": "Financial Asset Relationship Network - Enhanced 3D Visualization",
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=1200,
+        height=800,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
+    )
 
     return fig
 
@@ -408,71 +601,14 @@ def _create_relationship_traces(
     return traces
 
 
-def _validate_arrow_inputs(
-    graph: AssetRelationshipGraph,
-    positions: np.ndarray,
-    asset_ids: List[str]
-) -> Tuple[np.ndarray, List[str]]:
-    """Validate and normalize inputs for directional arrow creation.
-
-    Args:
-        graph: AssetRelationshipGraph instance
-        positions: NumPy array of node positions
-        asset_ids: List of asset IDs
-
-    Returns:
-        Tuple of (validated_positions, validated_asset_ids)
-
-    Raises:
-        TypeError: If graph is not an AssetRelationshipGraph instance
-        ValueError: If inputs are invalid
-    """
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
-    if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
-        raise ValueError("Invalid input data: graph must have a relationships dictionary")
-
-    try:
-        if positions is None or asset_ids is None:
-            raise ValueError("positions and asset_ids must not be None")
-        if len(positions) != len(asset_ids):
-            raise ValueError("positions and asset_ids must have the same length")
-    except TypeError as exc:
-        raise ValueError("Invalid input data: positions and asset_ids must support len()") from exc
-
-    if not isinstance(positions, np.ndarray):
-        positions = np.asarray(positions)
-    if positions.ndim != 2 or positions.shape[1] != 3:
-        raise ValueError("Invalid positions shape: expected (n, 3)")
-
-    if not isinstance(asset_ids, (list, tuple)):
-        try:
-            asset_ids = list(asset_ids)
-        except Exception as exc:
-            raise ValueError("asset_ids must be an iterable of strings") from exc
-
-    if not np.issubdtype(positions.dtype, np.number):
-        try:
-            positions = positions.astype(float)
-        except Exception as exc:
-            raise ValueError("Invalid positions: values must be numeric") from exc
-
-    if not np.isfinite(positions).all():
-        raise ValueError("Invalid positions: values must be finite numbers")
-
-    if not all(isinstance(a, str) and a for a in asset_ids):
-        raise ValueError("asset_ids must contain non-empty strings")
-
-    return positions, asset_ids
-
-
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
     """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
 
     Uses a pre-built relationship index for O(1) lookups and computes arrow positions
-    in a single vectorized step for performance.
+    in a single vectorized step for performance. Includes comprehensive input validation
+    to prevent runtime errors when working with external data sources.
 
     Args:
         graph: AssetRelationshipGraph instance containing relationship data
@@ -481,11 +617,50 @@ def _create_directional_arrows(
 
     Returns:
         List containing a single Scatter3d trace with arrow markers, or empty list if no arrows
-    """
-    # Validate inputs
-    positions, asset_ids = _validate_arrow_inputs(graph, positions, asset_ids)
 
-    # Build relationship index once for O(1) lookups
+    Raises:
+        TypeError: If graph is not an AssetRelationshipGraph instance
+        ValueError: If positions or asset_ids are None, have mismatched lengths,
+                   contain invalid data types, or have non-finite values
+
+    Notes:
+        Implements comprehensive input validation as suggested in code review to prevent
+        runtime errors when working with external data sources. Validates that positions
+        and asset_ids are not None, have matching lengths, and contain valid data types.
+    """
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
+    if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
+        raise ValueError("Invalid input data: graph must have a relationships dictionary")
+
+    # Early validation as suggested in review: check None, length match, and basic compatibility
+    try:
+        if positions is None or asset_ids is None:
+            raise ValueError("positions and asset_ids must not be None")
+        if len(positions) != len(asset_ids):
+            raise ValueError("positions and asset_ids must have the same length")
+    except TypeError as exc:
+        raise ValueError("Invalid input data: positions and asset_ids must support len()") from exc
+    if not isinstance(positions, np.ndarray):
+        positions = np.asarray(positions)
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid positions shape: expected (n, 3)")
+    if not isinstance(asset_ids, (list, tuple)):
+        try:
+            asset_ids = list(asset_ids)
+        except Exception as exc:
+            raise ValueError("asset_ids must be an iterable of strings") from exc
+    if not np.issubdtype(positions.dtype, np.number):
+        try:
+            positions = positions.astype(float)
+        except Exception as exc:
+            raise ValueError("Invalid positions: values must be numeric") from exc
+    if not np.isfinite(positions).all():
+        raise ValueError("Invalid positions: values must be finite numbers")
+    if not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("asset_ids must contain non-empty strings")
+
+    # Build relationship index once for O(1) lookups (optimization per review comment)
     relationship_index = _build_relationship_index(graph, asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
@@ -506,12 +681,19 @@ def _create_directional_arrows(
     if not source_indices:
         return []
 
-    # Use vectorized NumPy operations for arrow position calculation
+    # Performance optimization: Use vectorized NumPy operations for arrow position calculation.
+    # Instead of calculating positions in a loop, we compute all arrow positions at once using
+    # array operations, which is significantly faster for large graphs (vectorized operations
+    # leverage optimized C code and SIMD instructions vs. interpreted Python loops).
     src_idx_arr = np.asarray(source_indices, dtype=int)
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
+    # Vectorized computation places markers at 70% along each edge towards the target
+    # Formula: arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
     source_positions = positions[src_idx_arr]
     target_positions = positions[tgt_idx_arr]
     arrow_positions = source_positions + 0.7 * (target_positions - source_positions)
+    # This vectorized approach is significantly faster than looping: O(1) array operations
+    # vs O(n) loop iterations, especially beneficial for large graphs with many relationships
 
     arrow_trace = go.Scatter3d(
         x=arrow_positions[:, 0].tolist(),
@@ -519,7 +701,7 @@ def _create_directional_arrows(
         z=arrow_positions[:, 2].tolist(),
         mode="markers",
         marker=dict(
-            symbol="diamond",
+            symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
             size=8,
             color="rgba(255, 0, 0, 0.8)",
             line=dict(color="red", width=1),
@@ -584,19 +766,59 @@ def visualize_3d_graph_with_filters(
             fig.add_trace(trace)
 
     # Add nodes with enhanced styling
-    fig.add_trace(_create_node_trace(positions, asset_ids, colors, hover_texts))
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
 
     # Count visible relationships
     visible_relationships = (
         sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x")) // 3
     )
 
-    # Apply layout configuration
-    fig.update_layout(**_create_layout_config(
-        f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships"
-    ))
+    fig.update_layout(
+        title={
+            "text": f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships",
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=1200,
+        height=800,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
+    )
 
     return fig
-
-    # Validate visualization data to prevent runtime errors
-    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
