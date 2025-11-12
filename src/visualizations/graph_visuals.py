@@ -123,10 +123,6 @@ def _create_node_trace(
             raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
 
     # Validate hover_texts content (must be strings, can be empty)
-    for i, hover_text in enumerate(hover_texts):
-        if not isinstance(hover_text, str):
-            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
-
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
