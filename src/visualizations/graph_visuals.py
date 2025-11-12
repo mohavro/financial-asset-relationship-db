@@ -44,6 +44,7 @@ def _is_valid_color_format(color: str) -> bool:
     if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)$', color):
         return True
     # For named colors, we'll accept any non-empty string (Plotly will handle validation)
+    return True
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
