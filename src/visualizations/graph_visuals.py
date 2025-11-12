@@ -255,6 +255,9 @@ def _configure_layout(
             y=0.98,
             bgcolor=legend_bgcolor,
             bordercolor=legend_bordercolor,
+            borderwidth=1,
+        ),
+    )
 
 
 def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
