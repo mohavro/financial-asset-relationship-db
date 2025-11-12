@@ -75,12 +75,6 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Error Handling (addressing review feedback):
-    - Validates graph.relationships is a dictionary
-    - Validates each relationship list contains properly structured tuples/lists
-    - Validates data types (strings for IDs/types, numeric for strength)
-    - Provides informative error messages for malformed data
-
     Thread Safety and Data Integrity:
     - Creates and returns a new dictionary (no shared state modification)
     - Reads graph.relationships without mutating it
@@ -115,64 +109,77 @@ def _build_relationship_index(
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
 
     Raises:
-        TypeError: If graph.relationships is not a dictionary or contains invalid data types
-        ValueError: If relationship data is malformed or contains invalid values
+        TypeError: If graph is not an AssetRelationshipGraph instance or if data types are invalid
+        ValueError: If graph.relationships has invalid structure or malformed data
     """
-    # Validate graph.relationships exists and is a dictionary
-    if not hasattr(graph, 'relationships'):
+    # Validate graph input
+    if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError(
-            "Invalid graph data: graph object must have a 'relationships' attribute"
+            f"Invalid input: graph must be an AssetRelationshipGraph instance, "
+            f"got {type(graph).__name__}"
         )
+
+    # Validate graph.relationships exists and is a dictionary
+    if not hasattr(graph, "relationships"):
+        raise ValueError("Invalid graph: missing 'relationships' attribute")
+
     if not isinstance(graph.relationships, dict):
         raise TypeError(
             f"Invalid graph data: graph.relationships must be a dictionary, "
             f"got {type(graph.relationships).__name__}"
         )
 
-    asset_ids_set = set(asset_ids)
+    # Validate asset_ids is iterable
+    try:
+        asset_ids_set = set(asset_ids)
+    except TypeError as exc:
+        raise TypeError(
+            f"Invalid input: asset_ids must be an iterable, got {type(asset_ids).__name__}"
+        ) from exc
+
+    # Validate asset_ids contains only strings
+    if not all(isinstance(aid, str) for aid in asset_ids_set):
+        raise ValueError("Invalid input: asset_ids must contain only string values")
 
     # Pre-filter relationships to only include relevant source_ids
-    try:
-        relevant_relationships = {
-            source_id: rels
-            for source_id, rels in graph.relationships.items()
-            if source_id in asset_ids_set
-        }
-    except AttributeError as exc:
-        raise TypeError(
-            "Invalid graph data: graph.relationships must be a dictionary with items() method"
-        ) from exc
+    relevant_relationships = {
+        source_id: rels
+        for source_id, rels in graph.relationships.items()
+        if source_id in asset_ids_set
+    }
 
     relationship_index: Dict[Tuple[str, str, str], float] = {}
     for source_id, rels in relevant_relationships.items():
         # Validate that rels is iterable
         if not isinstance(rels, (list, tuple)):
-            raise TypeError(
-                f"Invalid relationship data for source '{source_id}': "
-                f"expected list or tuple, got {type(rels).__name__}"
+            raise ValueError(
+                f"Invalid relationship data: relationships for source '{source_id}' must be a list or tuple, "
+                f"got {type(rels).__name__}"
             )
 
         for idx, rel in enumerate(rels):
-            # Validate relationship structure (must be a tuple/list with 3 elements)
-            if not isinstance(rel, (tuple, list)) or len(rel) != 3:
+            # Validate relationship tuple structure
+            if not isinstance(rel, (list, tuple)) or len(rel) != 3:
                 raise ValueError(
-                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
-                    f"expected (target_id, rel_type, strength) tuple/list with 3 elements, "
-                    f"got {type(rel).__name__} with {len(rel) if isinstance(rel, (tuple, list)) else 'unknown'} elements"
+                    f"Invalid relationship data: relationship at index {idx} for source '{source_id}' "
+                    f"must be a tuple/list of 3 elements (target_id, rel_type, strength), got {type(rel).__name__} "
+                    f"with length {len(rel) if isinstance(rel, (list, tuple)) else 'N/A'}"
                 )
 
             target_id, rel_type, strength = rel
 
-            # Validate data types
-            if not isinstance(target_id, str) or not target_id:
-                raise TypeError(
-                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
-                    f"target_id must be a non-empty string, got {type(target_id).__name__}"
+            # Validate target_id is a string
+            if not isinstance(target_id, str):
+                raise ValueError(
+                    f"Invalid relationship data: target_id must be a string, got {type(target_id).__name__} "
+                    f"for relationship from '{source_id}'"
                 )
-            if not isinstance(rel_type, str) or not rel_type:
-                raise TypeError(
-                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
-                    f"rel_type must be a non-empty string, got {type(rel_type).__name__}"
+
+            # Validate rel_type is a string
+            if not isinstance(rel_type, str):
+                raise ValueError(
+                    f"Invalid relationship data: rel_type must be a string, got {type(rel_type).__name__} "
+                    f"for relationship from '{source_id}' to '{target_id}'"
                 )
 
             # Validate and convert strength to float
@@ -180,16 +187,9 @@ def _build_relationship_index(
                 strength_float = float(strength)
             except (TypeError, ValueError) as exc:
                 raise ValueError(
-                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
-                    f"strength must be numeric (got {type(strength).__name__} with value {strength!r})"
+                    f"Invalid relationship data: strength must be numeric, got {type(strength).__name__} "
+                    f"with value '{strength}' for relationship from '{source_id}' to '{target_id}'"
                 ) from exc
-
-            # Validate strength is finite
-            if not np.isfinite(strength_float):
-                raise ValueError(
-                    f"Invalid relationship data for source '{source_id}' at index {idx}: "
-                    f"strength must be a finite number (got {strength_float})"
-                )
 
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = strength_float
@@ -769,44 +769,23 @@ def _create_directional_arrows(
     return [arrow_trace]
 
 
-def _validate_filter_parameters(
-    show_same_sector: bool,
-    show_market_cap: bool,
-    show_correlation: bool,
-    show_corporate_bond: bool,
-    show_commodity_currency: bool,
-    show_income_comparison: bool,
-    show_regulatory: bool,
-    show_all_relationships: bool,
-    toggle_arrows: bool,
-) -> None:
+def _validate_filter_parameters(filter_params: Dict[str, bool]) -> None:
     """Validate that all filter parameters are boolean values.
 
     Args:
-        show_same_sector: Filter for same sector relationships
-        show_market_cap: Filter for market cap relationships
-        show_correlation: Filter for correlation relationships
-        show_corporate_bond: Filter for corporate bond relationships
-        show_commodity_currency: Filter for commodity currency relationships
-        show_income_comparison: Filter for income comparison relationships
-        show_regulatory: Filter for regulatory relationships
-        show_all_relationships: Master toggle for all relationships
-        toggle_arrows: Toggle for directional arrows
+        filter_params: Dictionary mapping filter parameter names to their boolean values.
+            Expected keys: show_same_sector, show_market_cap, show_correlation,
+            show_corporate_bond, show_commodity_currency, show_income_comparison,
+            show_regulatory, show_all_relationships, toggle_arrows
 
     Raises:
-        TypeError: If any parameter is not a boolean
+        TypeError: If any parameter is not a boolean or if filter_params is not a dictionary
     """
-    filter_params = {
-        "show_same_sector": show_same_sector,
-        "show_market_cap": show_market_cap,
-        "show_correlation": show_correlation,
-        "show_corporate_bond": show_corporate_bond,
-        "show_commodity_currency": show_commodity_currency,
-        "show_income_comparison": show_income_comparison,
-        "show_regulatory": show_regulatory,
-        "show_all_relationships": show_all_relationships,
-        "toggle_arrows": toggle_arrows,
-    }
+    if not isinstance(filter_params, dict):
+        raise TypeError(
+            f"Invalid filter configuration: filter_params must be a dictionary, "
+            f"got {type(filter_params).__name__}"
+        )
 
     invalid_params = [
         name for name, value in filter_params.items() if not isinstance(value, bool)
@@ -865,19 +844,21 @@ def visualize_3d_graph_with_filters(
             "with get_3d_visualization_data_enhanced method"
         )
 
-    # Validate filter parameters
+    # Build filter parameters dictionary and validate
+    filter_params = {
+        "show_same_sector": show_same_sector,
+        "show_market_cap": show_market_cap,
+        "show_correlation": show_correlation,
+        "show_corporate_bond": show_corporate_bond,
+        "show_commodity_currency": show_commodity_currency,
+        "show_income_comparison": show_income_comparison,
+        "show_regulatory": show_regulatory,
+        "show_all_relationships": show_all_relationships,
+        "toggle_arrows": toggle_arrows,
+    }
+
     try:
-        _validate_filter_parameters(
-            show_same_sector,
-            show_market_cap,
-            show_correlation,
-            show_corporate_bond,
-            show_commodity_currency,
-            show_income_comparison,
-            show_regulatory,
-            show_all_relationships,
-            toggle_arrows,
-        )
+        _validate_filter_parameters(filter_params)
     except TypeError as exc:
         logger.error("Invalid filter configuration: %s", exc)
         raise
