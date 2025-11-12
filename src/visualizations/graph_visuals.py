@@ -667,6 +667,8 @@ def _create_directional_arrows(
     if not np.isfinite(positions).all():
         raise ValueError("Invalid positions: values must be finite numbers")
 
+    # Early return optimization: prevent unnecessary computation and memory allocation
+    # when there are no unidirectional relationships to display
     if not all(isinstance(a, str) and a for a in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
 
