@@ -856,8 +856,8 @@ def visualize_3d_graph_with_filters(
     # Add directional arrows if enabled
     if toggle_arrows:
         arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
-        for trace in arrow_traces:
-            fig.add_trace(trace)
+        if arrow_traces:
+            fig.add_traces(arrow_traces)
 
     # Add nodes with enhanced styling
     fig.add_trace(
