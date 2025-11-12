@@ -323,8 +323,8 @@ def _configure_3d_layout(
         legend=dict(
             x=0.02,
             y=0.98,
-            bgcolor="rgba(255, 255, 255, 0.8)",
-            bordercolor="rgba(0, 0, 0, 0.3)",
+            bgcolor=legend_bgcolor,
+            bordercolor=legend_bordercolor,
             borderwidth=1,
         ),
     )
