@@ -479,6 +479,12 @@ def _create_relationship_traces(
     - Efficient set-based bidirectional relationship detection
     - Building relationship index once and reusing it
 
+    Performance Note:
+    This function returns a list of traces that should be added to the figure using
+    fig.add_traces() (batch operation) rather than adding them individually in a loop.
+    The batch operation reduces function call overhead and improves performance,
+    especially when dealing with large numbers of relationship types.
+
     Args:
         graph: The asset relationship graph
         positions: Node positions array
