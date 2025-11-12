@@ -49,64 +49,16 @@ def _build_relationship_index(
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
-
-    Raises:
-        TypeError: If graph is not an AssetRelationshipGraph instance
-        ValueError: If graph.relationships is not a dictionary or contains malformed data
     """
-    if not isinstance(graph, AssetRelationshipGraph):
-        raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
-    if not hasattr(graph, "relationships"):
-        raise ValueError("Invalid graph: missing 'relationships' attribute")
-    if not isinstance(graph.relationships, dict):
-        raise ValueError("Invalid graph: 'relationships' must be a dictionary")
-
-    try:
-        asset_ids_set = set(asset_ids)
-    except TypeError as exc:
-        raise ValueError("asset_ids must be an iterable") from exc
-
-    if not all(isinstance(aid, str) for aid in asset_ids_set):
-        raise ValueError("All asset_ids must be strings")
-
+    asset_ids_set = set(asset_ids)
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
     for source_id, rels in graph.relationships.items():
-        if not isinstance(source_id, str):
-            raise ValueError(f"Invalid relationship data: source_id must be a string, got {type(source_id).__name__}")
-
         if source_id not in asset_ids_set:
             continue
-
-    Raises:
-        ValueError: If positions is not a (n, 3) numpy array, or if asset_ids, colors,
-                   or hover_texts are not lists/tuples of matching length, or if positions
-                   contains non-finite values
-
-    Raises:
-        ValueError: If inputs are not in the expected format or have mismatched lengths
-
-        if not isinstance(rels, (list, tuple)):
-            raise ValueError(f"Invalid relationship data: relationships for '{source_id}' must be a list or tuple")
-
-        for rel in rels:
-            if not isinstance(rel, (list, tuple)) or len(rel) != 3:
-                raise ValueError(f"Invalid relationship data: each relationship must be a 3-element tuple (target_id, rel_type, strength)")
-
-            target_id, rel_type, strength = rel
-
-            if not isinstance(target_id, str):
-                raise ValueError(f"Invalid relationship data: target_id must be a string, got {type(target_id).__name__}")
-            if not isinstance(rel_type, str):
-                raise ValueError(f"Invalid relationship data: rel_type must be a string, got {type(rel_type).__name__}")
-
-            try:
-                strength_float = float(strength)
-            except (TypeError, ValueError) as exc:
-                raise ValueError(f"Invalid relationship data: strength must be numeric, got {type(strength).__name__}") from exc
-
+        for target_id, rel_type, strength in rels:
             if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = strength_float
+                relationship_index[(source_id, target_id, rel_type)] = float(strength)
 
     return relationship_index
 
@@ -197,20 +149,16 @@ def _configure_layout(
     height: int = 800,
     gridcolor: str = "rgba(200, 200, 200, 0.3)",
     bgcolor: str = "rgba(248, 248, 248, 0.95)",
-    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
-    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
 ) -> None:
     """Configure the layout for 3D visualization.
 
     Args:
         fig: Plotly figure to configure
         title_text: Title text for the visualization
-        width: Figure width in pixels
-        height: Figure height in pixels
-        gridcolor: Color for grid lines in RGBA format
-        bgcolor: Background color for the scene in RGBA format
-        legend_bgcolor: Background color for the legend in RGBA format
-        legend_bordercolor: Border color for the legend in RGBA format
+        width: Figure width in pixels (default: 1200)
+        height: Figure height in pixels (default: 800)
+        gridcolor: Grid color for axes (default: "rgba(200, 200, 200, 0.3)")
+        bgcolor: Background color for scene (default: "rgba(248, 248, 248, 0.95)")
     """
     fig.update_layout(
         title={
@@ -220,14 +168,14 @@ def _configure_layout(
             "font": {"size": 16},
         },
         scene=dict(
-            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
-            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
-            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
-            bgcolor="rgba(248, 248, 248, 0.95)",
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor=gridcolor),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor=gridcolor),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor=gridcolor),
+            bgcolor=bgcolor,
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
         ),
-        width=1200,
-        height=800,
+        width=width,
+        height=height,
         showlegend=True,
         hovermode="closest",
         legend=dict(
@@ -354,11 +302,13 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
 
     # Add all relationship traces
-    fig.add_traces(relationship_traces)
+    for trace in relationship_traces:
+        fig.add_trace(trace)
 
     # Add directional arrows for unidirectional relationships
     arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
-    fig.add_traces(arrow_traces)
+    for trace in arrow_traces:
+        fig.add_trace(trace)
 
     # Add nodes with enhanced styling
     fig.add_trace(
@@ -368,7 +318,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
             z=positions[:, 2],
             mode="markers+text",
             marker=dict(
-                size=15,  # Larger nodes for better visibility
+                size=15,
                 color=colors,
                 opacity=0.9,
                 line=dict(color="rgba(0,0,0,0.8)", width=2),
@@ -802,7 +752,9 @@ def visualize_3d_graph_with_filters(
         graph, positions, asset_ids, relationship_filters
     )
 
-    fig.add_traces(relationship_traces)
+    # Add all relationship traces
+    for trace in relationship_traces:
+        fig.add_trace(trace)
 
     # Add directional arrows if enabled
     if toggle_arrows:
