@@ -75,24 +75,25 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Thread Safety and Data Integrity (addressing review feedback):
+    Thread safety considerations:
+    - This function is thread-safe ONLY when the graph object is immutable or not
+      modified concurrently by other threads during execution
     - Creates and returns a new dictionary (no shared state modification)
-    - Reads from graph.relationships without mutating it
+    - Reads graph.relationships without mutating it
+    - Safe for concurrent reads when graph.relationships remains unchanged
 
-    Thread-safe conditions:
-    1. Safe for concurrent reads ONLY if graph.relationships is immutable or not
-       modified by other threads during execution
-    2. NOT thread-safe if graph.relationships can be modified concurrently by other
-       threads (risk of data races and inconsistent states)
+    Thread safety guarantees:
+    - ✓ Safe: Multiple threads calling this function with the same immutable graph
+    - ✓ Safe: Single-threaded environments
+    - ✗ Unsafe: Concurrent reads while another thread modifies graph.relationships
 
-    Recommendations for multi-threaded environments:
-    - Use immutable graph objects (preferred approach)
-    - Implement external synchronization (e.g., locks) if graph is mutable
-    - For concurrent write scenarios, callers should use immutable graph objects or
-      implement external synchronization (e.g., locks)
+    For multi-threaded environments with mutable graphs:
+    - Use immutable graph objects (recommended)
+    - Implement external synchronization (e.g., threading.Lock) around graph access
+    - Consider using copy.deepcopy() on the graph before passing to this function
 
     Args:
-        graph: The asset relationship graph
+        graph: The asset relationship graph (should be immutable in multi-threaded contexts)
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
 
     Returns:
@@ -171,6 +172,11 @@ def _create_node_trace(
     # Comprehensive validation: detailed checks on content, numeric types, and finite values
     # Delegates to shared validator to ensure consistency across all visualization functions
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+
+    # Additional color format validation (beyond non-empty string checks)
+    for i, color in enumerate(colors):
+        if not _is_valid_color_format(color):
+            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
 
     # Edge case validation: Ensure inputs are not empty
     if len(asset_ids) == 0:
@@ -287,7 +293,7 @@ def _validate_visualization_data(
     colors: List[str],
     hover_texts: List[str],
 ) -> None:
-    """Validate visualization data integrity including color formats to prevent runtime errors."""
+    """Validate visualization data integrity to prevent runtime errors."""
     # Validate positions array
     if not isinstance(positions, np.ndarray):
         raise ValueError(
@@ -331,10 +337,6 @@ def _validate_visualization_data(
         )
     if not all(isinstance(c, str) and c for c in colors):
         raise ValueError("Invalid graph data: colors must contain non-empty strings")
-    # Validate color formats to prevent runtime errors during rendering
-    for i, color in enumerate(colors):
-        if not _is_valid_color_format(color):
-            raise ValueError(f"Invalid graph data: colors[{i}] has invalid color format: '{color}'")
     if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
         raise ValueError(
             f"Invalid graph data: hover_texts must be a list/tuple of length {n}"
@@ -500,11 +502,10 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
     hover_texts: List[Optional[str]] = [None] * (num_rels * 3)
 
     for i, rel in enumerate(relationships):
-        strength_str = f"{rel['strength']:.2f}"
-        hover_text = ''.join([
-            rel['source_id'], ' ', direction_text, ' ', rel['target_id'],
-            '<br>Type: ', rel_type, '<br>Strength: ', strength_str
-        ])
+        hover_text = (
+            f"{rel['source_id']} {direction_text} {rel['target_id']}<br>"
+            f"Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
+        )
         base_idx = i * 3
         hover_texts[base_idx] = hover_text
         hover_texts[base_idx + 1] = hover_text
@@ -568,7 +569,7 @@ def _create_trace_for_group(
     )
 
 
-def _create_relationship_traces_with_count(
+def _create_relationship_traces(
     graph: AssetRelationshipGraph,
     positions: np.ndarray,
     asset_ids: List[str],
@@ -596,7 +597,6 @@ def _create_relationship_traces_with_count(
     traces: List[go.Scatter3d] = []
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
         if relationships:
-    total_relationships = 0
             trace = _create_trace_for_group(
                 rel_type, is_bidirectional, relationships, positions, asset_id_index
             )
@@ -688,72 +688,8 @@ def _create_directional_arrows(
         showlegend=False,
     )
     return [arrow_trace]
-    # Validate filter parameters (all must be boolean)
-    filter_params = {
-        "show_same_sector": show_same_sector,
-        "show_market_cap": show_market_cap,
-        "show_correlation": show_correlation,
-        "show_corporate_bond": show_corporate_bond,
-        "show_commodity_currency": show_commodity_currency,
-        "show_income_comparison": show_income_comparison,
-        "show_regulatory": show_regulatory,
-        "show_all_relationships": show_all_relationships,
-        "toggle_arrows": toggle_arrows,
-    }
-    for param_name, param_value in filter_params.items():
-        if not isinstance(param_value, bool):
-            raise TypeError(
-                f"Invalid filter configuration: {param_name} must be a boolean, "
-                f"got {type(param_value).__name__}"
-            )
-
-    # Validate and retrieve visualization data with error handling
-    try:
-        positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
-    except AttributeError as exc:
-        raise ValueError(
-            "Invalid graph data: graph.get_3d_visualization_data_enhanced() method not found or failed"
-        ) from exc
-    except Exception as exc:
-        raise ValueError(
-            f"Failed to retrieve visualization data from graph: {exc}"
-        ) from exc
-
-    # Validate retrieved data
-    try:
-        _validate_visualization_data(positions, asset_ids, colors, hover_texts)
-    except ValueError as exc:
-        raise ValueError(
-            f"Invalid data retrieved from graph: {exc}"
-        ) from exc
-
-    # Validate that we have data to visualize
-    if len(asset_ids) == 0:
-        raise ValueError("Cannot create visualization: graph contains no assets")
 
 
-
-def _validate_filter_parameters(
-    show_same_sector: bool,
-    show_market_cap: bool,
-    show_correlation: bool,
-    show_corporate_bond: bool,
-    show_commodity_currency: bool,
-    show_income_comparison: bool,
-    show_regulatory: bool,
-    show_all_relationships: bool,
-    toggle_arrows: bool,
-) -> None:
-    """Validate that all filter parameters are boolean values."""
-    params = {
-        "show_same_sector": show_same_sector, "show_market_cap": show_market_cap,
-        "show_correlation": show_correlation, "show_corporate_bond": show_corporate_bond,
-        "show_commodity_currency": show_commodity_currency, "show_income_comparison": show_income_comparison,
-        "show_regulatory": show_regulatory, "show_all_relationships": show_all_relationships,
-        "toggle_arrows": toggle_arrows,
-    }
-    for param_name, param_value in params.items():
-        if not isinstance(param_value, bool):
 def visualize_3d_graph_with_filters(
     graph: AssetRelationshipGraph,
     show_same_sector: bool = True,
