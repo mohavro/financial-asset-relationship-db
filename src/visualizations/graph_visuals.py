@@ -309,7 +309,7 @@ def _validate_visualization_data(
 
     # Validate asset_ids
     if not isinstance(asset_ids, (list, tuple)):
-        raise ValueError("Invalid graph data: asset_ids must be a list or tuple")
+        raise ValueError(f"Invalid graph data: asset_ids must be a list or tuple, got {type(asset_ids).__name__}")
     if not all(isinstance(a, str) and a for a in asset_ids):
         raise ValueError("Invalid graph data: asset_ids must contain non-empty strings")
 
