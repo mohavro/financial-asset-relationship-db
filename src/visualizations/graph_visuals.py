@@ -52,6 +52,25 @@ def _is_valid_color_format(color: str) -> bool:
     # rgb/rgba functions
     if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
         return True
+def _sanitize_colors(colors: List[str], default_color: str = "#888888") -> List[str]:
+    """Sanitize color list by replacing invalid colors with a default color.
+
+    This function provides a defensive approach to color validation, ensuring that
+    invalid color values don't cause runtime errors during visualization rendering.
+
+    Args:
+        colors: List of color strings to validate and sanitize
+        default_color: Default color to use for invalid entries (default: "#888888" gray)
+
+    Returns:
+        List of validated colors with invalid entries replaced by default_color
+    """
+    sanitized = []
+    for i, color in enumerate(colors):
+        if not _is_valid_color_format(color):
+            logger.warning("Invalid color format at index %d: '%s'. Using default color.", i, color)
+            sanitized.append(default_color)
+        else:
 
     # Fallback: allow named colors; Plotly will validate at render time
     return True
