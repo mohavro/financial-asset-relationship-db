@@ -108,14 +108,6 @@ def _build_relationship_index(
     return relationship_index
 
 
-def _create_node_trace(
-    positions: np.ndarray,
-    asset_ids: List[str],
-    colors: List[str],
-    hover_texts: List[str],
-) -> go.Scatter3d:
-    # Validate colors content (must be valid color format strings)
-    for i, color in enumerate(colors):
         if not isinstance(color, str) or not color:
             raise ValueError(
                 f"colors[{i}] must be a non-empty string, got {type(color).__name__}"
