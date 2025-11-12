@@ -544,7 +544,7 @@ def _create_relationship_traces(
 def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
-    """Create arrow markers for unidirectional relationships using vectorized NumPy operations."""
+    """Create arrow markers for unidirectional relationships using vectorized NumPy operations. Returns a list of traces for batch addition to figure."""
     if not isinstance(graph, AssetRelationshipGraph):
         raise TypeError("Expected graph to be an instance of AssetRelationshipGraph")
     if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
