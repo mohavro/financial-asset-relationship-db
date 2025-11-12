@@ -169,13 +169,17 @@ def _build_relationship_index(
     if not all(isinstance(aid, str) for aid in asset_ids_set):
         raise ValueError("Invalid input: asset_ids must contain only string values")
 
-    # Pre-filter relationships to only include relevant source_ids
-    relevant_relationships = {
-        source_id: rels
-        for source_id, rels in graph.relationships.items()
-        if source_id in asset_ids_set
-    }
+    # Thread-safe access to graph.relationships with synchronization lock
+    # Protects against concurrent modifications during read operations
+    with _graph_access_lock:
+        # Pre-filter relationships to only include relevant source_ids
+        relevant_relationships = {
+            source_id: rels
+            for source_id, rels in graph.relationships.items()
+            if source_id in asset_ids_set
+        }
 
+    # Build index outside the lock (no shared state access)
     relationship_index: Dict[Tuple[str, str, str], float] = {}
     for source_id, rels in relevant_relationships.items():
         for target_id, rel_type, strength in rels:
