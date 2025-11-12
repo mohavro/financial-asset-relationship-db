@@ -106,50 +106,6 @@ def _is_valid_color_format(color: str) -> bool:
         return True
 
     # Accept any non-empty string as a potential named color (Plotly will handle validation)
-    return True
-    # This reduces unnecessary iterations when source_id is frequently absent in asset_ids_set
-    relevant_relationships = {
-        source_id: rels
-        for source_id, rels in graph.relationships.items()
-        if source_id in asset_ids_set
-    }
-
-    for source_id, rels in relevant_relationships.items():
-        for target_id, rel_type, strength in rels:
-            if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
-
-    return relationship_index
-
-
-def _is_valid_color(color: str) -> bool:
-    """Check if a string is a valid color format for Plotly.
-
-    Validates common color formats:
-    - Named colors (e.g., 'red', 'blue')
-    - Hex colors (e.g., '#FF0000', '#F00')
-    - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-
-    Args:
-        color: String to validate as a color
-
-    Returns:
-        True if the color format is valid, False otherwise
-    """
-    if not isinstance(color, str) or not color:
-        return False
-
-    # Check for hex color format (#RGB or #RRGGBB)
-    if re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$', color):
-        return True
-
-    # Check for rgb/rgba format
-    if re.match(r'^rgba?\\s*\\([^)]+\\)$', color):
-        return True
-
-    # Accept any non-empty string as potentially valid named color
-    return True
-
 
 def _create_node_trace(
     positions: np.ndarray,
