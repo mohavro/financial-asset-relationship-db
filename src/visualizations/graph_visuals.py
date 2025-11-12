@@ -440,7 +440,7 @@ def _validate_visualization_data(
         raise ValueError(
             f"Invalid graph data: hover_texts must be a list/tuple of length {n}"
         )
-    if not all(isinstance(h, str) for h in hover_texts):
+    if not all(isinstance(h, str) and h for h in hover_texts):
         raise ValueError("Invalid graph data: hover_texts must contain strings")
 
 
