@@ -234,8 +234,6 @@ def _configure_layout(
     )
 
 
-
-
 def _add_directional_arrows_to_figure(
     fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> None:
