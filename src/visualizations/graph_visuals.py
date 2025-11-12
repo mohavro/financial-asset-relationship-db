@@ -258,7 +258,17 @@ def _configure_layout(
         ),
     )
 
+    # Validate colors content (must be valid color format strings)
+    for i, color in enumerate(colors):
+        if not isinstance(color, str) or not color:
+            raise ValueError(f"colors[{i}] must be a non-empty string, got {type(color).__name__}")
+        if not _is_valid_color(color):
+            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
 
+    # Validate hover_texts content (must be strings, can be empty)
+    for i, hover_text in enumerate(hover_texts):
+        if not isinstance(hover_text, str):
+            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
 
 
 def _add_directional_arrows_to_figure(
