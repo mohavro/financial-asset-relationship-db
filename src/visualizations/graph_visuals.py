@@ -263,10 +263,14 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 
     fig = go.Figure()
 
+    # Performance optimization: Use batch operation to add all relationship traces at once
+    # instead of adding them individually in a loop (reduces overhead)
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
     if relationship_traces:
         fig.add_traces(relationship_traces)
 
+    # Performance optimization: Use batch operation to add all arrow traces at once
+    # instead of adding them individually in a loop (reduces overhead)
     arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
     if arrow_traces:
         fig.add_traces(arrow_traces)
