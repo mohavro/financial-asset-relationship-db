@@ -35,7 +35,7 @@ VALID_RELATIONSHIP_TYPES = {
 def _is_valid_color_format(color: str) -> bool:
     """Validate if a string is a valid color format for Plotly.
 
-    Accepts hex colors (#RGB or #RRGGBB), rgb/rgba format, or named colors.
+    Accepts hex colors (#RGB, #RRGGBB, optionally #RRGGBBAA), rgb/rgba format, or named colors.
 
     Args:
         color: Color string to validate
@@ -46,7 +46,7 @@ def _is_valid_color_format(color: str) -> bool:
     if not isinstance(color, str) or not color:
         return False
 
-    # Check for hex color format (#RGB or #RRGGBB or #RRGGBBAA)
+    # Check for hex color format (#RGB, #RRGGBB, or #RRGGBBAA)
     if re.match(r'^#(?:[0-9A-Fa-f]{3}){1,2}(?:[0-9A-Fa-f]{2})?$', color):
         return True
 
@@ -85,7 +85,6 @@ def _build_relationship_index(
     - Pre-filters graph.relationships to only include relevant source_ids
     - Uses set-based membership tests for O(1) lookups
     - Avoids unnecessary iterations over irrelevant relationships
-    - Reduces continue statements by filtering upfront
 
     Thread Safety:
     - This function is thread-safe as it only reads from the input graph and
@@ -159,18 +158,6 @@ def _create_node_trace(
     if not all(isinstance(aid, str) and aid for aid in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
 
-    # Validate colors content (must be valid color format strings)
-    for i, color in enumerate(colors):
-        if not isinstance(color, str) or not color:
-            raise ValueError(f"colors[{i}] must be a non-empty string, got {type(color).__name__}")
-        if not _is_valid_color_format(color):
-            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
-
-    # Validate hover_texts content (must be strings, can be empty)
-    for i, hover_text in enumerate(hover_texts):
-        if not isinstance(hover_text, str):
-            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
-
     # Validate length alignment
     n_positions = positions.shape[0]
     n_asset_ids = len(asset_ids)
@@ -183,6 +170,18 @@ def _create_node_trace(
             f"asset_ids has {n_asset_ids} elements, colors has {n_colors} elements, "
             f"hover_texts has {n_hover_texts} elements. All must have the same length."
         )
+
+    # Validate colors content (must be valid color format strings)
+    for i, color in enumerate(colors):
+        if not isinstance(color, str) or not color:
+            raise ValueError(f"colors[{i}] must be a non-empty string, got {type(color).__name__}")
+        if not _is_valid_color_format(color):
+            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
+
+    # Validate hover_texts content (must be strings, can be empty)
+    for i, hover_text in enumerate(hover_texts):
+        if not isinstance(hover_text, str):
+            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
 
     return go.Scatter3d(
         x=positions[:, 0],
@@ -204,3 +203,6 @@ def _create_node_trace(
         name="Assets",
         visible=True,
     )
+
+
+# ... the rest of the file remains unchanged ...
