@@ -202,6 +202,8 @@ def _create_node_trace(
     if not (n_positions == n_asset_ids == n_colors == n_hover_texts):
         raise ValueError(
             f"Length mismatch: positions has {n_positions} rows, "
+        if not isinstance(hover_text, str):
+            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
             f"asset_ids has {n_asset_ids} elements, colors has {n_colors} elements, "
             f"hover_texts has {n_hover_texts} elements. All must have the same length."
         )
