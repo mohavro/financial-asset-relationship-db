@@ -88,6 +88,8 @@ def _build_relationship_index(
     asset_ids_set = set(asset_ids)
 
     # Pre-filter relationships to only include relevant source_ids
+    # This eliminates unnecessary iterations when source_id is frequently absent
+    # in asset_ids_set, addressing the efficiency concern from code review
     relevant_relationships = {
         source_id: rels
         for source_id, rels in graph.relationships.items()
