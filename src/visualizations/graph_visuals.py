@@ -615,7 +615,30 @@ def visualize_3d_graph_with_filters(
     show_all_relationships: bool = True,
     toggle_arrows: bool = True,
 ) -> go.Figure:
-    """Create 3D visualization with selective relationship filtering"""
+    """Create 3D visualization with selective relationship filtering
+
+    Args:
+        graph: Asset relationship graph to visualize
+        show_same_sector: Show same sector relationships
+        show_market_cap: Show market cap similar relationships
+        show_correlation: Show correlation relationships
+        show_corporate_bond: Show corporate bond to equity relationships
+        show_commodity_currency: Show commodity currency relationships
+        show_income_comparison: Show income comparison relationships
+        show_regulatory: Show regulatory impact relationships
+        show_all_relationships: If True, show all relationships regardless of individual filters
+        toggle_arrows: If True, show directional arrows for unidirectional relationships
+
+    Returns:
+        Plotly Figure object with 3D visualization
+
+    Raises:
+        ValueError: If graph data is invalid or filter configuration is inconsistent
+        TypeError: If filter parameters are not boolean values
+    """
+    filter_params = [show_same_sector, show_market_cap, show_correlation, show_corporate_bond,
+                     show_commodity_currency, show_income_comparison, show_regulatory,
+                     show_all_relationships, toggle_arrows]
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(
         graph, "get_3d_visualization_data_enhanced"
     ):
