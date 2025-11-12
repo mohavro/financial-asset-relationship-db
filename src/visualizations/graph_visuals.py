@@ -170,6 +170,7 @@ def _configure_layout(
             bordercolor="rgba(0, 0, 0, 0.3)",
             borderwidth=1,
         ),
+    )
 def _add_nodes_trace(fig: go.Figure, positions: np.ndarray, asset_ids: List[str], colors: List[str], hover_texts: List[str]) -> None:
     """Add nodes trace to the figure with enhanced styling.
 
