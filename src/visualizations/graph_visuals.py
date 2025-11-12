@@ -689,6 +689,27 @@ def _create_directional_arrows(
     return [arrow_trace]
 
 
+def _validate_filter_parameters(
+    show_same_sector: bool,
+    show_market_cap: bool,
+    show_correlation: bool,
+    show_corporate_bond: bool,
+    show_commodity_currency: bool,
+    show_income_comparison: bool,
+    show_regulatory: bool,
+    show_all_relationships: bool,
+    toggle_arrows: bool,
+) -> None:
+    """Validate that all filter parameters are boolean values."""
+    params = {
+        "show_same_sector": show_same_sector, "show_market_cap": show_market_cap,
+        "show_correlation": show_correlation, "show_corporate_bond": show_corporate_bond,
+        "show_commodity_currency": show_commodity_currency, "show_income_comparison": show_income_comparison,
+        "show_regulatory": show_regulatory, "show_all_relationships": show_all_relationships,
+        "toggle_arrows": toggle_arrows,
+    }
+    for param_name, param_value in params.items():
+        if not isinstance(param_value, bool):
 def visualize_3d_graph_with_filters(
     graph: AssetRelationshipGraph,
     show_same_sector: bool = True,
