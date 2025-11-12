@@ -118,7 +118,7 @@ def _create_node_trace(
             f"Length mismatch: positions has {n_positions} rows, "
             f"asset_ids has {n_asset_ids} elements, colors has {n_colors} elements, "
             f"hover_texts has {n_hover_texts} elements. All must have the same length."
-
+        )
 
     # Validate colors content (must be valid color format strings)
     for i, color in enumerate(colors):
