@@ -304,7 +304,13 @@ def _validate_visualization_data(
     if not isinstance(asset_ids, (list, tuple)):
         raise ValueError("Invalid graph data: asset_ids must be a list or tuple")
     if not all(isinstance(a, str) and a for a in asset_ids):
-        raise ValueError("Invalid graph data: asset_ids must contain non-empty strings")
+        invalid_ids = [i for i, a in enumerate(asset_ids) if not isinstance(a, str) or not a]
+        examples = [repr(asset_ids[i]) for i in invalid_ids[:3]]
+        raise ValueError(
+            "Invalid graph data: asset_ids must contain non-empty strings. "
+            f"Found {len(invalid_ids)} invalid entries at indices {invalid_ids[:5]} "
+            f"with examples {examples}"
+        )
 
     # Validate length consistency
     n = len(asset_ids)
