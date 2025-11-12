@@ -194,6 +194,26 @@ def _create_node_trace(
         textfont=dict(size=12, color="black"),
         name="Assets",
         visible=True,
+
+def _generate_dynamic_title(
+    num_assets: int,
+    num_relationships: int,
+    base_title: str = "Financial Asset Network"
+) -> str:
+    """Generate a dynamic title for the visualization based on asset and relationship counts.
+
+    This function creates a consistent title format across different visualization contexts,
+    improving modularity and making it easier to customize titles without modifying core logic.
+
+    Args:
+        num_assets: Number of assets in the visualization
+        num_relationships: Number of relationships displayed
+        base_title: Base title text (default: "Financial Asset Network")
+
+    Returns:
+        Formatted title string with asset and relationship counts
+    """
+    return f"{base_title} - {num_assets} Assets, {num_relationships} Relationships"
     )
 
 
