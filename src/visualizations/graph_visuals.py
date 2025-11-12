@@ -285,6 +285,53 @@ def _configure_3d_layout(
     )
 
 
+
+def _validate_visualization_data(
+    positions: np.ndarray,
+    asset_ids: List[str],
+    colors: List[str],
+    hover_texts: List[str],
+) -> None:
+    """Validate visualization data integrity to prevent runtime errors.
+
+    This function performs comprehensive validation of data returned by
+    graph.get_3d_visualization_data_enhanced() to ensure it contains all
+    expected fields with correct data types and structure.
+
+    Args:
+        positions: NumPy array of node positions
+        asset_ids: List of asset IDs
+        colors: List of node colors
+        hover_texts: List of hover texts
+
+    Raises:
+        ValueError: If any validation check fails with descriptive error message
+    """
+    # Validate positions array
+    if not isinstance(positions, np.ndarray):
+        raise ValueError("Invalid graph data: positions must be a numpy array")
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid graph data: positions must be a (n, 3) numpy array")
+    if not np.issubdtype(positions.dtype, np.number):
+        raise ValueError("Invalid graph data: positions must contain numeric values")
+    if not np.isfinite(positions).all():
+        raise ValueError("Invalid graph data: positions must contain finite values (no NaN or Inf)")
+
+    # Validate asset_ids
+    if not isinstance(asset_ids, (list, tuple)):
+        raise ValueError("Invalid graph data: asset_ids must be a list or tuple")
+    if not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("Invalid graph data: asset_ids must contain non-empty strings")
+
+    # Validate length consistency
+    n = len(asset_ids)
+    if positions.shape[0] != n:
+        raise ValueError(f"Invalid graph data: positions length ({positions.shape[0]}) must match asset_ids length ({n})")
+    if not isinstance(colors, (list, tuple)) or len(colors) != n:
+        raise ValueError(f"Invalid graph data: colors must be a list/tuple of length {n}")
+    if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
+        raise ValueError(f"Invalid graph data: hover_texts must be a list/tuple of length {n}")
+
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, "get_3d_visualization_data_enhanced"):
