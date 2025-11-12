@@ -75,10 +75,19 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Thread safety (addressing review feedback):
+    Thread Safety and Data Integrity (addressing review feedback):
     - Creates and returns a new dictionary (no shared state modification)
-    - Reads graph.relationships without mutating it
-    - Safe for concurrent reads if graph.relationships is not modified during execution
+    - Reads from graph.relationships without mutating it
+
+    Thread-safe conditions:
+    1. Safe for concurrent reads ONLY if graph.relationships is immutable or not
+       modified by other threads during execution
+    2. NOT thread-safe if graph.relationships can be modified concurrently by other
+       threads (risk of data races and inconsistent states)
+
+    Recommendations for multi-threaded environments:
+    - Use immutable graph objects (preferred approach)
+    - Implement external synchronization (e.g., locks) if graph is mutable
     - For concurrent write scenarios, callers should use immutable graph objects or
       implement external synchronization (e.g., locks)
 
