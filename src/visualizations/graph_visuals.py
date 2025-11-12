@@ -21,6 +21,24 @@ REL_TYPE_COLORS = defaultdict(
 )
 
 
+def _is_valid_color(color: str) -> bool:
+    """Validate if a string is a valid color format.
+
+    Supports hex colors (#RGB, #RRGGBB, #RRGGBBAA), rgb/rgba, and named colors.
+
+    Args:
+        color: Color string to validate
+
+    Returns:
+        True if color format is valid, False otherwise
+    """
+    if not isinstance(color, str) or not color:
+        return False
+    hex_pattern = r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$'
+    rgba_pattern = r'^rgba?\s*\([^)]+\)$'
+    return bool(re.match(hex_pattern, color) or re.match(rgba_pattern, color) or color.isalpha())
+
+
 def _is_valid_color_format(color: str) -> bool:
     """Validate if a string is a valid color format for Plotly.
 
