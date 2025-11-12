@@ -484,7 +484,6 @@ def _create_trace_for_group(
     relationships: List[dict],
     positions: np.ndarray,
     asset_id_index: Dict[str, int],
-) -> go.Scatter3d:
     """Create a single trace for a relationship group with optimized performance.
 
     Args:
