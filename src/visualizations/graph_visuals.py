@@ -193,12 +193,24 @@ def _add_node_trace(
 def _configure_layout(
     fig: go.Figure,
     title_text: str,
+    width: int = 1200,
+    height: int = 800,
+    gridcolor: str = "rgba(200, 200, 200, 0.3)",
+    bgcolor: str = "rgba(248, 248, 248, 0.95)",
+    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
+    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
 ) -> None:
     """Configure the layout for 3D visualization.
 
     Args:
         fig: Plotly figure to configure
         title_text: Title text for the visualization
+        width: Figure width in pixels
+        height: Figure height in pixels
+        gridcolor: Color for grid lines in RGBA format
+        bgcolor: Background color for the scene in RGBA format
+        legend_bgcolor: Background color for the legend in RGBA format
+        legend_bordercolor: Border color for the legend in RGBA format
     """
     fig.update_layout(
         title={
