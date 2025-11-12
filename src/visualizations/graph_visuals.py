@@ -42,7 +42,11 @@ def _is_valid_color_format(color: str) -> bool:
     Returns:
         True if color format is valid, False otherwise
     """
-    if not isinstance(color, str) or not color:
+    # Type check: ensure input is a string before proceeding with regex checks
+    if not isinstance(color, str):
+        return False
+
+    if not color:
         return False
 
     # Hex colors
