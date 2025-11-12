@@ -110,13 +110,16 @@ def _create_node_trace(
     colors: List[str],
     hover_texts: List[str],
 ) -> go.Scatter3d:
-    """Create node trace for 3D visualization.
+    """Create node trace for 3D visualization with comprehensive input validation.
+
+    Validates all inputs to ensure:
+    - positions is a 2D numpy array with shape (n, 3) containing finite numeric values
+    - asset_ids is a list/tuple of non-empty strings with length matching positions
+    - colors is a list/tuple of valid color strings with length matching positions
+    - hover_texts is a list/tuple of strings with length matching positions
 
     Args:
-        positions: NumPy array of node positions with shape (n, 3) containing finite numeric values
-        asset_ids: List of asset ID strings (must be non-empty strings, length must match positions)
-        colors: List of node colors (length must match positions)
-        hover_texts: List of hover texts (length must match positions)
+        positions: NumPy array of node positions with shape (n, 3)
 
     Returns:
         Plotly Scatter3d trace for nodes
@@ -124,7 +127,14 @@ def _create_node_trace(
     Raises:
         ValueError: If input parameters are invalid, have mismatched dimensions, or contain invalid data
     """
-    # Delegate core validation to shared validator to ensure consistency and reduce duplication
+    # Input validation: Check basic types and structure before detailed validation
+    if not isinstance(positions, np.ndarray):
+        raise ValueError(f"positions must be a numpy array, got {type(positions).__name__}")
+    if not isinstance(asset_ids, (list, tuple)):
+        raise ValueError(f"asset_ids must be a list or tuple, got {type(asset_ids).__name__}")
+    if not isinstance(colors, (list, tuple)):
+        raise ValueError(f"colors must be a list or tuple, got {type(colors).__name__}")
+    if not isinstance(hover_texts, (list, tuple)):
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
 
     # Additional color format validation (beyond non-empty string checks)
