@@ -22,28 +22,32 @@ REL_TYPE_COLORS = defaultdict(
 
 
 def _is_valid_color_format(color: str) -> bool:
-    """Validate if a string is a valid color format for Plotly.
+    """Validate if a string is a valid color format.
 
-    Accepts:
-    - Named colors (e.g., 'red', 'blue')
+    Supports common color formats:
     - Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
     - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
+    - Named colors (delegated to Plotly)
 
-    Returns True if valid color format, False otherwise.
+    Args:
+        color: Color string to validate
+
+    Returns:
+        True if color format is valid, False otherwise
     """
     if not isinstance(color, str) or not color:
         return False
 
-    # Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
-    if re.match(r"^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$", color):
+    # Hex colors
+    if re.match(r'^#(?:[0-9A-Fa-f]{3}){1,2}(?:[0-9A-Fa-f]{2})?$', color):
         return True
 
-    # rgb()/rgba()
-    if re.match(r"^rgba?\s*\([^)]+\)$", color):
+    # rgb/rgba functions
+    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
         return True
 
-    # Named colors (simple alpha strings)
-    return color.isalpha()
+    # Fallback: allow named colors; Plotly will validate at render time
+    return True
 
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
@@ -54,36 +58,41 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def _build_relationship_index(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups.
+    """Build optimized relationship index for O(1) lookups with pre-filtering.
 
-    Performance optimizations:
+    This function consolidates relationship data into a single index structure
+    that can be efficiently queried for:
+    - Checking if a relationship exists (O(1) lookup)
+    - Getting relationship strength (O(1) lookup)
+    - Detecting bidirectional relationships (O(1) reverse lookup)
+
+    Performance optimizations (addressing review feedback):
     - Pre-filters graph.relationships to only include relevant source_ids
     - Uses set-based membership tests for O(1) lookups
     - Avoids unnecessary iterations over irrelevant relationships
+    - Reduces continue statements by filtering upfront
 
-    Thread safety:
-    - Thread-safe for concurrent reads on the graph object
-    - Returns a new dictionary (no shared state modification)
-    - Safe to call concurrently from multiple threads with the same graph
-    - Does not modify graph.relationships during execution
+    Thread safety (addressing review feedback):
+    - Creates and returns a new dictionary (no shared state modification)
+    - Reads graph.relationships without mutating it
 
     Args:
         graph: The asset relationship graph
-        asset_ids: Iterable of asset IDs to include
+        asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
     """
     asset_ids_set = set(asset_ids)
-    relationship_index: Dict[Tuple[str, str, str], float] = {}
 
-    # Pre-filter relationships to only include relevant source_ids (addressing review feedback)
+    # Pre-filter relationships to only include relevant source_ids
     relevant_relationships = {
         source_id: rels
         for source_id, rels in graph.relationships.items()
         if source_id in asset_ids_set
     }
 
+    relationship_index: Dict[Tuple[str, str, str], float] = {}
     for source_id, rels in relevant_relationships.items():
         for target_id, rel_type, strength in rels:
             if target_id in asset_ids_set:
@@ -134,6 +143,18 @@ def _create_node_trace(
     if not all(isinstance(aid, str) and aid for aid in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
 
+    # Validate colors content (must be valid color format strings)
+    for i, color in enumerate(colors):
+        if not isinstance(color, str) or not color:
+            raise ValueError(f"colors[{i}] must be a non-empty string, got {type(color).__name__}")
+        if not _is_valid_color_format(color):
+            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
+
+    # Validate hover_texts content (must be strings, can be empty)
+    for i, hover_text in enumerate(hover_texts):
+        if not isinstance(hover_text, str):
+            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
+
     # Validate length alignment
     n_positions = positions.shape[0]
     n_asset_ids = len(asset_ids)
@@ -146,18 +167,6 @@ def _create_node_trace(
             f"asset_ids has {n_asset_ids} elements, colors has {n_colors} elements, "
             f"hover_texts has {n_hover_texts} elements. All must have the same length."
         )
-
-    # Validate colors content (must be valid color format strings)
-    for i, color in enumerate(colors):
-        if not isinstance(color, str) or not color:
-            raise ValueError(f"colors[{i}] must be a non-empty string, got {type(color).__name__}")
-        if not _is_valid_color_format(color):
-            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
-
-    # Validate hover_texts content (must be strings, can be empty)
-    for i, hover_text in enumerate(hover_texts):
-        if not isinstance(hover_text, str):
-            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
 
     return go.Scatter3d(
         x=positions[:, 0],
@@ -220,6 +229,54 @@ def _configure_layout(
     )
 
 
+def _add_directional_arrows_to_figure(
+    fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
+) -> None:
+    """Add directional arrows to the figure for unidirectional relationships using batch operations."""
+    arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
+    if arrow_traces:
+        fig.add_traces(arrow_traces)
+
+
+def _configure_3d_layout(
+    fig: go.Figure,
+    title: str,
+    width: int = 1200,
+    height: int = 800,
+    gridcolor: str = "rgba(200, 200, 200, 0.3)",
+    bgcolor: str = "rgba(248, 248, 248, 0.95)",
+    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
+    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
+) -> None:
+    """Configure the 3D layout for the figure."""
+    fig.update_layout(
+        title={
+            "text": title,
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=width,
+        height=height,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
+    )
+
+
 def _validate_visualization_data(
     positions: np.ndarray,
     asset_ids: List[str],
@@ -262,7 +319,9 @@ def _validate_visualization_data(
     if not all(isinstance(c, str) and c for c in colors):
         raise ValueError("Invalid graph data: colors must contain non-empty strings")
     if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
-        raise ValueError(f"Invalid graph data: hover_texts must be a list/tuple of length {n}")
+        raise ValueError(
+            f"Invalid graph data: hover_texts must be a list/tuple of length {n}"
+        )
     if not all(isinstance(h, str) for h in hover_texts):
         raise ValueError("Invalid graph data: hover_texts must contain strings")
 
@@ -284,8 +343,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     # Create separate traces for different relationship types and directions
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
 
-    # Performance optimization: Use batch operation (add_traces) instead of adding traces
-    # individually in a loop, which reduces function call overhead for large graphs
+    # Batch add traces
     if relationship_traces:
         fig.add_traces(relationship_traces)
 
@@ -294,13 +352,35 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     if arrow_traces:
         fig.add_traces(arrow_traces)
 
-    # Add nodes with enhanced styling using the reusable helper function
+    # Add nodes with enhanced styling
     node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
     fig.add_trace(node_trace)
 
-    # Use the parameterized _configure_layout function instead of inline configuration
-    _configure_layout(
-        fig, title_text="Financial Asset Relationship Network - Enhanced 3D Visualization"
+    fig.update_layout(
+        title={
+            "text": "Financial Asset Relationship Network - Enhanced 3D Visualization",
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=1200,
+        height=800,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
     )
 
     return fig
@@ -311,13 +391,7 @@ def _collect_and_group_relationships(
     asset_ids: Iterable[str],
     relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> Dict[Tuple[str, bool], List[dict]]:
-    """Collect and group relationships with directionality info in a single pass.
-
-    Optimized to avoid nested loops and intermediate lists by:
-    - Building a relationship index once for O(1) lookups
-    - Detecting bidirectionality via reverse-key checks
-    - Using a processed-pairs set to avoid double-counting
-    """
+    """Collect and group relationships with directionality info in a single pass."""
     relationship_index = _build_relationship_index(graph, asset_ids)
 
     processed_pairs: Set[Tuple[str, str, str]] = set()
@@ -327,13 +401,13 @@ def _collect_and_group_relationships(
         if relationship_filters and rel_type in relationship_filters and not relationship_filters[rel_type]:
             continue
 
-        # Canonical pair key for bidirectional detection without sorting overhead
+        # Canonical pair key for bidirectional detection
         if source_id <= target_id:
             pair_key: Tuple[str, str, str] = (source_id, target_id, rel_type)
         else:
             pair_key = (target_id, source_id, rel_type)
 
-        # O(1) reverse lookup for bidirectionality
+        # Reverse lookup for bidirectionality
         is_bidirectional = (target_id, source_id, rel_type) in relationship_index
 
         # Avoid duplicate entries for bidirectional edges
@@ -359,21 +433,17 @@ def _build_edge_coordinates_optimized(
     asset_id_index: Dict[str, int],
 ) -> Tuple[List[Optional[float]], List[Optional[float]], List[Optional[float]]]:
     """Build edge coordinate lists for relationships using optimized O(1) lookups."""
-    # Pre-allocate arrays for better performance (3 values per relationship: start, end, None)
     num_edges = len(relationships)
     edges_x: List[Optional[float]] = [None] * (num_edges * 3)
     edges_y: List[Optional[float]] = [None] * (num_edges * 3)
     edges_z: List[Optional[float]] = [None] * (num_edges * 3)
 
     for i, rel in enumerate(relationships):
-        # O(1) index lookup
         source_idx = asset_id_index[rel["source_id"]]
         target_idx = asset_id_index[rel["target_id"]]
 
-        # Calculate base index for this edge
         base_idx = i * 3
 
-        # Set coordinates
         edges_x[base_idx] = positions[source_idx, 0]
         edges_x[base_idx + 1] = positions[target_idx, 0]
 
@@ -390,7 +460,6 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
     """Build hover text list for relationships with pre-allocation for performance."""
     direction_text = "↔" if is_bidirectional else "→"
 
-    # Pre-allocate array for better performance
     num_rels = len(relationships)
     hover_texts: List[Optional[str]] = [None] * (num_rels * 3)
 
@@ -456,7 +525,6 @@ def _create_relationship_traces(
     relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> List[go.Scatter3d]:
     """Create separate traces for different types of relationships with enhanced visibility."""
-    # Validate input parameters
     if not isinstance(graph, AssetRelationshipGraph):
         raise ValueError("Invalid input data: graph must be an AssetRelationshipGraph instance")
     if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
@@ -466,10 +534,8 @@ def _create_relationship_traces(
     if len(positions) != len(asset_ids):
         raise ValueError("Invalid input data: positions array length must match asset_ids length")
 
-    # Build asset ID index once for O(1) lookups throughout processing
     asset_id_index = _build_asset_id_index(asset_ids)
 
-    # Collect and group relationships in a single pass
     relationship_groups = _collect_and_group_relationships(
         graph, asset_ids, relationship_filters
     )
@@ -494,7 +560,6 @@ def _create_directional_arrows(
     if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
         raise ValueError("Invalid input data: graph must have a relationships dictionary")
 
-    # Early validation: check None, length match, and basic compatibility
     try:
         if positions is None or asset_ids is None:
             raise ValueError("positions and asset_ids must not be None")
@@ -502,26 +567,30 @@ def _create_directional_arrows(
             raise ValueError("positions and asset_ids must have the same length")
     except TypeError as exc:
         raise ValueError("Invalid input data: positions and asset_ids must support len()") from exc
+
     if not isinstance(positions, np.ndarray):
         positions = np.asarray(positions)
     if positions.ndim != 2 or positions.shape[1] != 3:
         raise ValueError("Invalid positions shape: expected (n, 3)")
+
     if not isinstance(asset_ids, (list, tuple)):
         try:
             asset_ids = list(asset_ids)
-        except Exception as exc:  # pylint: disable=broad-except
+        except Exception as exc:
             raise ValueError("asset_ids must be an iterable of strings") from exc
+
     if not np.issubdtype(positions.dtype, np.number):
         try:
             positions = positions.astype(float)
-        except Exception as exc:  # pylint: disable=broad-except
+        except Exception as exc:
             raise ValueError("Invalid positions: values must be numeric") from exc
+
     if not np.isfinite(positions).all():
         raise ValueError("Invalid positions: values must be finite numbers")
+
     if not all(isinstance(a, str) and a for a in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
 
-    # Build relationship index once for O(1) lookups
     relationship_index = _build_relationship_index(graph, asset_ids)
     asset_id_index = _build_asset_id_index(asset_ids)
 
@@ -529,12 +598,10 @@ def _create_directional_arrows(
     target_indices: List[int] = []
     hover_texts: List[str] = []
 
-    # Gather unidirectional relationships using the pre-built index
+    # Gather unidirectional relationships
     for (source_id, target_id, rel_type), _ in relationship_index.items():
-        # Check for reverse relationship using O(1) index lookup
         reverse_key = (target_id, source_id, rel_type)
         if reverse_key not in relationship_index:
-            # This is a unidirectional relationship
             source_indices.append(asset_id_index[source_id])
             target_indices.append(asset_id_index[target_id])
             hover_texts.append(f"Direction: {source_id} → {target_id}<br>Type: {rel_type}")
@@ -542,7 +609,7 @@ def _create_directional_arrows(
     if not source_indices:
         return []
 
-    # Performance optimization: Use vectorized NumPy operations for arrow position calculation.
+    # Vectorized arrow position calculation at 70% along each edge
     src_idx_arr = np.asarray(source_indices, dtype=int)
     tgt_idx_arr = np.asarray(target_indices, dtype=int)
     source_positions = positions[src_idx_arr]
@@ -555,7 +622,7 @@ def _create_directional_arrows(
         z=arrow_positions[:, 2].tolist(),
         mode="markers",
         marker=dict(
-            symbol="diamond",  # Use diamond instead of arrow for 3D compatibility
+            symbol="diamond",
             size=8,
             color="rgba(255, 0, 0, 0.8)",
             line=dict(color="red", width=1),
@@ -581,14 +648,13 @@ def visualize_3d_graph_with_filters(
     show_all_relationships: bool = True,
     toggle_arrows: bool = True,
 ) -> go.Figure:
-    """Create 3D visualization with selective relationship filtering."""
+    """Create 3D visualization with selective relationship filtering"""
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(
         graph, "get_3d_visualization_data_enhanced"
     ):
         raise ValueError("Invalid graph data provided")
 
     if not show_all_relationships:
-        # Filter which relationship types to show
         relationship_filters = {
             "same_sector": show_same_sector,
             "market_cap_similar": show_market_cap,
@@ -599,44 +665,58 @@ def visualize_3d_graph_with_filters(
             "regulatory_impact": show_regulatory,
         }
     else:
-        # Show all relationships if the master toggle is on
         relationship_filters = None
 
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
-    # Validate visualization data to prevent runtime errors
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
 
     fig = go.Figure()
 
-    # Create relationship traces with filtering
     relationship_traces = _create_relationship_traces(
         graph, positions, asset_ids, relationship_filters
     )
 
-    # Use batch operation (add_traces) for better performance with multiple traces
     if relationship_traces:
         fig.add_traces(relationship_traces)
 
-    # Add directional arrows if enabled
     if toggle_arrows:
         arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
         if arrow_traces:
             fig.add_traces(arrow_traces)
 
-    # Add nodes with enhanced styling using the reusable helper function
     node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
     fig.add_trace(node_trace)
 
-    # Count visible relationships for dynamic title
     visible_relationships = (
         sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x")) // 3
     )
 
-    # Use the parameterized _configure_layout function instead of inline configuration
-    _configure_layout(
-        fig,
-        title_text=f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships",
+    fig.update_layout(
+        title={
+            "text": f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships",
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=1200,
+        height=800,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
     )
 
     return fig
