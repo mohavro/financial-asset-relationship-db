@@ -94,9 +94,15 @@ def _build_relationship_index(
     asset_ids_set = set(asset_ids)
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
-    for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
-            continue
+    # Pre-filter relationships to only include relevant source_ids (optimization per review)
+    # This reduces unnecessary iterations when source_id is frequently absent in asset_ids_set
+    relevant_relationships = {
+        source_id: rels
+        for source_id, rels in graph.relationships.items()
+        if source_id in asset_ids_set
+    }
+
+    for source_id, rels in relevant_relationships.items():
         for target_id, rel_type, strength in rels:
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = float(strength)
