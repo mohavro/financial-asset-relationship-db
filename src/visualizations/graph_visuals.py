@@ -107,27 +107,18 @@ def _build_relationship_index(
     - Creates and returns a new dictionary (no shared state modification)
     - Reads graph.relationships without mutating it
     - Function itself does not modify any shared state
+    - Uses threading.RLock (_graph_access_lock) to synchronize access to graph.relationships
+    - Protects against concurrent modifications during read operations
 
     Thread safety guarantees:
-    This function is thread-safe for concurrent execution ONLY under these conditions:
-    1. The graph.relationships dictionary is NOT modified during execution
-    2. Multiple threads can safely call this function simultaneously IF AND ONLY IF
-       the graph object remains immutable
+    This function is now thread-safe for concurrent execution:
+    1. Uses a reentrant lock (_graph_access_lock) to protect graph.relationships access
+    2. Multiple threads can safely call this function simultaneously
+    3. Prevents data races and inconsistent states from concurrent modifications
+    4. The lock is reentrant (RLock), allowing the same thread to acquire it multiple times
 
-    NOT thread-safe when:
-    - graph.relationships is modified by any thread during execution
-    - This can cause data races, inconsistent states, or runtime errors
-
-    Recommendations for Multi-Threaded Environments:
-    1. PREFERRED: Use immutable graph objects (freeze graph.relationships after creation)
-    2. ALTERNATIVE: Implement external synchronization:
-       - Use threading.Lock or similar mechanism to protect graph access
-       - Ensure all reads/writes to graph.relationships are synchronized
-    3. AVOID: Modifying graph.relationships while any thread may be reading it
-
-    For multi-threaded environments with mutable graphs:
-    Note: If your application modifies the graph concurrently, you MUST implement
-    external locking or use immutable data structures to prevent race conditions.
+    Note: All functions that access graph.relationships should use the same lock
+    to ensure consistent synchronization across the codebase.
 
     Args:
         graph: The asset relationship graph (should be immutable in multi-threaded contexts)
