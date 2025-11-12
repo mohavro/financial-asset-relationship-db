@@ -606,6 +606,20 @@ def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectiona
     return hover_texts
 
 
+def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
+    """Generate a dynamic title for the visualization based on asset and relationship counts.
+
+    Args:
+        num_assets: Number of assets in the visualization
+        num_relationships: Number of visible relationships
+
+    Returns:
+        Formatted title string
+    """
+    return (
+        f"Financial Asset Relationship Network - {num_assets} Assets, "
+        f"{num_relationships} Relationships"
+    )
 def _get_line_style(rel_type: str, is_bidirectional: bool) -> dict:
     """Get line style configuration for a relationship"""
     return dict(
