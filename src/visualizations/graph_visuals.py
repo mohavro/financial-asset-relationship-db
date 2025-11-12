@@ -1,6 +1,9 @@
 import re
+import logging
 from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Set, Tuple
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 import plotly.graph_objects as go
