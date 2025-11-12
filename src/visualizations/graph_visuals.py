@@ -137,6 +137,17 @@ def _create_node_trace(
             f"hover_texts has {n_hover_texts} elements. All must have the same length."
         )
 
+    # Validate colors contain valid color formats (addresses review feedback)
+    invalid_colors = [c for c in colors if not _is_valid_color(c)]
+    if invalid_colors:
+        raise ValueError(
+            f"colors must contain valid color formats. Invalid colors found: {invalid_colors[:5]}"
+        )
+
+    # Validate hover_texts contain strings
+    if not all(isinstance(h, str) for h in hover_texts):
+        raise ValueError("hover_texts must contain strings")
+
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
