@@ -1109,10 +1109,6 @@ def visualize_3d_graph_with_filters(
         _validate_visualization_data(positions, asset_ids, colors, hover_texts)
     except ValueError as exc:
         logger.error("Invalid visualization data: %s", exc)
-    # ERROR HANDLING: Create relationship traces with comprehensive error handling
-    # Handles invalid data structures, type mismatches, and unexpected exceptions
-    # Falls back to empty trace list on failure to allow partial visualization
-    # Logs detailed error information for debugging
         raise
 
     # Create figure
