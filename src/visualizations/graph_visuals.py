@@ -500,6 +500,9 @@ def _build_edge_coordinates_optimized(
 
 def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectional: bool) -> List[Optional[str]]:
     """Build hover text list for relationships with pre-allocation for performance."""
+    # Note: F-strings (PEP 498) are used here for optimal performance in Python 3.6+.
+    # They are compiled to efficient bytecode and outperform ''.join() for simple
+    # string formatting operations like this, avoiding unnecessary list allocations.
     direction_text = "↔" if is_bidirectional else "→"
 
     num_rels = len(relationships)
