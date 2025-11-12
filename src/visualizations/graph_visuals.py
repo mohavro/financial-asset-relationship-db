@@ -142,6 +142,12 @@ def _build_relationship_index(
             f"got {type(graph.relationships).__name__}"
         )
 
+    # Validate asset_ids is iterable (explicit check as requested in review)
+    if not isinstance(asset_ids, Iterable):
+        raise TypeError(
+            f"Invalid input: asset_ids must be an iterable, got {type(asset_ids).__name__}"
+        )
+
     # Validate asset_ids is iterable
     try:
         asset_ids_set = set(asset_ids)
