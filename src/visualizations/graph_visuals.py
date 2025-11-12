@@ -201,6 +201,27 @@ def _create_node_trace(
             line=dict(color="rgba(0,0,0,0.8)", width=2),
             symbol="circle",
         ),
+
+def _generate_dynamic_title(
+    base_title: str,
+    num_assets: Optional[int] = None,
+    num_relationships: Optional[int] = None,
+) -> str:
+    """Generate dynamic title with asset and relationship counts.
+
+    Args:
+        base_title: Base title text (e.g., "Financial Asset Network")
+        num_assets: Number of assets to display (optional)
+        num_relationships: Number of relationships to display (optional)
+
+    Returns:
+        Formatted title string with counts if provided
+    """
+    if num_assets is not None and num_relationships is not None:
+        return f"{base_title} - {num_assets} Assets, {num_relationships} Relationships"
+    if num_assets is not None:
+        return f"{base_title} - {num_assets} Assets"
+    return base_title
         text=asset_ids,
         hovertext=hover_texts,
         hoverinfo="text",
