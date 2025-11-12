@@ -80,6 +80,32 @@ def _create_node_trace(
     Returns:
         Plotly Scatter3d trace for nodes
     """
+    # Validate positions
+    if not isinstance(positions, np.ndarray):
+        raise ValueError("Invalid input: positions must be a numpy array")
+    if positions.ndim != 2 or positions.shape[1] != 3:
+        raise ValueError("Invalid input: positions must be a (n, 3) numpy array")
+    if not np.issubdtype(positions.dtype, np.number):
+        raise ValueError("Invalid input: positions must contain numeric values")
+    if not np.isfinite(positions).all():
+        raise ValueError("Invalid input: positions must contain finite values")
+
+    # Validate asset_ids
+    if not isinstance(asset_ids, (list, tuple)) or not all(isinstance(a, str) and a for a in asset_ids):
+        raise ValueError("Invalid input: asset_ids must be a sequence of non-empty strings")
+
+    n = len(asset_ids)
+    if n == 0:
+        raise ValueError("Invalid input: asset_ids cannot be empty")
+    if positions.shape[0] != n:
+        raise ValueError("Invalid input: positions length must match asset_ids length")
+
+    # Validate colors and hover_texts
+    if not isinstance(colors, (list, tuple)) or len(colors) != n:
+        raise ValueError("Invalid input: colors length must match asset_ids length")
+    if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
+        raise ValueError("Invalid input: hover_texts length must match asset_ids length")
+
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
