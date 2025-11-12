@@ -87,13 +87,11 @@ def _build_relationship_index(
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
     # Pre-filter relationships to only include relevant source_ids (optimization per review)
-    # Pre-filter relationships to only include relevant source_ids (optimization per review)
     # This reduces unnecessary iterations when source_id is frequently absent in asset_ids_set
-    # This reduces unnecessary iterations when source_id is frequently absent in asset_ids_set
-        if source_id in asset_ids_set
     relevant_relationships = {
         source_id: rels
         for source_id, rels in graph.relationships.items()
+        if source_id in asset_ids_set
     }
 
     for source_id, rels in relevant_relationships.items():
