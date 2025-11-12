@@ -1051,6 +1051,9 @@ def visualize_3d_graph_with_filters(
         logger.error("Invalid filter configuration: %s", exc)
         raise
 
+    # ERROR HANDLING: Validate filter configuration to prevent invalid filter settings
+    # This catches type errors (non-boolean values) and structural issues early
+    # before attempting to create traces, preventing downstream failures
     # Build filter configuration with validation (Error Handling Layer 2)
     # Validates relationship filter structure and catches configuration errors
     # to prevent invalid filter settings from causing runtime failures
@@ -1077,6 +1080,9 @@ def visualize_3d_graph_with_filters(
             relationship_filters = None
     except (TypeError, ValueError) as exc:
         logger.exception("Failed to build filter configuration: %s", exc)
+    # ERROR HANDLING: Retrieve and validate visualization data from graph
+    # This ensures data integrity before attempting to create traces
+    # Catches issues with missing/malformed data early in the pipeline
         raise ValueError(f"Invalid filter configuration: {exc}") from exc
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Unexpected error building filter configuration: %s", exc)
@@ -1094,6 +1100,10 @@ def visualize_3d_graph_with_filters(
         _validate_visualization_data(positions, asset_ids, colors, hover_texts)
     except ValueError as exc:
         logger.error("Invalid visualization data: %s", exc)
+    # ERROR HANDLING: Create relationship traces with comprehensive error handling
+    # Handles invalid data structures, type mismatches, and unexpected exceptions
+    # Falls back to empty trace list on failure to allow partial visualization
+    # Logs detailed error information for debugging
         raise
 
     # Create figure
@@ -1117,6 +1127,9 @@ def visualize_3d_graph_with_filters(
             relationship_filters,
             exc
         )
+    # ERROR HANDLING: Add directional arrows with graceful degradation
+    # If arrow creation fails, visualization continues without arrows
+    # Prevents complete failure due to arrow rendering issues
         relationship_traces = []
 
     # Add relationship traces with error handling
@@ -1135,6 +1148,9 @@ def visualize_3d_graph_with_filters(
             arrow_traces = []
         except Exception as exc:  # pylint: disable=broad-except
             logger.exception("Unexpected error creating directional arrows: %s", exc)
+    # ERROR HANDLING: Create and add node trace with strict validation
+    # Node trace is critical - failure here raises exception to prevent
+    # incomplete visualization (relationships without nodes would be meaningless)
             arrow_traces = []
 
         if arrow_traces:
@@ -1143,6 +1159,10 @@ def visualize_3d_graph_with_filters(
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to add directional arrows to figure: %s", exc)
 
+    # ERROR HANDLING: Configure layout with fallback to default title
+    # If dynamic title generation fails, uses simple fallback title
+    # Ensures visualization is still usable even if metadata is unavailable
+    # Layout configuration errors are logged but don't prevent figure creation
     # Add node trace
     try:
         node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
