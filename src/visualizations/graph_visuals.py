@@ -401,6 +401,8 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     fig = go.Figure()
 
     # Create separate traces for different relationship types and directions
+    # Note: _create_relationship_traces returns a list of traces which are added
+    # in a single batch operation below for optimal performance
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
 
     # Performance optimization: Use batch operation (add_traces) instead of adding traces
