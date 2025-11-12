@@ -597,3 +597,6 @@ def visualize_3d_graph_with_filters(
     ))
 
     return fig
+
+    # Validate visualization data to prevent runtime errors
+    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
