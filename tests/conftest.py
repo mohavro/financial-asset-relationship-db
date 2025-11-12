@@ -1,4 +1,3 @@
-# Placeholder for test configuration
 """Pytest configuration and fixtures for the financial asset relationship database tests."""
 
 from typing import TYPE_CHECKING
