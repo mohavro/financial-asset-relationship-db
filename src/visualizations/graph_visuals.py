@@ -807,8 +807,8 @@ def visualize_3d_graph_with_filters(
     )
 
     # Add all relationship traces
-    for trace in relationship_traces:
-        fig.add_trace(trace)
+    if relationship_traces:
+        fig.add_traces(relationship_traces)
 
     # Add directional arrows if enabled
     if toggle_arrows:
