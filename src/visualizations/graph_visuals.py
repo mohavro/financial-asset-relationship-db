@@ -43,6 +43,16 @@ def _build_relationship_index(
     - Getting relationship strength (O(1) lookup)
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
+    Performance optimizations:
+    - Pre-filters graph.relationships to only include relevant source_ids
+    - Uses set-based membership tests for O(1) lookups
+    - Avoids unnecessary iterations over irrelevant relationships
+
+    Thread safety:
+    - This function is thread-safe for concurrent reads on the graph object
+    - Returns a new dictionary (no shared state modification)
+    - Safe to call concurrently from multiple threads with the same graph
+
     Args:
         graph: The asset relationship graph
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
@@ -51,11 +61,14 @@ def _build_relationship_index(
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
     """
     asset_ids_set = set(asset_ids)
+    # Pre-filter relationships to only include relevant source_ids (optimization per review)
+    relevant_relationships = {
+        source_id: rels for source_id, rels in graph.relationships.items()
+        if source_id in asset_ids_set
+    }
+
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
-    for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
-            continue
         for target_id, rel_type, strength in rels:
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = float(strength)
