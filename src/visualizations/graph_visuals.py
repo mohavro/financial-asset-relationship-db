@@ -178,6 +178,12 @@ def _create_node_trace(
             line=dict(color="rgba(0,0,0,0.8)", width=2),
             symbol="circle",
         ),
+    # Edge case: Validate non-empty inputs to prevent visualization errors
+    if len(asset_ids) == 0:
+        raise ValueError("Cannot create node trace: asset_ids is empty (must contain at least one asset)")
+    if positions.shape[0] == 0:
+        raise ValueError("Cannot create node trace: positions array is empty (must contain at least one position)")
+
         text=asset_ids,
         hovertext=hover_texts,
         hoverinfo="text",
