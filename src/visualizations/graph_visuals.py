@@ -21,6 +21,31 @@ REL_TYPE_COLORS = defaultdict(
 )
 
 
+def _is_valid_color_format(color: str) -> bool:
+    """Validate if a string is a valid color format for Plotly.
+
+    Accepts:
+    - Named colors (e.g., 'red', 'blue')
+    - Hex colors (e.g., '#FF0000', '#F00')
+    - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
+
+    Args:
+        color: Color string to validate
+
+    Returns:
+        True if valid color format, False otherwise
+    """
+    if not isinstance(color, str) or not color:
+        return False
+
+    # Check for hex color format
+    if re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color):
+        return True
+    # Check for rgb/rgba format
+    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)$', color):
+        return True
+    # Accept any non-empty string as potentially valid named color
+
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
 
