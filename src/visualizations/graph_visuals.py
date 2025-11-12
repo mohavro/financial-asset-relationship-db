@@ -70,7 +70,7 @@ def _is_valid_color_format(color: str) -> bool:
     Supports common color formats:
     - Hex colors (#RGB, #RRGGBB, #RRGGBBAA)
     - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
-    - Named colors (delegated to Plotly)
+    - Named colors (validated against CSS/Plotly color names)
 
     Args:
         color: Color string to validate
