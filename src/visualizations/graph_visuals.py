@@ -584,6 +584,7 @@ def visualize_3d_graph_with_filters(
 
     if toggle_arrows:
         arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
+            # Batch operation for performance: add all arrow traces at once
         if arrow_traces:
             fig.add_traces(arrow_traces)
 
