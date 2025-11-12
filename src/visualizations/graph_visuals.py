@@ -75,33 +75,25 @@ def _build_relationship_index(
     - Avoids unnecessary iterations over irrelevant relationships
     - Reduces continue statements by filtering upfront
 
-    Thread Safety and Data Integrity (addressing review feedback):
+    Thread safety considerations:
+    - This function is thread-safe ONLY when the graph object is immutable or not
+      modified concurrently by other threads during execution
     - Creates and returns a new dictionary (no shared state modification)
-    - Reads from graph.relationships without mutating it
-    - Function itself does not modify any shared state
+    - Reads graph.relationships without mutating it
+    - Safe for concurrent reads when graph.relationships remains unchanged
 
-    Thread-Safety Guarantees and Limitations:
-    This function is thread-safe for concurrent execution ONLY under these conditions:
-    1. The graph.relationships dictionary is NOT modified during execution
-    2. Multiple threads can safely call this function simultaneously IF AND ONLY IF
-       the graph object remains immutable
+    Thread safety guarantees:
+    - ✓ Safe: Multiple threads calling this function with the same immutable graph
+    - ✓ Safe: Single-threaded environments
+    - ✗ Unsafe: Concurrent reads while another thread modifies graph.relationships
 
-    NOT thread-safe when:
-    - graph.relationships is modified by any thread during execution
-    - This can cause data races, inconsistent states, or runtime errors
-
-    Recommendations for Multi-Threaded Environments:
-    1. PREFERRED: Use immutable graph objects (freeze graph.relationships after creation)
-    2. ALTERNATIVE: Implement external synchronization:
-       - Use threading.Lock or similar mechanism to protect graph access
-       - Ensure all reads/writes to graph.relationships are synchronized
-    3. AVOID: Modifying graph.relationships while any thread may be reading it
-
-    Note: If your application modifies the graph concurrently, you MUST implement
-    external locking or use immutable data structures to prevent race conditions.
+    For multi-threaded environments with mutable graphs:
+    - Use immutable graph objects (recommended)
+    - Implement external synchronization (e.g., threading.Lock) around graph access
+    - Consider using copy.deepcopy() on the graph before passing to this function
 
     Args:
-        graph: The asset relationship graph
+        graph: The asset relationship graph (should be immutable in multi-threaded contexts)
         asset_ids: Iterable of asset IDs to include (will be converted to a set for O(1) membership tests)
 
     Returns:
@@ -180,6 +172,11 @@ def _create_node_trace(
     # Comprehensive validation: detailed checks on content, numeric types, and finite values
     # Delegates to shared validator to ensure consistency across all visualization functions
     _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+
+    # Additional color format validation (beyond non-empty string checks)
+    for i, color in enumerate(colors):
+        if not _is_valid_color_format(color):
+            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
 
     # Edge case validation: Ensure inputs are not empty
     if len(asset_ids) == 0:
@@ -363,11 +360,13 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     fig = go.Figure()
 
     # Create separate traces for different relationship types and directions
+    # Returns both traces and count for efficient title generation (addresses review feedback)
     try:
-        relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
+        relationship_traces, total_relationships = _create_relationship_traces(graph, positions, asset_ids)
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to create relationship traces: %s", exc)
         relationship_traces = []
+        total_relationships = 0
 
     # Batch add traces
     if relationship_traces:
@@ -393,8 +392,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
     fig.add_trace(node_trace)
 
-    # Calculate total relationships for dynamic title
-    total_relationships = sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
+    # Use cached relationship count for dynamic title (optimization: avoids iterating over traces)
     dynamic_title = _generate_dynamic_title(len(asset_ids), total_relationships)
 
     fig.update_layout(
@@ -498,27 +496,17 @@ def _build_edge_coordinates_optimized(
 
 
 def _build_hover_texts(relationships: List[dict], rel_type: str, is_bidirectional: bool) -> List[Optional[str]]:
-    """Build hover text list for relationships with optimized string building.
-
-    Uses a reusable list buffer to accumulate string parts, avoiding repeated
-    list allocations. This approach minimizes memory overhead and improves
-    performance for large numbers of relationships.
-    """
+    """Build hover text list for relationships with pre-allocation for performance."""
     direction_text = "↔" if is_bidirectional else "→"
 
     num_rels = len(relationships)
     hover_texts: List[Optional[str]] = [None] * (num_rels * 3)
-    # Reusable buffer for building hover text strings
-    text_parts: List[str] = []
 
     for i, rel in enumerate(relationships):
-        # Clear and reuse the buffer for each relationship
-        text_parts.clear()
-        text_parts.extend([
-            rel['source_id'], ' ', direction_text, ' ', rel['target_id'],
-            '<br>Type: ', rel_type, '<br>Strength: ', f"{rel['strength']:.2f}"
-        ])
-        hover_text = ''.join(text_parts)
+        hover_text = (
+            f"{rel['source_id']} {direction_text} {rel['target_id']}<br>"
+            f"Type: {rel_type}<br>Strength: {rel['strength']:.2f}"
+        )
         base_idx = i * 3
         hover_texts[base_idx] = hover_text
         hover_texts[base_idx + 1] = hover_text
@@ -587,10 +575,22 @@ def _create_relationship_traces(
     positions: np.ndarray,
     asset_ids: List[str],
     relationship_filters: Optional[Dict[str, bool]] = None,
-) -> List[go.Scatter3d]:
+) -> Tuple[List[go.Scatter3d], int]:
     """Create separate traces for different types of relationships with enhanced visibility.
 
-    Returns a list of traces for batch addition to figure using fig.add_traces() for optimal performance.
+    Performance optimization (addressing review feedback):
+    - Returns both traces and relationship count to avoid expensive post-processing
+    - Eliminates need to iterate over traces to count relationships
+    - Caches count during trace creation when data is already available
+
+    Args:
+        graph: Asset relationship graph
+        positions: Node positions array
+        asset_ids: List of asset IDs
+        relationship_filters: Optional filters for relationship types
+
+    Returns:
+        Tuple of (traces list, relationship count) for batch addition to figure and efficient title generation
     """
     if not isinstance(graph, AssetRelationshipGraph):
         raise ValueError("Invalid input data: graph must be an AssetRelationshipGraph instance")
@@ -608,14 +608,18 @@ def _create_relationship_traces(
     )
 
     traces: List[go.Scatter3d] = []
+    total_relationships = 0
+
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
         if relationships:
             trace = _create_trace_for_group(
                 rel_type, is_bidirectional, relationships, positions, asset_id_index
             )
             traces.append(trace)
+            # Cache relationship count during trace creation (optimization)
+            total_relationships += len(relationships)
 
-    return traces
+    return traces, total_relationships
 
 
 def _create_directional_arrows(
@@ -703,30 +707,6 @@ def _create_directional_arrows(
     return [arrow_trace]
 
 
-def _validate_filter_parameters(
-    show_same_sector: bool,
-    show_market_cap: bool,
-    show_correlation: bool,
-    show_corporate_bond: bool,
-    show_commodity_currency: bool,
-    show_income_comparison: bool,
-    show_regulatory: bool,
-    show_all_relationships: bool,
-    toggle_arrows: bool,
-) -> None:
-    """Validate that all filter parameters are boolean values."""
-    params = {
-        "show_same_sector": show_same_sector, "show_market_cap": show_market_cap,
-        "show_correlation": show_correlation, "show_corporate_bond": show_corporate_bond,
-        "show_commodity_currency": show_commodity_currency, "show_income_comparison": show_income_comparison,
-        "show_regulatory": show_regulatory, "show_all_relationships": show_all_relationships,
-        "toggle_arrows": toggle_arrows,
-    }
-    for param_name, param_value in params.items():
-        if not isinstance(param_value, bool):
-            raise TypeError(f"Parameter '{param_name}' must be a boolean, got {type(param_value).__name__}")
-
-
 def visualize_3d_graph_with_filters(
     graph: AssetRelationshipGraph,
     show_same_sector: bool = True,
@@ -765,13 +745,15 @@ def visualize_3d_graph_with_filters(
     fig = go.Figure()
 
     # Safely build relationship traces according to filters
+    # Returns both traces and count for efficient title generation (addresses review feedback)
     try:
-        relationship_traces = _create_relationship_traces(
+        relationship_traces, visible_relationships = _create_relationship_traces(
             graph, positions, asset_ids, relationship_filters
         )
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to create filtered relationship traces: %s", exc)
         relationship_traces = []
+        visible_relationships = 0
 
     # Performance optimization: Use batch operation to add all relationship traces at once
     if relationship_traces:
@@ -799,15 +781,7 @@ def visualize_3d_graph_with_filters(
     node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
     fig.add_trace(node_trace)
 
-    visible_relationships = 0
-    try:
-        visible_relationships = (
-            sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
-        )
-    except Exception as exc:  # pylint: disable=broad-except
-        logger.exception("Failed to compute visible relationships count: %s", exc)
-
-    # Generate dynamic title based on asset and relationship counts
+    # Use cached relationship count for dynamic title (optimization: avoids iterating over traces)
     dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
 
     # Configure layout with dynamic title using the helper function
