@@ -1146,9 +1146,6 @@ def visualize_3d_graph_with_filters(
             arrow_traces = []
         except Exception as exc:  # pylint: disable=broad-except
             logger.exception("Unexpected error creating directional arrows: %s", exc)
-    # ERROR HANDLING: Create and add node trace with strict validation
-    # Node trace is critical - failure here raises exception to prevent
-    # incomplete visualization (relationships without nodes would be meaningless)
             arrow_traces = []
 
         if arrow_traces:
@@ -1157,11 +1154,11 @@ def visualize_3d_graph_with_filters(
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to add directional arrows to figure: %s", exc)
 
-    # ERROR HANDLING: Configure layout with fallback to default title
-    # If dynamic title generation fails, uses simple fallback title
-    # Ensures visualization is still usable even if metadata is unavailable
-    # Layout configuration errors are logged but don't prevent figure creation
-    # Add node trace
+    # ERROR HANDLING: Create and add node trace with strict validation
+    # Node trace is critical - failure here raises exception to prevent
+    # incomplete visualization (relationships without nodes would be meaningless)
+    # This is the only section that raises on error (others log and continue)
+    # because nodes are essential for any meaningful visualization
     try:
         node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
         fig.add_trace(node_trace)
