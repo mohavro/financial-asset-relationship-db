@@ -265,10 +265,6 @@ def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
         Formatted title string for the visualization
     """
     return f"Financial Asset Network - {num_assets} Assets, {num_relationships} Relationships"
-            borderwidth=1,
-        ),
-    )
-
 
 def _add_nodes_trace(fig: go.Figure, positions: np.ndarray, asset_ids: List[str], colors: List[str], hover_texts: List[str]) -> None:
     """Add nodes trace to the figure with enhanced styling.
