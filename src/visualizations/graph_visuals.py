@@ -54,7 +54,7 @@ def _is_valid_color_format(color: str) -> bool:
         return True
 
     # rgb/rgba functions
-    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
+    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
         return True
 
     # Fallback: allow named colors; Plotly will validate at render time
