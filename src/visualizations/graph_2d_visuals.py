@@ -8,7 +8,6 @@ import logging
 import math
 from typing import Dict, List, Tuple
 
-import numpy as np
 import plotly.graph_objects as go
 from src.logic.asset_graph import AssetRelationshipGraph
 
