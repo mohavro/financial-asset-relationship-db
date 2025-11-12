@@ -103,6 +103,29 @@ def _build_relationship_index(
     }
 
     for source_id, rels in relevant_relationships.items():
+
+def _is_valid_color_format(color: str) -> bool:
+    """Validate if a string is a valid color format for Plotly.
+
+    Accepts hex colors (#RGB or #RRGGBB), rgb/rgba format, or named colors.
+
+    Args:
+        color: Color string to validate
+
+    Returns:
+        True if the color format is valid, False otherwise
+    """
+    if not isinstance(color, str) or not color:
+        return False
+
+    # Check for hex color format (#RGB or #RRGGBB)
+    if re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$', color):
+        return True
+
+    # Check for rgb/rgba format
+    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
+        return True
+
         for target_id, rel_type, strength in rels:
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = float(strength)
