@@ -46,7 +46,7 @@ def _is_valid_color_format(color: str) -> bool:
         return True
 
     # rgb/rgba functions
-    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
+    if re.match(r'^rgba?\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*(,\\s*[\\d.]+\\s*)?\\)$', color):
         return True
 
     # Fallback: allow named colors; Plotly will validate at render time
@@ -818,14 +818,14 @@ def _validate_filter_parameters(filter_params: Dict[str, bool]) -> None:
 
 
 def _validate_relationship_filters(relationship_filters: Optional[Dict[str, bool]]) -> None:
-    """Validate relationship filter configuration.
+    """Validate relationship filter dictionary structure and values.
 
     Args:
-        relationship_filters: Optional dictionary mapping relationship types to visibility flags
+        relationship_filters: Optional dictionary mapping relationship types to boolean visibility flags
 
     Raises:
         TypeError: If relationship_filters is not None and not a dictionary
-        ValueError: If relationship_filters contains invalid relationship types or non-boolean values
+        ValueError: If relationship_filters contains invalid keys or non-boolean values
     """
     if relationship_filters is None:
         return
@@ -837,11 +837,22 @@ def _validate_relationship_filters(relationship_filters: Optional[Dict[str, bool
         )
 
     # Validate all values are boolean
-    invalid_values = [k for k, v in relationship_filters.items() if not isinstance(v, bool)]
+    invalid_values = [
+        key for key, value in relationship_filters.items()
+        if not isinstance(value, bool)
+    ]
     if invalid_values:
         raise ValueError(
             f"Invalid filter configuration: relationship_filters must contain only boolean values. "
             f"Invalid keys: {', '.join(invalid_values)}"
+        )
+
+    # Validate keys are strings
+    invalid_keys = [key for key in relationship_filters.keys() if not isinstance(key, str)]
+    if invalid_keys:
+        raise ValueError(
+            f"Invalid filter configuration: relationship_filters keys must be strings. "
+            f"Invalid keys: {invalid_keys}"
         )
 
 
@@ -913,17 +924,6 @@ def visualize_3d_graph_with_filters(
     # Build filter configuration with validation
     try:
         if not show_all_relationships:
-            # Validate that at least one relationship type is enabled
-            individual_filters = [
-                show_same_sector, show_market_cap, show_correlation,
-                show_corporate_bond, show_commodity_currency,
-                show_income_comparison, show_regulatory
-            ]
-            if not any(individual_filters):
-                logger.warning(
-                    "All relationship filters are disabled. Visualization will show nodes only."
-                )
-
             relationship_filters = {
                 "same_sector": show_same_sector,
                 "market_cap_similar": show_market_cap,
@@ -935,11 +935,17 @@ def visualize_3d_graph_with_filters(
             }
             # Validate the constructed filter dictionary
             _validate_relationship_filters(relationship_filters)
+
+            # Check if all filters are disabled (would result in empty visualization)
+            if not any(relationship_filters.values()):
+                logger.warning(
+                    "All relationship filters are disabled. Visualization will show no relationships."
+                )
         else:
             relationship_filters = None
     except (TypeError, ValueError) as exc:
         logger.exception("Failed to build filter configuration: %s", exc)
-        raise ValueError("Invalid filter configuration") from exc
+        raise ValueError(f"Invalid filter configuration: {exc}") from exc
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Unexpected error building filter configuration: %s", exc)
         raise ValueError("Failed to build filter configuration") from exc
@@ -947,9 +953,6 @@ def visualize_3d_graph_with_filters(
     # Retrieve visualization data with error handling
     try:
         positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
-    except AttributeError as exc:
-        logger.exception("Graph missing required method: %s", exc)
-        raise ValueError("Graph does not support visualization data retrieval") from exc
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to retrieve visualization data from graph: %s", exc)
         raise ValueError("Failed to retrieve graph visualization data") from exc
@@ -961,11 +964,6 @@ def visualize_3d_graph_with_filters(
         logger.error("Invalid visualization data: %s", exc)
         raise
 
-    # Validate data is not empty
-    if len(asset_ids) == 0:
-        logger.warning("Graph contains no assets to visualize")
-        raise ValueError("Cannot create visualization: graph contains no assets")
-
     # Create figure
     fig = go.Figure()
 
@@ -976,14 +974,14 @@ def visualize_3d_graph_with_filters(
         )
     except (TypeError, ValueError) as exc:
         logger.exception(
-            "Failed to create filtered relationship traces (filters: %s): %s",
+            "Failed to create filtered relationship traces due to invalid data (filters: %s): %s",
             relationship_filters,
             exc
         )
-        relationship_traces = []
+        raise ValueError(f"Failed to create relationship traces: {exc}") from exc
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception(
-            "Unexpected error creating relationship traces (filters: %s): %s",
+            "Unexpected error creating filtered relationship traces (filters: %s): %s",
             relationship_filters,
             exc
         )
@@ -1001,7 +999,7 @@ def visualize_3d_graph_with_filters(
         try:
             arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
         except (TypeError, ValueError) as exc:
-            logger.exception("Failed to create directional arrows: %s", exc)
+            logger.exception("Failed to create directional arrows due to invalid data: %s", exc)
             arrow_traces = []
         except Exception as exc:  # pylint: disable=broad-except
             logger.exception("Unexpected error creating directional arrows: %s", exc)
@@ -1017,11 +1015,8 @@ def visualize_3d_graph_with_filters(
     try:
         node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
         fig.add_trace(node_trace)
-    except ValueError as exc:
-        logger.exception("Failed to create node trace: %s", exc)
-        raise ValueError("Failed to create node visualization") from exc
     except Exception as exc:  # pylint: disable=broad-except
-        logger.exception("Unexpected error creating or adding node trace: %s", exc)
+        logger.exception("Failed to create or add node trace: %s", exc)
         raise ValueError("Failed to create node visualization") from exc
 
     # Configure layout using centralized helper function
@@ -1031,11 +1026,7 @@ def visualize_3d_graph_with_filters(
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to configure figure layout: %s", exc)
         # Use fallback title if dynamic title generation fails
-        try:
-            fallback_title = "Financial Asset Network"
-            _configure_3d_layout(fig, fallback_title)
-        except Exception as fallback_exc:  # pylint: disable=broad-except
-            logger.exception("Failed to apply fallback layout configuration: %s", fallback_exc)
-            # Continue with default Plotly layout
+        fallback_title = "Financial Asset Network"
+        _configure_3d_layout(fig, fallback_title)
 
     return fig
