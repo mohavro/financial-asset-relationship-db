@@ -9,7 +9,7 @@ import NetworkVisualization from '../../app/components/NetworkVisualization';
 import type { VisualizationData } from '../../app/types/api';
 
 jest.mock('react-plotly.js', () => {
-  return function MockPlot({ data }: any) {
+  return function MockPlot({ data }: { data: unknown }) {
     return (
       <div data-testid="mock-plot">
         <div data-testid="plot-data">{JSON.stringify(data)}</div>
@@ -61,7 +61,7 @@ describe('NetworkVisualization Component', () => {
 
   it('should render plot with data', async () => {
     render(<NetworkVisualization data={mockData} />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('mock-plot')).toBeInTheDocument();
     });
@@ -69,7 +69,7 @@ describe('NetworkVisualization Component', () => {
 
   it('should process node coordinates', async () => {
     render(<NetworkVisualization data={mockData} />);
-    
+
     await waitFor(() => {
       const plotData = screen.getByTestId('plot-data');
       const data = JSON.parse(plotData.textContent || '[]');
