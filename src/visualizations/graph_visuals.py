@@ -80,6 +80,8 @@ def _build_relationship_index(
     - Creates and returns a new dictionary (no shared state modification)
     - Reads graph.relationships without mutating it
     - Function itself does not modify any shared state
+    - Uses threading.RLock to synchronize access to graph.relationships
+    - Protects against concurrent modifications during read operations
 
     Thread safety guarantees:
     This function is thread-safe for concurrent execution ONLY under these conditions:
