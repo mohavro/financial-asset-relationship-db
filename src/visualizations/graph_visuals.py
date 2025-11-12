@@ -63,6 +63,36 @@ def _build_relationship_index(
     return relationship_index
 
 
+def _create_node_trace(
+    positions: np.ndarray,
+    asset_ids: List[str],
+    colors: List[str],
+    hover_texts: List[str],
+) -> go.Scatter3d:
+    """Create node trace for 3D visualization.
+
+    Args:
+        positions: NumPy array of node positions
+        asset_ids: List of asset IDs
+        colors: List of node colors
+        hover_texts: List of hover texts
+
+    Returns:
+        Plotly Scatter3d trace for nodes
+    """
+    return go.Scatter3d(
+        x=positions[:, 0],
+        y=positions[:, 1],
+        z=positions[:, 2],
+        mode="markers+text",
+        marker=dict(
+            size=15,
+            color=colors,
+            opacity=0.9,
+            line=dict(color="rgba(0,0,0,0.8)", width=2),
+            symbol="circle",
+        ),
+
 def _add_node_trace(
     fig: go.Figure,
     positions: np.ndarray,
