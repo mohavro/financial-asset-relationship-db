@@ -685,6 +685,7 @@ def visualize_3d_graph_with_filters(
             logger.exception("Failed to create directional arrows: %s", exc)
             arrow_traces = []
 
+        # Performance optimization: Batch add arrow traces for efficiency
         if arrow_traces:
             try:
                 fig.add_traces(arrow_traces)
