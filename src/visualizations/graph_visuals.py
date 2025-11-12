@@ -69,6 +69,7 @@ def _build_relationship_index(
 
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
+    for source_id, rels in relevant_relationships.items():
         for target_id, rel_type, strength in rels:
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = float(strength)
