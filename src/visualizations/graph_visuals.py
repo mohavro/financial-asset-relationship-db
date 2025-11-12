@@ -477,6 +477,14 @@ def _collect_and_group_relationships(
 ) -> Dict[Tuple[str, bool], List[dict]]:
     """Collect and group relationships with directionality info in a single pass.
 
+    # Validate relationship_filters if provided
+    if relationship_filters is not None:
+        if not isinstance(relationship_filters, dict):
+            raise ValueError("relationship_filters must be a dictionary")
+        invalid_keys = set(relationship_filters.keys()) - VALID_RELATIONSHIP_TYPES
+        if invalid_keys:
+            raise ValueError(f"Invalid relationship filter keys: {invalid_keys}. Valid keys are: {VALID_RELATIONSHIP_TYPES}")
+
     Optimized to avoid nested loops and intermediate lists by:
     - Building a relationship index once for O(1) lookups
     - Detecting bidirectionality via reverse-key checks
