@@ -257,6 +257,7 @@ def _configure_3d_layout(
             bordercolor="rgba(0, 0, 0, 0.3)",
             borderwidth=1,
         ),
+    )
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
