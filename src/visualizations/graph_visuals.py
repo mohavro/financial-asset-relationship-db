@@ -62,6 +62,82 @@ def _build_relationship_index(
 
     return relationship_index
 
+
+def _add_node_trace(
+    fig: go.Figure,
+    positions: np.ndarray,
+    asset_ids: List[str],
+    colors: List[str],
+    hover_texts: List[str],
+) -> None:
+    """Add node trace to the figure with enhanced styling.
+
+    Args:
+        fig: Plotly figure to add trace to
+        positions: NumPy array of node positions
+        asset_ids: List of asset IDs
+        colors: List of colors for nodes
+        hover_texts: List of hover texts for nodes
+    """
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
+
+
+def _configure_layout(
+    fig: go.Figure,
+    title_text: str,
+) -> None:
+    """Configure the layout for 3D visualization.
+
+    Args:
+        fig: Plotly figure to configure
+        title_text: Title text for the visualization
+    """
+    fig.update_layout(
+        title={
+            "text": title_text,
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=1200,
+        height=800,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
 def _add_nodes_trace(fig: go.Figure, positions: np.ndarray, asset_ids: List[str], colors: List[str], hover_texts: List[str]) -> None:
     """Add nodes trace to the figure with enhanced styling.
 
