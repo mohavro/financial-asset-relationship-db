@@ -408,6 +408,7 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
+    fig = go.Figure()
 
     # Create separate traces for different relationship types and directions
     relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
