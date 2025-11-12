@@ -861,6 +861,9 @@ def visualize_3d_graph_with_filters(
             "regulatory_impact": show_regulatory,
         }
     else:
+
+    # Validate visualization data to prevent runtime errors
+    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
         # Show all relationships if the master toggle is on
         relationship_filters = None
 
