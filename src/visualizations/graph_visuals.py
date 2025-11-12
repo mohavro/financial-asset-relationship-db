@@ -337,17 +337,16 @@ def _validate_visualization_data(
         )
     if not all(isinstance(c, str) and c for c in colors):
         raise ValueError("Invalid graph data: colors must contain non-empty strings")
+    # Validate color formats
+    for i, color in enumerate(colors):
+        if not _is_valid_color_format(color):
+            raise ValueError(f"Invalid graph data: colors[{i}] has invalid color format: '{color}'")
     if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
         raise ValueError(
             f"Invalid graph data: hover_texts must be a list/tuple of length {n}"
         )
     if not all(isinstance(h, str) for h in hover_texts):
         raise ValueError("Invalid graph data: hover_texts must contain strings")
-
-    # Validate color formats to prevent runtime errors during rendering
-    for i, color in enumerate(colors):
-        if not _is_valid_color_format(color):
-            raise ValueError(f"Invalid graph data: colors[{i}] has invalid color format: '{color}'")
 
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
@@ -365,13 +364,11 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     fig = go.Figure()
 
     # Create separate traces for different relationship types and directions
-    # Returns both traces and count for efficient title generation (addresses review feedback)
     try:
-        relationship_traces, total_relationships = _create_relationship_traces(graph, positions, asset_ids)
+        relationship_traces = _create_relationship_traces(graph, positions, asset_ids)
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Failed to create relationship traces: %s", exc)
         relationship_traces = []
-        total_relationships = 0
 
     # Batch add traces
     if relationship_traces:
@@ -397,7 +394,8 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
     fig.add_trace(node_trace)
 
-    # Use cached relationship count for dynamic title (optimization: avoids iterating over traces)
+    # Calculate total relationships for dynamic title
+    total_relationships = sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
     dynamic_title = _generate_dynamic_title(len(asset_ids), total_relationships)
 
     fig.update_layout(
@@ -580,22 +578,10 @@ def _create_relationship_traces(
     positions: np.ndarray,
     asset_ids: List[str],
     relationship_filters: Optional[Dict[str, bool]] = None,
-) -> Tuple[List[go.Scatter3d], int]:
+) -> List[go.Scatter3d]:
     """Create separate traces for different types of relationships with enhanced visibility.
 
-    Performance optimization (addressing review feedback):
-    - Returns both traces and relationship count to avoid expensive post-processing
-    - Eliminates need to iterate over traces to count relationships
-    - Caches count during trace creation when data is already available
-
-    Args:
-        graph: Asset relationship graph
-        positions: Node positions array
-        asset_ids: List of asset IDs
-        relationship_filters: Optional filters for relationship types
-
-    Returns:
-        Tuple of (traces list, relationship count) for batch addition to figure and efficient title generation
+    Returns a list of traces for batch addition to figure using fig.add_traces() for optimal performance.
     """
     if not isinstance(graph, AssetRelationshipGraph):
         raise ValueError("Invalid input data: graph must be an AssetRelationshipGraph instance")
@@ -613,18 +599,14 @@ def _create_relationship_traces(
     )
 
     traces: List[go.Scatter3d] = []
-    total_relationships = 0
-
     for (rel_type, is_bidirectional), relationships in relationship_groups.items():
         if relationships:
             trace = _create_trace_for_group(
                 rel_type, is_bidirectional, relationships, positions, asset_id_index
             )
             traces.append(trace)
-            # Cache relationship count during trace creation (optimization)
-            total_relationships += len(relationships)
 
-    return traces, total_relationships
+    return traces
 
 
 def _create_directional_arrows(
@@ -712,6 +694,56 @@ def _create_directional_arrows(
     return [arrow_trace]
 
 
+def _validate_filter_parameters(
+    show_same_sector: bool,
+    show_market_cap: bool,
+    show_correlation: bool,
+    show_corporate_bond: bool,
+    show_commodity_currency: bool,
+    show_income_comparison: bool,
+    show_regulatory: bool,
+    show_all_relationships: bool,
+    toggle_arrows: bool,
+) -> None:
+    """Validate that all filter parameters are boolean values.
+
+    Args:
+        show_same_sector: Filter for same sector relationships
+        show_market_cap: Filter for market cap relationships
+        show_correlation: Filter for correlation relationships
+        show_corporate_bond: Filter for corporate bond relationships
+        show_commodity_currency: Filter for commodity currency relationships
+        show_income_comparison: Filter for income comparison relationships
+        show_regulatory: Filter for regulatory relationships
+        show_all_relationships: Master toggle for all relationships
+        toggle_arrows: Toggle for directional arrows
+
+    Raises:
+        TypeError: If any parameter is not a boolean
+    """
+    filter_params = {
+        "show_same_sector": show_same_sector,
+        "show_market_cap": show_market_cap,
+        "show_correlation": show_correlation,
+        "show_corporate_bond": show_corporate_bond,
+        "show_commodity_currency": show_commodity_currency,
+        "show_income_comparison": show_income_comparison,
+        "show_regulatory": show_regulatory,
+        "show_all_relationships": show_all_relationships,
+        "toggle_arrows": toggle_arrows,
+    }
+
+    invalid_params = [
+        name for name, value in filter_params.items() if not isinstance(value, bool)
+    ]
+
+    if invalid_params:
+        raise TypeError(
+            f"Invalid filter configuration: The following parameters must be boolean values: "
+            f"{', '.join(invalid_params)}"
+        )
+
+
 def visualize_3d_graph_with_filters(
     graph: AssetRelationshipGraph,
     show_same_sector: bool = True,
@@ -724,51 +756,113 @@ def visualize_3d_graph_with_filters(
     show_all_relationships: bool = True,
     toggle_arrows: bool = True,
 ) -> go.Figure:
-    """Create 3D visualization with selective relationship filtering"""
+    """Create 3D visualization with selective relationship filtering.
+
+    This function dynamically creates and adds relationship traces based on optional filters,
+    with comprehensive error handling to manage potential issues from invalid filter
+    configurations or data inconsistencies.
+
+    Args:
+        graph: Asset relationship graph to visualize
+        show_same_sector: Show same sector relationships (default: True)
+        show_market_cap: Show market cap relationships (default: True)
+        show_correlation: Show correlation relationships (default: True)
+        show_corporate_bond: Show corporate bond relationships (default: True)
+        show_commodity_currency: Show commodity currency relationships (default: True)
+        show_income_comparison: Show income comparison relationships (default: True)
+        show_regulatory: Show regulatory relationships (default: True)
+        show_all_relationships: Master toggle to show all relationships (default: True)
+        toggle_arrows: Show directional arrows for unidirectional relationships (default: True)
+
+    Returns:
+        Plotly Figure object with 3D visualization
+
+    Raises:
+        ValueError: If graph is invalid or missing required methods/attributes
+        TypeError: If filter parameters are not boolean values
+    """
+    # Validate graph input
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(
         graph, "get_3d_visualization_data_enhanced"
     ):
-        raise ValueError("Invalid graph data provided")
+        raise ValueError(
+            "Invalid graph data provided: graph must be an AssetRelationshipGraph instance "
+            "with get_3d_visualization_data_enhanced method"
+        )
 
-    if not show_all_relationships:
-        relationship_filters = {
-            "same_sector": show_same_sector,
-            "market_cap_similar": show_market_cap,
-            "correlation": show_correlation,
-            "corporate_bond_to_equity": show_corporate_bond,
-            "commodity_currency": show_commodity_currency,
-            "income_comparison": show_income_comparison,
-            "regulatory_impact": show_regulatory,
-        }
-    else:
-        relationship_filters = None
+    # Validate filter parameters
+    try:
+        _validate_filter_parameters(
+            show_same_sector,
+            show_market_cap,
+            show_correlation,
+            show_corporate_bond,
+            show_commodity_currency,
+            show_income_comparison,
+            show_regulatory,
+            show_all_relationships,
+            toggle_arrows,
+        )
+    except TypeError as exc:
+        logger.error("Invalid filter configuration: %s", exc)
+        raise
 
-    positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    # Build filter configuration
+    try:
+        if not show_all_relationships:
+            relationship_filters = {
+                "same_sector": show_same_sector,
+                "market_cap_similar": show_market_cap,
+                "correlation": show_correlation,
+                "corporate_bond_to_equity": show_corporate_bond,
+                "commodity_currency": show_commodity_currency,
+                "income_comparison": show_income_comparison,
+                "regulatory_impact": show_regulatory,
+            }
+        else:
+            relationship_filters = None
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Failed to build filter configuration: %s", exc)
+        raise ValueError("Invalid filter configuration") from exc
 
-    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+    # Retrieve visualization data with error handling
+    try:
+        positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Failed to retrieve visualization data from graph: %s", exc)
+        raise ValueError("Failed to retrieve graph visualization data") from exc
 
+    # Validate retrieved data
+    try:
+        _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+    except ValueError as exc:
+        logger.error("Invalid visualization data: %s", exc)
+        raise
+
+    # Create figure
     fig = go.Figure()
 
-    # Safely build relationship traces according to filters
-    # Returns both traces and count for efficient title generation (addresses review feedback)
+    # Build relationship traces with comprehensive error handling
     try:
-        relationship_traces, visible_relationships = _create_relationship_traces(
+        relationship_traces = _create_relationship_traces(
             graph, positions, asset_ids, relationship_filters
         )
     except Exception as exc:  # pylint: disable=broad-except
-        logger.exception("Failed to create filtered relationship traces: %s", exc)
+        logger.exception(
+            "Failed to create filtered relationship traces (filters: %s): %s",
+            relationship_filters,
+            exc
+        )
         relationship_traces = []
-        visible_relationships = 0
 
-    # Performance optimization: Use batch operation to add all relationship traces at once
+    # Add relationship traces with error handling
     if relationship_traces:
         try:
-            # This is more efficient than adding traces individually in a loop
             fig.add_traces(relationship_traces)
         except Exception as exc:  # pylint: disable=broad-except
             logger.exception("Failed to add filtered relationship traces to figure: %s", exc)
 
-    # Optionally add directional arrows with protection against data issues
+    # Add directional arrows if enabled
     if toggle_arrows:
         try:
             arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
@@ -776,20 +870,37 @@ def visualize_3d_graph_with_filters(
             logger.exception("Failed to create directional arrows: %s", exc)
             arrow_traces = []
 
-        # Performance optimization: Batch add arrow traces for efficiency
         if arrow_traces:
             try:
                 fig.add_traces(arrow_traces)
             except Exception as exc:  # pylint: disable=broad-except
                 logger.exception("Failed to add directional arrows to figure: %s", exc)
 
-    node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
-    fig.add_trace(node_trace)
+    # Add node trace
+    try:
+        node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
+        fig.add_trace(node_trace)
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Failed to create or add node trace: %s", exc)
+        raise ValueError("Failed to create node visualization") from exc
 
-    # Use cached relationship count for dynamic title (optimization: avoids iterating over traces)
-    dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
+    # Calculate visible relationships count
+    visible_relationships = 0
+    try:
+        visible_relationships = (
+            sum(len(getattr(trace, "x", []) or []) for trace in relationship_traces) // 3
+        )
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Failed to compute visible relationships count: %s", exc)
 
-    # Configure layout with dynamic title using the helper function
-    _configure_3d_layout(fig, dynamic_title)
+    # Configure layout
+    try:
+        dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
+        _configure_3d_layout(fig, dynamic_title)
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.exception("Failed to configure figure layout: %s", exc)
+        # Use fallback title if dynamic title generation fails
+        fallback_title = "Financial Asset Network"
+        _configure_3d_layout(fig, fallback_title)
 
     return fig
