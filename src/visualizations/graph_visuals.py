@@ -342,6 +342,8 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
 
     positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
 
+
+    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
     fig = go.Figure()
     # Validate visualization data to prevent runtime errors
     if not isinstance(positions, np.ndarray) or positions.ndim != 2 or positions.shape[1] != 3:
