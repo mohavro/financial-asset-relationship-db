@@ -378,7 +378,9 @@ def _validate_visualization_data(
     """
     # Validate positions array
     if not isinstance(positions, np.ndarray):
-        raise ValueError("Invalid graph data: positions must be a numpy array")
+        raise ValueError(
+            f"Invalid graph data: positions must be a numpy array, got {type(positions).__name__}"
+        )
     if positions.ndim != 2 or positions.shape[1] != 3:
         raise ValueError("Invalid graph data: positions must be a (n, 3) numpy array")
     if not np.issubdtype(positions.dtype, np.number):
