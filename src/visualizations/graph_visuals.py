@@ -140,45 +140,6 @@ def _create_node_trace(
     )
 
 
-def _add_node_trace(
-    fig: go.Figure,
-    positions: np.ndarray,
-    asset_ids: List[str],
-    colors: List[str],
-    hover_texts: List[str],
-) -> None:
-    """Add node trace to the figure with enhanced styling.
-
-    Args:
-        fig: Plotly figure to add trace to
-        positions: NumPy array of node positions
-        asset_ids: List of asset IDs
-        colors: List of colors for nodes
-        hover_texts: List of hover texts for nodes
-    """
-    fig.add_trace(
-        go.Scatter3d(
-            x=positions[:, 0],
-            y=positions[:, 1],
-            z=positions[:, 2],
-            mode="markers+text",
-            marker=dict(
-                size=15,
-                color=colors,
-                opacity=0.9,
-                line=dict(color="rgba(0,0,0,0.8)", width=2),
-                symbol="circle",
-            ),
-            text=asset_ids,
-            hovertext=hover_texts,
-            hoverinfo="text",
-            textposition="top center",
-            textfont=dict(size=12, color="black"),
-            name="Assets",
-            visible=True,
-        )
-    )
-
 
 def _configure_layout(
     fig: go.Figure,
