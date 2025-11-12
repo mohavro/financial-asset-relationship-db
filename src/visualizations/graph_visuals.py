@@ -287,34 +287,8 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     for trace in relationship_traces:
         fig.add_trace(trace)
 
-    # Add directional arrows for unidirectional relationships
-    arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
-    for trace in arrow_traces:
-        fig.add_trace(trace)
-
-    # Add nodes with enhanced styling
-    fig.add_trace(
-        go.Scatter3d(
-            x=positions[:, 0],
-            y=positions[:, 1],
-            z=positions[:, 2],
-            mode="markers+text",
-            marker=dict(
-                size=15,  # Larger nodes for better visibility
-                color=colors,
-                opacity=0.9,
-                line=dict(color="rgba(0,0,0,0.8)", width=2),
-                symbol="circle",
-            ),
-            text=asset_ids,
-            hovertext=hover_texts,
-            hoverinfo="text",
-            textposition="top center",
-            textfont=dict(size=12, color="black"),
-            name="Assets",
-            visible=True,
-        )
-    )
+    # Add directional arrows and nodes
+    _add_nodes_and_arrows_to_figure(fig, graph, positions, asset_ids, colors, hover_texts)
 
     fig.update_layout(
         title={
