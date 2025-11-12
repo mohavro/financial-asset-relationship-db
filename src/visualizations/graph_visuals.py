@@ -122,6 +122,7 @@ def _create_node_trace(
             f"asset_ids has {n_asset_ids} elements, colors has {n_colors} elements, "
             f"hover_texts has {n_hover_texts} elements. All must have the same length."
 
+        )
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
