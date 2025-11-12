@@ -8,8 +8,9 @@ permissions:
   contents: read
 jobs:
   build:
-    if: vars.JF_URL != ''
     runs-on: ubuntu-latest
+    # Only run if JF_URL is configured
+    if: vars.JF_URL != ''
     steps:
       - name: Checkout
         uses: actions/checkout@v4
