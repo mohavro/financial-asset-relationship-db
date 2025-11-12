@@ -161,6 +161,14 @@ def _build_relationship_index(
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
     # Process relationships with comprehensive error handling
+        # Validate source_id is a string
+        if not isinstance(source_id, str):
+            raise TypeError(
+                f"Invalid graph data: source_id must be a string, "
+                f"got {type(source_id).__name__}"
+            )
+
+        # Validate source_id is not empty
     for source_id, rels in relevant_relationships.items():
         # Validate that rels is iterable
         if not isinstance(rels, (list, tuple)):
