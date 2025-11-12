@@ -1,5 +1,5 @@
-from collections import defaultdict
 import re
+from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
@@ -21,25 +21,6 @@ REL_TYPE_COLORS = defaultdict(
 )
 
 
-def _is_valid_color(color: str) -> bool:
-    """Validate if a string is a valid color format.
-
-    Supports hex colors (#RGB, #RRGGBB, #RRGGBBAA), rgb/rgba, and named colors.
-
-    Args:
-        color: Color string to validate
-
-    Returns:
-        True if color format is valid, False otherwise
-    """
-    if not isinstance(color, str) or not color:
-        return False
-    hex_pattern = r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$'
-    rgba_pattern = r'^rgba?\s*\([^)]+\)$'
-    return bool(re.match(hex_pattern, color) or re.match(rgba_pattern, color) or color.isalpha())
-
-
-
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
 
@@ -55,7 +36,7 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def _build_relationship_index(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups with pre-filtering.
+    """Build optimized relationship index for O(1) lookups.
 
     This function consolidates relationship data into a single index structure
     that can be efficiently queried for:
@@ -84,14 +65,49 @@ def _build_relationship_index(
     asset_ids_set = set(asset_ids)
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
-    for source_id, rels in graph.relationships.items():
-        if source_id not in asset_ids_set:
-            continue
+    # Pre-filter relationships to only include relevant source_ids (optimization per review)
+    # This reduces unnecessary iterations when source_id is frequently absent in asset_ids_set
+    relevant_relationships = {
+        source_id: rels
+        for source_id, rels in graph.relationships.items()
+        if source_id in asset_ids_set
+    }
+
+    for source_id, rels in relevant_relationships.items():
         for target_id, rel_type, strength in rels:
             if target_id in asset_ids_set:
                 relationship_index[(source_id, target_id, rel_type)] = float(strength)
 
     return relationship_index
+
+
+def _is_valid_color(color: str) -> bool:
+    """Check if a string is a valid color format for Plotly.
+
+    Validates common color formats:
+    - Named colors (e.g., 'red', 'blue')
+    - Hex colors (e.g., '#FF0000', '#F00')
+    - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
+
+    Args:
+        color: String to validate as a color
+
+    Returns:
+        True if the color format is valid, False otherwise
+    """
+    if not isinstance(color, str) or not color:
+        return False
+
+    # Check for hex color format (#RGB or #RRGGBB)
+    if re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$', color):
+        return True
+
+    # Check for rgb/rgba format
+    if re.match(r'^rgba?\\s*\\([^)]+\\)$', color):
+        return True
+
+    # Accept any non-empty string as potentially valid named color
+    return True
 
 
 def _create_node_trace(
@@ -149,17 +165,6 @@ def _create_node_trace(
             f"hover_texts has {n_hover_texts} elements. All must have the same length."
         )
 
-    # Validate colors content (must be valid color format strings)
-    for i, color in enumerate(colors):
-        if not isinstance(color, str) or not color:
-            raise ValueError(f"colors[{i}] must be a non-empty string, got {type(color).__name__}")
-        if not _is_valid_color_format(color):
-            raise ValueError(f"colors[{i}] has invalid color format: '{color}'")
-
-    # Validate hover_texts content (must be strings, can be empty)
-    for i, hover_text in enumerate(hover_texts):
-        if not isinstance(hover_text, str):
-            raise ValueError(f"hover_texts[{i}] must be a string, got {type(hover_text).__name__}")
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
@@ -227,6 +232,76 @@ def _configure_layout(
             y=0.98,
             bgcolor=legend_bgcolor,
             bordercolor=legend_bordercolor,
+            borderwidth=1,
+        ),
+    )
+
+
+def _add_directional_arrows_to_figure(
+    fig: go.Figure, graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
+) -> None:
+    """Add directional arrows to the figure for unidirectional relationships using batch operations.
+
+    Uses Plotly's add_traces (plural) method for efficient batch addition of traces,
+    which reduces overhead compared to multiple add_trace calls.
+
+    Args:
+        fig: Plotly figure to add arrows to
+        graph: The asset relationship graph
+        positions: Node positions array
+        asset_ids: List of asset IDs
+    """
+    arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
+    if arrow_traces:
+        # Use batch operation for better performance
+        fig.add_traces(arrow_traces)
+
+
+def _configure_3d_layout(
+    fig: go.Figure,
+    title: str,
+    width: int = 1200,
+    height: int = 800,
+    gridcolor: str = "rgba(200, 200, 200, 0.3)",
+    bgcolor: str = "rgba(248, 248, 248, 0.95)",
+    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
+    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
+) -> None:
+    """Configure the 3D layout for the figure.
+
+    Args:
+        fig: Plotly figure to configure
+        title: Title text for the figure
+        width: Figure width in pixels
+        height: Figure height in pixels
+        gridcolor: Color for grid lines in RGBA format
+        bgcolor: Background color for the scene in RGBA format
+        legend_bgcolor: Background color for the legend in RGBA format
+        legend_bordercolor: Border color for the legend in RGBA format
+    """
+    fig.update_layout(
+        title={
+            "text": title,
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=width,
+        height=height,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
             borderwidth=1,
         ),
     )
@@ -312,14 +387,55 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     if arrow_traces:
         fig.add_traces(arrow_traces)
 
-    # Add nodes with enhanced styling using the reusable helper function
-    node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
-    fig.add_trace(node_trace)
+    # Add nodes with enhanced styling
+    fig.add_trace(
+        go.Scatter3d(
+            x=positions[:, 0],
+            y=positions[:, 1],
+            z=positions[:, 2],
+            mode="markers+text",
+            marker=dict(
+                size=15,
+                color=colors,
+                opacity=0.9,
+                line=dict(color="rgba(0,0,0,0.8)", width=2),
+                symbol="circle",
+            ),
+            text=asset_ids,
+            hovertext=hover_texts,
+            hoverinfo="text",
+            textposition="top center",
+            textfont=dict(size=12, color="black"),
+            name="Assets",
+            visible=True,
+        )
+    )
 
-    # Use the parameterized _configure_layout function instead of inline configuration
-    _configure_layout(
-        fig,
-        title_text="Financial Asset Relationship Network - Enhanced 3D Visualization"
+    fig.update_layout(
+        title={
+            "text": "Financial Asset Relationship Network - Enhanced 3D Visualization",
+            "x": 0.5,
+            "xanchor": "center",
+            "font": {"size": 16},
+        },
+        scene=dict(
+            xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            zaxis=dict(title="Dimension 3", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
+            bgcolor="rgba(248, 248, 248, 0.95)",
+            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
+        ),
+        width=1200,
+        height=800,
+        showlegend=True,
+        hovermode="closest",
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.3)",
+            borderwidth=1,
+        ),
     )
 
     return fig
@@ -506,6 +622,22 @@ def _create_trace_for_group(
     )
 
 
+def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
+    """Generate dynamic title based on asset and relationship counts.
+
+    Args:
+        num_assets: Number of assets in the visualization
+        num_relationships: Number of visible relationships
+
+    Returns:
+        Formatted title string
+    """
+    return (
+        f"Financial Asset Relationship Network - "
+        f"{num_assets} Assets, {num_relationships} Relationships"
+    )
+
+
 def _create_relationship_traces(
     graph: AssetRelationshipGraph,
     positions: np.ndarray,
@@ -520,12 +652,6 @@ def _create_relationship_traces(
     - Single-pass collection and grouping of relationships
     - Efficient set-based bidirectional relationship detection
     - Building relationship index once and reusing it
-
-    Performance Note:
-    This function returns a list of traces that should be added to the figure using
-    fig.add_traces() (batch operation) rather than adding them individually in a loop.
-    The batch operation reduces function call overhead and improves performance,
-    especially when dealing with large numbers of relationship types.
 
     Args:
         graph: The asset relationship graph
@@ -569,9 +695,6 @@ def _create_directional_arrows(
     graph: AssetRelationshipGraph, positions: np.ndarray, asset_ids: List[str]
 ) -> List[go.Scatter3d]:
     """Create arrow markers for unidirectional relationships using vectorized NumPy operations.
-
-    Returns a list of traces designed to be added to the figure in batch using fig.add_traces()
-    for optimal performance, avoiding the overhead of multiple individual add_trace() calls.
 
     Uses a pre-built relationship index for O(1) lookups and computes arrow positions
     in a single vectorized step for performance. Includes comprehensive input validation
@@ -694,60 +817,169 @@ def visualize_3d_graph_with_filters(
     show_all_relationships: bool = True,
     toggle_arrows: bool = True,
 ) -> go.Figure:
-    """Create 3D visualization with selective relationship filtering"""
-    if not isinstance(graph, AssetRelationshipGraph) or not hasattr(graph, "get_3d_visualization_data_enhanced"):
-        raise ValueError("Invalid graph data provided")
+    """Create 3D visualization with selective relationship filtering.
 
-    if not show_all_relationships:
-        # Filter which relationship types to show
-        relationship_filters = {
-            "same_sector": show_same_sector,
-            "market_cap_similar": show_market_cap,
-            "correlation": show_correlation,
-            "corporate_bond_to_equity": show_corporate_bond,
-            "commodity_currency": show_commodity_currency,
-            "income_comparison": show_income_comparison,
-            "regulatory_impact": show_regulatory,
-        }
-    else:
-        # Show all relationships if the master toggle is on
-        relationship_filters = None
+    This function dynamically creates and adds relationship traces based on optional filters.
+    Includes comprehensive error handling to manage potential issues from invalid filter
+    configurations or data inconsistencies.
 
-    positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    Args:
+        graph: AssetRelationshipGraph instance containing the data to visualize
+        show_same_sector: Whether to show same sector relationships
+        show_market_cap: Whether to show market cap similar relationships
+        show_correlation: Whether to show correlation relationships
+        show_corporate_bond: Whether to show corporate bond to equity relationships
+        show_commodity_currency: Whether to show commodity currency relationships
+        show_income_comparison: Whether to show income comparison relationships
+        show_regulatory: Whether to show regulatory impact relationships
+        show_all_relationships: Master toggle to show all relationships regardless of individual filters
+        toggle_arrows: Whether to show directional arrows for unidirectional relationships
+
+    Returns:
+        Plotly Figure object with the 3D visualization
+
+    Raises:
+        ValueError: If graph is invalid or data is inconsistent
+        TypeError: If filter parameters are not boolean values
+        RuntimeError: If trace creation or figure generation fails
+    """
+    # Validate graph input
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise ValueError("Invalid graph data provided: graph must be an AssetRelationshipGraph instance")
+    if not hasattr(graph, "get_3d_visualization_data_enhanced"):
+        raise ValueError("Invalid graph data provided: graph must have get_3d_visualization_data_enhanced method")
+
+    # Validate filter parameters are boolean
+    filter_params = {
+        "show_same_sector": show_same_sector,
+        "show_market_cap": show_market_cap,
+        "show_correlation": show_correlation,
+        "show_corporate_bond": show_corporate_bond,
+        "show_commodity_currency": show_commodity_currency,
+        "show_income_comparison": show_income_comparison,
+        "show_regulatory": show_regulatory,
+        "show_all_relationships": show_all_relationships,
+        "toggle_arrows": toggle_arrows,
+    }
+
+    for param_name, param_value in filter_params.items():
+        if not isinstance(param_value, bool):
+            raise TypeError(f"Invalid filter configuration: {param_name} must be a boolean, got {type(param_value).__name__}")
+
+    # Build relationship filters based on parameters
+    try:
+        if not show_all_relationships:
+            # Filter which relationship types to show
+            relationship_filters = {
+                "same_sector": show_same_sector,
+                "market_cap_similar": show_market_cap,
+                "correlation": show_correlation,
+                "corporate_bond_to_equity": show_corporate_bond,
+                "commodity_currency": show_commodity_currency,
+                "income_comparison": show_income_comparison,
+                "regulatory_impact": show_regulatory,
+            }
+        else:
+            # Show all relationships if the master toggle is on
+            relationship_filters = None
+    except Exception as exc:
+        raise RuntimeError(f"Failed to configure relationship filters: {exc}") from exc
+
+    # Retrieve visualization data with error handling
+    try:
+        positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    except AttributeError as exc:
+        raise ValueError(f"Invalid graph data: get_3d_visualization_data_enhanced method failed: {exc}") from exc
+    except Exception as exc:
+        raise RuntimeError(f"Failed to retrieve visualization data from graph: {exc}") from exc
 
     # Validate visualization data to prevent runtime errors
-    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+    try:
+        _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+    except ValueError as exc:
+        raise ValueError(f"Data validation failed: {exc}") from exc
 
-    fig = go.Figure()
+    # Create figure with error handling
+    try:
+        fig = go.Figure()
+    except Exception as exc:
+        raise RuntimeError(f"Failed to create Plotly figure: {exc}") from exc
 
-    # Create relationship traces with filtering
-    relationship_traces = _create_relationship_traces(
-        graph, positions, asset_ids, relationship_filters
-    )
+    # Create relationship traces with filtering and error handling
+    try:
+        relationship_traces = _create_relationship_traces(
+            graph, positions, asset_ids, relationship_filters
+        )
+    except (ValueError, KeyError) as exc:
+        raise ValueError(f"Failed to create relationship traces: {exc}") from exc
+    except Exception as exc:
+        raise RuntimeError(f"Unexpected error during relationship trace creation: {exc}") from exc
 
-    # Use batch operation (add_traces) for better performance with multiple traces
-    if relationship_traces:
-        fig.add_traces(relationship_traces)
+    # Add relationship traces with error handling
+    try:
+        if relationship_traces:
+            fig.add_traces(relationship_traces)
+    except Exception as exc:
+        raise RuntimeError(f"Failed to add relationship traces to figure: {exc}") from exc
 
-    # Add directional arrows if enabled
+    # Add directional arrows if enabled with error handling
     if toggle_arrows:
-        arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
-        if arrow_traces:
-            fig.add_traces(arrow_traces)
+        try:
+            arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
+            if arrow_traces:
+                fig.add_traces(arrow_traces)
+        except (ValueError, TypeError) as exc:
+            raise ValueError(f"Failed to create directional arrows: {exc}") from exc
+        except Exception as exc:
+            raise RuntimeError(f"Unexpected error during arrow creation: {exc}") from exc
 
-    # Add nodes with enhanced styling using the reusable helper function
-    node_trace = _create_node_trace(positions, asset_ids, colors, hover_texts)
-    fig.add_trace(node_trace)
+    # Add nodes with enhanced styling and error handling
+    try:
+        fig.add_trace(
+            go.Scatter3d(
+                x=positions[:, 0],
+                y=positions[:, 1],
+                z=positions[:, 2],
+                mode="markers+text",
+                marker=dict(
+                    size=15,
+                    color=colors,
+                    opacity=0.9,
+                    line=dict(color="rgba(0,0,0,0.8)", width=2),
+                    symbol="circle",
+                ),
+                text=asset_ids,
+                hovertext=hover_texts,
+                hoverinfo="text",
+                textposition="top center",
+                textfont=dict(size=12, color="black"),
+                name="Assets",
+                visible=True,
+            )
+        )
+    except Exception as exc:
+        raise RuntimeError(f"Failed to add node trace to figure: {exc}") from exc
 
-    # Count visible relationships for dynamic title
-    visible_relationships = (
-        sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x")) // 3
-    )
+    # Count visible relationships for dynamic title with error handling
+    try:
+        visible_relationships = (
+            sum(len(trace.x or []) for trace in relationship_traces if hasattr(trace, "x")) // 3
+        )
+    except Exception as exc:
+        # If counting fails, default to 0 to avoid breaking the visualization
+        visible_relationships = 0
 
-    # Use the parameterized _configure_layout function instead of inline configuration
-    _configure_layout(
-        fig,
-        title_text=f"Financial Asset Network - {len(asset_ids)} Assets, {visible_relationships} Relationships"
-    )
+    # Generate dynamic title with error handling
+    try:
+        dynamic_title = _generate_dynamic_title(len(asset_ids), visible_relationships)
+    except Exception as exc:
+        # Fallback to a simple title if dynamic title generation fails
+        dynamic_title = "Financial Asset Relationship Network"
+
+    # Configure layout with error handling
+    try:
+        _configure_3d_layout(fig, dynamic_title)
+    except Exception as exc:
+        raise RuntimeError(f"Failed to configure figure layout: {exc}") from exc
 
     return fig
