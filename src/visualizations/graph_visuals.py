@@ -408,7 +408,10 @@ def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     if relationship_traces:
         fig.add_traces(relationship_traces)
 
-    # Add directional arrows for unidirectional relationships
+    # Add directional arrows for unidirectional relationships using batch operation
+    # Performance: add_traces() (plural) is more efficient than multiple add_trace() calls
+    # as it reduces function call overhead, especially beneficial for large graphs with
+    # many relationships (addresses code review feedback on batch operations)
     arrow_traces = _create_directional_arrows(graph, positions, asset_ids)
     if arrow_traces:
         fig.add_traces(arrow_traces)
