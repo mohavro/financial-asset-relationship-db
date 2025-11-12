@@ -63,7 +63,7 @@ def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
 def _build_relationship_index(
     graph: AssetRelationshipGraph, asset_ids: Iterable[str]
 ) -> Dict[Tuple[str, str, str], float]:
-    """Build optimized relationship index for O(1) lookups with pre-filtering.
+    """Build optimized relationship index for O(1) lookups.
 
     This function consolidates relationship data into a single index structure
     that can be efficiently queried for:
