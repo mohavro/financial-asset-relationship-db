@@ -214,7 +214,6 @@ def _generate_dynamic_title(
         Formatted title string with asset and relationship counts
     """
     return f"{base_title} - {num_assets} Assets, {num_relationships} Relationships"
-    )
 
 
 def _add_directional_arrows_to_figure(
