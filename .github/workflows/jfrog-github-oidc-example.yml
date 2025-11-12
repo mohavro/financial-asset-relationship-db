@@ -8,6 +8,7 @@ permissions:
   contents: read
 jobs:
   build:
+    if: vars.JF_URL != ''
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
