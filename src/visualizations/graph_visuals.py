@@ -265,7 +265,11 @@ def _validate_visualization_data(
             f"Invalid graph data: positions must contain numeric values, got dtype {positions.dtype}"
         )
     if not np.isfinite(positions).all():
-        raise ValueError("Invalid graph data: positions must contain finite values (no NaN or Inf)")
+        nan_count = int(np.isnan(positions).sum())
+        inf_count = int(np.isinf(positions).sum())
+        raise ValueError(
+            f"Invalid graph data: positions must contain finite values (no NaN or Inf). Found {nan_count} NaN and {inf_count} Inf"
+        )
 
     # Validate asset_ids
     if not isinstance(asset_ids, (list, tuple)):
