@@ -20,6 +20,16 @@ REL_TYPE_COLORS = defaultdict(
     },
 )
 
+# Valid relationship types for filter validation
+VALID_RELATIONSHIP_TYPES = {
+    "same_sector",
+    "market_cap_similar",
+    "correlation",
+    "corporate_bond_to_equity",
+    "commodity_currency",
+    "income_comparison",
+    "regulatory_impact",
+
 
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
