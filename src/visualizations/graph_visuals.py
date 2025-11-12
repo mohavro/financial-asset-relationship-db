@@ -75,6 +75,8 @@ def _build_relationship_index(
     Thread safety (addressing review feedback):
     - Creates and returns a new dictionary (no shared state modification)
     - Reads graph.relationships without mutating it
+    - Safe for concurrent calls as each invocation creates its own local state
+    - No global or shared mutable state is accessed or modified
 
     Args:
         graph: The asset relationship graph
