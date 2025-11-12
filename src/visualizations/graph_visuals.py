@@ -58,6 +58,30 @@ def _is_valid_color_format(color: str) -> bool:
     return True
 
 
+def _validate_filter_configuration(relationship_filters: Optional[Dict[str, bool]]) -> None:
+    """Validate relationship filter configuration.
+
+    Args:
+        relationship_filters: Dictionary mapping relationship types to boolean visibility flags
+
+    Raises:
+        ValueError: If filter configuration contains invalid relationship types or non-boolean values
+    """
+    if relationship_filters is None:
+        return
+
+    if not isinstance(relationship_filters, dict):
+        raise ValueError("relationship_filters must be a dictionary")
+
+    for rel_type, enabled in relationship_filters.items():
+        if not isinstance(rel_type, str) or not rel_type:
+            raise ValueError(f"Invalid relationship type in filters: {rel_type}")
+        if rel_type not in VALID_RELATIONSHIP_TYPES:
+            raise ValueError(f"Unknown relationship type in filters: '{rel_type}'. Valid types: {VALID_RELATIONSHIP_TYPES}")
+        if not isinstance(enabled, bool):
+            raise ValueError(f"Filter value for '{rel_type}' must be boolean, got {type(enabled).__name__}")
+
+
 def _build_asset_id_index(asset_ids: List[str]) -> Dict[str, int]:
     """Build O(1) lookup index for asset IDs to their positions.
 
