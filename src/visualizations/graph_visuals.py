@@ -883,6 +883,14 @@ def visualize_3d_graph_with_filters(
     """
     # Validate graph input
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(
+    # Validate filter configuration structure
+    try:
+        if not show_all_relationships:
+            # Validate that at least one relationship type is enabled
+            individual_filters = [show_same_sector, show_market_cap, show_correlation,
+                                  show_corporate_bond, show_commodity_currency,
+                                  show_income_comparison, show_regulatory]
+            if not any(individual_filters):
         graph, "get_3d_visualization_data_enhanced"
     ):
         raise ValueError(
