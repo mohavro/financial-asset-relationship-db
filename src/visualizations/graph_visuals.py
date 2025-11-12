@@ -1,4 +1,5 @@
 from collections import defaultdict
+import re
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
@@ -62,6 +63,34 @@ def _build_relationship_index(
 
     return relationship_index
 
+
+def _is_valid_color(color: str) -> bool:
+    """Check if a string is a valid color format for Plotly.
+
+    Validates common color formats:
+    - Named colors (e.g., 'red', 'blue')
+    - Hex colors (e.g., '#FF0000', '#F00')
+    - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
+
+    Args:
+        color: String to validate as a color
+
+    Returns:
+        True if the color format is valid, False otherwise
+    """
+    if not isinstance(color, str) or not color:
+        return False
+
+    # Check for hex color format (#RGB or #RRGGBB)
+    if re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$', color):
+        return True
+
+    # Check for rgb/rgba format
+    if re.match(r'^rgba?\s*\([^)]+\)$', color):
+        return True
+
+    # Accept any non-empty string as potentially valid named color
+    return True
 
 def _create_node_trace(
     positions: np.ndarray,
