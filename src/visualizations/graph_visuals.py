@@ -107,8 +107,39 @@ def _build_relationship_index(
 
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
+
+    Raises:
+        TypeError: If graph is not an AssetRelationshipGraph instance or if data types are invalid
+        ValueError: If graph.relationships has invalid structure or malformed data
     """
-    asset_ids_set = set(asset_ids)
+    # Validate graph input
+    if not isinstance(graph, AssetRelationshipGraph):
+        raise TypeError(
+            f"Invalid input: graph must be an AssetRelationshipGraph instance, "
+            f"got {type(graph).__name__}"
+        )
+
+    # Validate graph.relationships exists and is a dictionary
+    if not hasattr(graph, "relationships"):
+        raise ValueError("Invalid graph: missing 'relationships' attribute")
+
+    if not isinstance(graph.relationships, dict):
+        raise TypeError(
+            f"Invalid graph data: graph.relationships must be a dictionary, "
+            f"got {type(graph.relationships).__name__}"
+        )
+
+    # Validate asset_ids is iterable
+    try:
+        asset_ids_set = set(asset_ids)
+    except TypeError as exc:
+        raise TypeError(
+            f"Invalid input: asset_ids must be an iterable, got {type(asset_ids).__name__}"
+        ) from exc
+
+    # Validate asset_ids contains only strings
+    if not all(isinstance(aid, str) for aid in asset_ids_set):
+        raise ValueError("Invalid input: asset_ids must contain only string values")
 
     # Pre-filter relationships to only include relevant source_ids
     relevant_relationships = {
