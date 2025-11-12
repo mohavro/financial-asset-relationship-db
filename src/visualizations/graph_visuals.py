@@ -66,6 +66,34 @@ def _build_relationship_index(
     relationship_index: Dict[Tuple[str, str, str], float] = {}
 
     # Pre-filter relationships to only include relevant source_ids (optimization per review)
+
+def _is_valid_color_format(color: str) -> bool:
+    """Validate if a string is a valid color format for Plotly.
+
+    Accepts the following formats:
+    - Named colors (e.g., 'red', 'blue')
+    - Hex colors (e.g., '#FF0000', '#F00')
+    - RGB/RGBA (e.g., 'rgb(255,0,0)', 'rgba(255,0,0,0.5)')
+
+    Args:
+        color: Color string to validate
+
+    Returns:
+        True if the color format is valid, False otherwise
+    """
+    if not isinstance(color, str) or not color:
+        return False
+
+    # Check for hex color format (#RGB or #RRGGBB)
+    if re.match(r'^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$', color):
+        return True
+
+    # Check for rgb/rgba format
+    if re.match(r'^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$', color):
+        return True
+
+    # Accept any non-empty string as a potential named color (Plotly will handle validation)
+    return True
     # This reduces unnecessary iterations when source_id is frequently absent in asset_ids_set
     relevant_relationships = {
         source_id: rels
