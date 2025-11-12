@@ -435,6 +435,8 @@ def _validate_visualization_data(
         for aid in asset_ids:
             if aid in seen_ids and aid not in dup_ids:
                 dup_ids.append(aid)
+        dup_str = ", ".join(dup_ids)
+        raise ValueError(f"Invalid graph data: duplicate asset_ids detected: {dup_str}")
         raise ValueError(
             f"Invalid graph data: colors must be a list/tuple of length {n}, "
             f"got {colors_type} with length {colors_len}"
