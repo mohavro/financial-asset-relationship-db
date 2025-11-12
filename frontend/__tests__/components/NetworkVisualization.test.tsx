@@ -78,7 +78,7 @@ describe('NetworkVisualization Component', () => {
   });
 
   it('should handle null data gracefully', () => {
-    render(<NetworkVisualization data={null as any} />);
+    render(<NetworkVisualization data={null as unknown as VisualizationData} />);
     expect(screen.getByText('No visualization data available.')).toBeInTheDocument();
   });
 
