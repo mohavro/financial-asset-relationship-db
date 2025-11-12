@@ -97,22 +97,37 @@ def _build_relationship_index(
     Returns:
         Dictionary mapping (source_id, target_id, rel_type) to strength for all relationships
     """
-    asset_ids_set = set(asset_ids)
+    if graph is None:
+        raise ValueError("graph must not be None")
+    if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
+        raise ValueError("Invalid graph: missing relationships dictionary")
+    try:
+        asset_ids_list = list(asset_ids)
+    except TypeError as exc:
+        raise ValueError("asset_ids must be an iterable of strings") from exc
+    if not asset_ids_list:
+        return {}
+    if not all(isinstance(a, str) and a for a in asset_ids_list):
+        raise ValueError("asset_ids must contain non-empty strings")
 
-    # Pre-filter relationships to only include relevant source_ids
-    relevant_relationships = {
-        source_id: rels
-        for source_id, rels in graph.relationships.items()
-        if source_id in asset_ids_set
-    }
+    asset_ids_set = set(asset_ids_list)
 
     relationship_index: Dict[Tuple[str, str, str], float] = {}
-    for source_id, rels in relevant_relationships.items():
-        for target_id, rel_type, strength in rels:
-            if target_id in asset_ids_set:
-                relationship_index[(source_id, target_id, rel_type)] = float(strength)
-
-    return relationship_index
+    for source_id, rels in graph.relationships.items():
+        if not isinstance(source_id, str) or not source_id:
+            continue
+        if source_id not in asset_ids_set:
+            continue
+        if not isinstance(rels, (list, tuple, set)):
+            continue
+        for rel in rels:
+            if not isinstance(rel, (list, tuple)) or len(rel) < 3:
+                continue
+            target_id, rel_type, strength = rel[0], rel[1], rel[2]
+            if not isinstance(target_id, str) or not target_id:
+                continue
+            if not isinstance(rel_type, str) or not rel_type:
+                continue
 
 
 def _create_node_trace(
