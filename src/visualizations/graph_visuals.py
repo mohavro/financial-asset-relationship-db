@@ -670,9 +670,24 @@ def visualize_3d_graph_with_filters(
     else:
         relationship_filters = None
 
-    positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    # Validate filter configuration - at least one relationship type should be enabled
+    if not show_all_relationships and relationship_filters:
+        if not any(relationship_filters.values()):
+            logger.warning(
+                "All relationship filters are disabled. Visualization will only show nodes without edges."
+            )
 
-    _validate_visualization_data(positions, asset_ids, colors, hover_texts)
+    # Safely retrieve visualization data with error handling
+    try:
+        positions, asset_ids, colors, hover_texts = graph.get_3d_visualization_data_enhanced()
+    except AttributeError as exc:
+        raise ValueError(
+            "Graph object does not support get_3d_visualization_data_enhanced method"
+        ) from exc
+    except Exception as exc:
+        raise ValueError(
+            f"Failed to retrieve visualization data from graph: {exc}"
+        ) from exc
 
     fig = go.Figure()
 
