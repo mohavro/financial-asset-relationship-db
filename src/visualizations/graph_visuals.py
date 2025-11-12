@@ -639,6 +639,9 @@ def visualize_3d_graph_with_filters(
     filter_params = [show_same_sector, show_market_cap, show_correlation, show_corporate_bond,
                      show_commodity_currency, show_income_comparison, show_regulatory,
                      show_all_relationships, toggle_arrows]
+    if not all(isinstance(param, bool) for param in filter_params):
+        raise TypeError("All filter parameters must be boolean values")
+
     if not isinstance(graph, AssetRelationshipGraph) or not hasattr(
         graph, "get_3d_visualization_data_enhanced"
     ):
