@@ -78,6 +78,9 @@ def _build_relationship_index(
         if source_id not in asset_ids_set:
             continue
 
+    Raises:
+        ValueError: If inputs are not in the expected format or have mismatched lengths
+
         if not isinstance(rels, (list, tuple)):
             raise ValueError(f"Invalid relationship data: relationships for '{source_id}' must be a list or tuple")
 
