@@ -41,6 +41,7 @@ def _build_relationship_index(
     This function consolidates relationship data into a single index structure
     that can be efficiently queried for:
     - Checking if a relationship exists (O(1) lookup)
+    - Getting relationship strength (O(1) lookup)
 
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
