@@ -429,6 +429,8 @@ def _create_relationship_traces(
     relationship_filters: Optional[Dict[str, bool]] = None,
 ) -> List[go.Scatter3d]:
     """Create separate traces for different types of relationships with enhanced visibility."""
+
+    Returns a list of traces for efficient batch addition to figure using fig.add_traces().
     if not isinstance(graph, AssetRelationshipGraph):
         raise ValueError("Invalid input data: graph must be an AssetRelationshipGraph instance")
     if not hasattr(graph, "relationships") or not isinstance(graph.relationships, dict):
