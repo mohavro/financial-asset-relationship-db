@@ -576,7 +576,9 @@ def visualize_3d_graph_with_filters(
     relationship_traces = _create_relationship_traces(
         graph, positions, asset_ids, relationship_filters
     )
+    # Performance optimization: Use batch operation to add all relationship traces at once
     if relationship_traces:
+
         fig.add_traces(relationship_traces)
 
     if toggle_arrows:
