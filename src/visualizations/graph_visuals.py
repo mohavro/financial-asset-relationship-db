@@ -805,6 +805,21 @@ def _create_directional_arrows(
         ),
         hovertext=hover_texts,
         hoverinfo="text",
+def _generate_dynamic_title(num_assets: int, num_relationships: int) -> str:
+    """Generate a dynamic title for the visualization based on asset and relationship counts.
+
+    Args:
+        num_assets: Number of assets in the visualization
+        num_relationships: Number of visible relationships
+
+    Returns:
+        Formatted title string with asset and relationship counts
+    """
+    return (
+        f"Financial Asset Relationship Network - Enhanced 3D Visualization<br>"
+        f"<sub>{num_assets} Assets, {num_relationships} Relationships</sub>"
+    )
+
         name="Direction Arrows",
         visible=True,
         showlegend=False,
