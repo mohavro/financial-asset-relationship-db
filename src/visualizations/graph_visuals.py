@@ -158,6 +158,7 @@ def _configure_layout(
             camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)),
         )
     )
+    fig.update_layout(
         width=1200,
         height=800,
         showlegend=True,
