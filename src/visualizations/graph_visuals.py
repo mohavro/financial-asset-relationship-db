@@ -171,8 +171,6 @@ def _create_node_trace(
     # Edge case validation: Ensure inputs are not empty
     if len(asset_ids) == 0:
         raise ValueError("Cannot create node trace with empty inputs (asset_ids length is 0)")
-
-
     return go.Scatter3d(
         x=positions[:, 0],
         y=positions[:, 1],
@@ -185,7 +183,6 @@ def _create_node_trace(
             line=dict(color="rgba(0,0,0,0.8)", width=2),
             symbol="circle",
         ),
-
         text=asset_ids,
         hovertext=hover_texts,
         hoverinfo="text",
