@@ -138,6 +138,10 @@ def _create_node_trace(
     - asset_ids is a list/tuple of non-empty strings with length matching positions
     - colors is a list/tuple of valid color strings with length matching positions
     - hover_texts is a list/tuple of strings with length matching positions
+    # Edge case: Check for empty inputs before detailed validation
+    if isinstance(positions, np.ndarray) and positions.shape[0] == 0:
+        raise ValueError("positions array cannot be empty")
+
 
     Args:
         positions: NumPy array of node positions with shape (n, 3) containing finite numeric values
@@ -160,6 +164,11 @@ def _create_node_trace(
     if not isinstance(colors, (list, tuple)):
         raise ValueError(f"colors must be a list or tuple, got {type(colors).__name__}")
     if not isinstance(hover_texts, (list, tuple)):
+
+    # Edge case: Ensure we have at least one node to visualize
+    if len(asset_ids) == 0:
+        raise ValueError("Cannot create node trace with empty asset_ids list")
+
         raise ValueError(f"hover_texts must be a list or tuple, got {type(hover_texts).__name__}")
 
     # Validate dimensions and alignment before detailed validation
