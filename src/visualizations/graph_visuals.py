@@ -140,7 +140,7 @@ def _create_node_trace(
         raise ValueError("hover_texts must be a list or tuple")
 
     # Validate asset_ids contains non-empty strings
-    if not all(isinstance(aid, str) and aid for aid in asset_ids):
+    if not all(isinstance(aid, str) and aid.strip() for aid in asset_ids):
         raise ValueError("asset_ids must contain non-empty strings")
 
     # Validate colors content (must be valid color format strings)
