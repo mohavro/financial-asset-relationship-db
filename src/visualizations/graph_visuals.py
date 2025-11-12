@@ -81,14 +81,25 @@ def _build_relationship_index(
     - Function itself does not modify any shared state
 
     Thread safety guarantees:
-    - ✓ Safe: Multiple threads calling this function with the same immutable graph
-    - ✓ Safe: Single-threaded environments
-    - ✗ Unsafe: Concurrent reads while another thread modifies graph.relationships
+    This function is thread-safe for concurrent execution ONLY under these conditions:
+    1. The graph.relationships dictionary is NOT modified during execution
+    2. Multiple threads can safely call this function simultaneously IF AND ONLY IF
+       the graph object remains immutable
+
+    NOT thread-safe when:
+    - graph.relationships is modified by any thread during execution
+    - This can cause data races, inconsistent states, or runtime errors
+
+    Recommendations for Multi-Threaded Environments:
+    1. PREFERRED: Use immutable graph objects (freeze graph.relationships after creation)
+    2. ALTERNATIVE: Implement external synchronization:
+       - Use threading.Lock or similar mechanism to protect graph access
+       - Ensure all reads/writes to graph.relationships are synchronized
+    3. AVOID: Modifying graph.relationships while any thread may be reading it
 
     For multi-threaded environments with mutable graphs:
-    - Use immutable graph objects (recommended)
-    - Implement external synchronization (e.g., threading.Lock) around graph access
-    - Consider using copy.deepcopy() on the graph before passing to this function
+    Note: If your application modifies the graph concurrently, you MUST implement
+    external locking or use immutable data structures to prevent race conditions.
 
     Args:
         graph: The asset relationship graph (should be immutable in multi-threaded contexts)
