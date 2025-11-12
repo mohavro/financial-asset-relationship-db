@@ -405,9 +405,9 @@ def _validate_visualization_data(
     if positions.shape[0] != n:
         raise ValueError(f"Invalid graph data: positions length ({positions.shape[0]}) must match asset_ids length ({n})")
     if not isinstance(colors, (list, tuple)) or len(colors) != n:
-        raise ValueError(f"Invalid graph data: colors must be a list/tuple of length {n}")
+        raise ValueError(f"Invalid graph data: colors must be a list/tuple of length {n}, got {type(colors).__name__} with length {len(colors) if isinstance(colors, (list, tuple)) else 'N/A'}")
     if not isinstance(hover_texts, (list, tuple)) or len(hover_texts) != n:
-        raise ValueError(f"Invalid graph data: hover_texts must be a list/tuple of length {n}")
+        raise ValueError(f"Invalid graph data: hover_texts must be a list/tuple of length {n}, got {type(hover_texts).__name__} with length {len(hover_texts) if isinstance(hover_texts, (list, tuple)) else 'N/A'}")
 
 def visualize_3d_graph(graph: AssetRelationshipGraph) -> go.Figure:
     """Create enhanced 3D visualization of asset relationship graph with improved relationship visibility"""
