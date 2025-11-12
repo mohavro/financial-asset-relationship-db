@@ -219,6 +219,10 @@ def _configure_3d_layout(
             "xanchor": "center",
             "font": {"size": 16},
         },
+    for i, c in enumerate(colors):
+        if not _is_valid_color_format(c):
+            raise ValueError(
+                f"Invalid graph data: colors[{i}] has invalid color format: '{c}'")
         scene=dict(
             xaxis=dict(title="Dimension 1", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
             yaxis=dict(title="Dimension 2", showgrid=True, gridcolor="rgba(200, 200, 200, 0.3)"),
