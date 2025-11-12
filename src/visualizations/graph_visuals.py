@@ -248,6 +248,9 @@ def _add_directional_arrows_to_figure(
 
 def _configure_3d_layout(
     fig: go.Figure,
+    bgcolor: str = "rgba(248, 248, 248, 0.95)",
+    legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
+    legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
     title: str,
     width: int = 1200,
     height: int = 800,
