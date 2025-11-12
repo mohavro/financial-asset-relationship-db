@@ -69,14 +69,15 @@ def _build_relationship_index(
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
     Performance optimizations:
-    - Pre-filters graph.relationships to only include relevant source_ids
+    - Pre-filters relationships to only process relevant source_ids
     - Uses set-based membership tests for O(1) lookups
     - Avoids unnecessary iterations over irrelevant relationships
 
-    Thread safety:
-    - This function is thread-safe for concurrent reads on the graph object
-    - Returns a new dictionary (no shared state modification)
-    - Safe to call concurrently from multiple threads with the same graph
+    Thread Safety:
+    This function creates and returns a new dictionary without modifying shared state.
+    However, it reads from graph.relationships which should not be modified concurrently.
+    If used in a multi-threaded context, ensure graph.relationships is not modified
+    during execution, or use appropriate synchronization mechanisms (e.g., locks).
 
     Args:
         graph: The asset relationship graph
