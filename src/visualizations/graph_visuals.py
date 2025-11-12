@@ -699,8 +699,15 @@ def visualize_3d_graph_with_filters(
         relationship_traces = _create_relationship_traces(
             graph, positions, asset_ids, relationship_filters
         )
+    except (ValueError, TypeError) as exc:
+        # Specific handling for data validation or type errors
+        logger.error(
+            "Invalid filter configuration or data inconsistency detected: %s. "
+            "Proceeding without relationship traces.",
+            exc
+        )
+        relationship_traces = []
     except Exception as exc:  # pylint: disable=broad-except
-        logger.exception("Failed to create filtered relationship traces: %s", exc)
         relationship_traces = []
 
     # Performance optimization: Use batch operation to add all relationship traces at once
