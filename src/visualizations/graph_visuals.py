@@ -215,6 +215,7 @@ def _configure_layout(
     width: int = 1200,
     height: int = 800,
     gridcolor: str = "rgba(200, 200, 200, 0.3)",
+        if not isinstance(hover_text, str):
     legend_bgcolor: str = "rgba(255, 255, 255, 0.8)",
     legend_bordercolor: str = "rgba(0, 0, 0, 0.3)",
     bgcolor: str = "rgba(248, 248, 248, 0.95)",
