@@ -71,7 +71,7 @@ def _build_relationship_index(
     - Getting relationship strength (O(1) lookup)
     - Detecting bidirectional relationships (O(1) reverse lookup)
 
-    Performance Notes:
+    Performance optimizations:
     - The function uses early-continue pattern to skip irrelevant source_ids
       with O(1) set membership checks, which is more efficient than pre-filtering
       graph.relationships into an intermediate dictionary.
