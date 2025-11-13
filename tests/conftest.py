@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from src.models.financial_models import AssetClass, Equity
+
 if TYPE_CHECKING:
     from _pytest.config.argparsing import Parser
 
@@ -58,8 +60,6 @@ def _reset_graph():
 @pytest.fixture
 def dividend_stock():
     """Fixture providing a standard dividend-paying stock for testing."""
-    from src.models.financial_models import AssetClass, Equity
-    
     return Equity(
         id="DIV_STOCK",
         symbol="DIVS",
