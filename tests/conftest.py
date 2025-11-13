@@ -53,4 +53,23 @@ def _reset_graph():
 
     reset_graph()
     yield
+
+
+@pytest.fixture
+def dividend_stock():
+    """Fixture providing a standard dividend-paying stock for testing."""
+    from src.models.financial_models import AssetClass, Equity
+    
+    return Equity(
+        id="DIV_STOCK",
+        symbol="DIVS",
+        name="Dividend Stock",
+        asset_class=AssetClass.EQUITY,
+        sector="Utilities",
+        price=100.0,
+        market_cap=1e10,
+        pe_ratio=15.0,
+        dividend_yield=0.04,
+        earnings_per_share=6.67,
+    )
     reset_graph()
