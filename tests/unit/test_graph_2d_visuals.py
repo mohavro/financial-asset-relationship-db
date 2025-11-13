@@ -21,6 +21,25 @@ from src.visualizations.graph_2d_visuals import (
 )
 
 
+def create_relationship_traces_with_defaults(
+        graph, positions, asset_ids, **overrides
+):
+    """Helper to call _create_2d_relationship_traces with default parameters."""
+    defaults = {
+        "show_same_sector": True,
+        "show_market_cap": True,
+        "show_correlation": True,
+        "show_corporate_bond": True,
+        "show_commodity_currency": True,
+        "show_income_comparison": True,
+        "show_regulatory": True,
+        "show_all_relationships": False,
+    }
+    defaults.update(overrides)
+    return _create_2d_relationship_traces(graph, positions, asset_ids, **defaults)
+
+
+
 @pytest.mark.unit
 class TestVisualize2DGraph:
     """Test suite for the visualize_2d_graph function."""
@@ -262,18 +281,10 @@ class TestRelationshipTraces:
         asset_ids = list(positions.keys())
         
         # Execute
-        traces = _create_2d_relationship_traces(
+        traces = create_relationship_traces_with_defaults(
             populated_graph,
             positions,
             asset_ids,
-            show_same_sector=True,
-            show_market_cap=True,
-            show_correlation=True,
-            show_corporate_bond=True,
-            show_commodity_currency=True,
-            show_income_comparison=True,
-            show_regulatory=True,
-            show_all_relationships=False,
         )
 
         # Assert
@@ -285,7 +296,7 @@ class TestRelationshipTraces:
         asset_ids = list(positions.keys())
         
         # Execute
-        traces = _create_2d_relationship_traces(
+        traces = create_relationship_traces_with_defaults(
             populated_graph,
             positions,
             asset_ids,
@@ -308,7 +319,7 @@ class TestRelationshipTraces:
         asset_ids = list(positions.keys())
         
         # Execute - only show corporate bond relationships
-        traces = _create_2d_relationship_traces(
+        traces = create_relationship_traces_with_defaults(
             populated_graph,
             positions,
             asset_ids,
@@ -331,18 +342,10 @@ class TestRelationshipTraces:
         asset_ids = []
         
         # Execute
-        traces = _create_2d_relationship_traces(
+        traces = create_relationship_traces_with_defaults(
             empty_graph,
             positions,
             asset_ids,
-            show_same_sector=True,
-            show_market_cap=True,
-            show_correlation=True,
-            show_corporate_bond=True,
-            show_commodity_currency=True,
-            show_income_comparison=True,
-            show_regulatory=True,
-            show_all_relationships=False,
         )
 
         # Assert
