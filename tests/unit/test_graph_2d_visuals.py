@@ -22,7 +22,7 @@ from src.visualizations.graph_2d_visuals import (
 
 
 def create_relationship_traces_with_defaults(
-    graph, positions, asset_ids, **overrides
+        graph, positions, asset_ids, **overrides
 ):
     """Helper to call _create_2d_relationship_traces with default parameters."""
     defaults = {
