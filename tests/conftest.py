@@ -72,4 +72,3 @@ def dividend_stock():
         dividend_yield=0.04,
         earnings_per_share=6.67,
     )
-    reset_graph()
