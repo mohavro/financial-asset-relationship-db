@@ -190,7 +190,7 @@ Track these metrics to measure cleanup success:
 
 ## Maintenance Schedule
 
-- **Daily**: Automated stale branch detection (via GitHub Actions)
+- **Weekly**: Automated stale branch detection (via GitHub Actions)
 - **Weekly**: Review branch cleanup workflow results
 - **Monthly**: Manual audit of all branches
 - **Quarterly**: Review and update branch policies
