@@ -27,7 +27,7 @@ def pytest_addoption(parser: "Parser") -> None:
         _register_dummy_cov_options(parser)
 
 
-def _register_dummy_cov_options(parser: "Parser") -> None:
+def _register_dummy_cov_options(parser: "Parser") -> None:  # pragma: no cover
     """Register dummy --cov and --cov-report options."""
     group = parser.getgroup("cov")
     group.addoption(
