@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
@@ -72,10 +73,19 @@ DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 
 # Module-level shared in-memory connection
 _MEMORY_CONNECTION: sqlite3.Connection | None = None
-
-
 _memory_connection_lock = threading.Lock()
-_MEMORY_CONNECTION: sqlite3.Connection | None = None
+
+
+def _is_memory_db(path: str | None = None) -> bool:
+    """Return ``True`` when the configured database represents an in-memory SQLite DB."""
+
+    target = path or DATABASE_PATH
+    if target == ":memory:":
+        return True
+
+    # SQLite supports URI-style memory databases such as ``file::memory:?cache=shared``.
+    # These start with ``file:`` and include the ``:memory:`` segment in the URI.
+    return target.startswith("file:") and ":memory:" in target
 
 
 def _connect() -> sqlite3.Connection:
@@ -91,26 +101,25 @@ def _connect() -> sqlite3.Connection:
         sqlite3.Connection: A connection to DATABASE_PATH with the module's preferred settings.
     """
     global _MEMORY_CONNECTION
-    
+
     if _is_memory_db():
-    
-    if is_memory:
         with _memory_connection_lock:
             if _MEMORY_CONNECTION is None:
-                _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+                _MEMORY_CONNECTION = sqlite3.connect(
+                    DATABASE_PATH,
+                    detect_types=sqlite3.PARSE_DECLTYPES,
+                    check_same_thread=False,
+                    uri=DATABASE_PATH.startswith("file:"),
+                )
                 _MEMORY_CONNECTION.row_factory = sqlite3.Row
         return _MEMORY_CONNECTION
 
-    global _MEMORY_CONNECTION
-    
-    if DATABASE_PATH == ":memory:":
-        if _MEMORY_CONNECTION is None:
-            _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
-            _MEMORY_CONNECTION.row_factory = sqlite3.Row
-        return _MEMORY_CONNECTION
-    
     # For file-backed databases, create a new connection each time
-    connection = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+    connection = sqlite3.connect(
+        DATABASE_PATH,
+        detect_types=sqlite3.PARSE_DECLTYPES,
+        check_same_thread=False,
+    )
     connection.row_factory = sqlite3.Row
     return connection
 
@@ -125,13 +134,11 @@ def get_connection() -> Iterator[sqlite3.Connection]:
     Returns:
         sqlite3.Connection: The connection object; closed on context exit for file-backed databases, kept open for in-memory databases.
     """
-    is_memory = DATABASE_PATH == ":memory:" or (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
-    
     connection = _connect()
     try:
         yield connection
     finally:
-        if not is_memory:
+        if not _is_memory_db():
             connection.close()
 
 
