@@ -37,7 +37,7 @@ type EdgeTrace = {
  * @returns A JSX element rendering the 3D network plot when data is valid, or a centred status message when data is missing, invalid or too large.
  */
 export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
-  const [plotData, setPlotData] = useState<any[]>([]);
+const [plotData, setPlotData] = useState<(EdgeTrace | NodeTrace)[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'tooLarge'>('loading');
   const [message, setMessage] = useState('Loading visualization...');
 
