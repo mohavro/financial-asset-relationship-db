@@ -127,7 +127,7 @@ class TestShellScripts:
         # Check if file has execute permissions
         import stat
         file_stat = os.stat("cleanup-branches.sh")
-        assert file_stat.st_mode & stat.S_IXUSR
+        assert os.name == "nt" or file_stat.st_mode & stat.S_IXUSR
 
     def test_cleanup_branches_script_has_shebang(self):
         """Test that cleanup-branches.sh has proper shebang."""
