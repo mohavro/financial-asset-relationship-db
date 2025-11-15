@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import type { VisualizationData } from '../types/api';
 
 // Dynamically import Plotly to avoid SSR issues
-const Plot = dynamic(() => import('react-plotly.js'), { 
+const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
   loading: () => <div className="text-center p-8">Loading visualization...</div>
 });
@@ -28,6 +28,9 @@ type EdgeTrace = {
   showlegend: false;
 };
 
+const MAX_NODES = Number(process.env.NEXT_PUBLIC_MAX_NODES) || 500;
+const MAX_EDGES = Number(process.env.NEXT_PUBLIC_MAX_EDGES) || 2000;
+
 /**
  * Display an interactive 3D network of assets from the provided visualization payload.
  *
@@ -38,32 +41,6 @@ type EdgeTrace = {
  */
 export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
 const [plotData, setPlotData] = useState<(EdgeTrace | NodeTrace)[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'tooLarge'>('loading');
-  const [message, setMessage] = useState('Loading visualization...');
-
-  useEffect(() => {
-    if (!data) {
-      setPlotData([]);
-      setStatus('empty');
-      setMessage('No visualization data available.');
-      return;
-    }
-
-    const nodes = Array.isArray(data.nodes) ? data.nodes : [];
-    const edges = Array.isArray(data.edges) ? data.edges : [];
-
-    if (nodes.length === 0 || edges.length === 0) {
-      setPlotData([]);
-      setStatus('empty');
-      setMessage('Visualization data is missing nodes or edges.');
-      return;
-    }
-
-const MAX_NODES = Number(process.env.NEXT_PUBLIC_MAX_NODES) || 500;
-const MAX_EDGES = Number(process.env.NEXT_PUBLIC_MAX_EDGES) || 2000;
-
-export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
-  const [plotData, setPlotData] = useState<any[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'tooLarge'>('loading');
   const [message, setMessage] = useState('Loading visualization...');
 

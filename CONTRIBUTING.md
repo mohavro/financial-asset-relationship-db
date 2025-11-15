@@ -209,11 +209,11 @@ Every public class and function should have a docstring:
 ```python
 def calculate_metrics(self) -> Dict[str, Any]:
     """Calculate relationship strength metrics.
-    
+
     Returns:
         Dict containing metrics including total_assets, total_relationships,
         average_relationship_strength, and more.
-        
+
     Raises:
         ValueError: If graph is empty or invalid.
     """
@@ -260,7 +260,7 @@ tests/
    @pytest.mark.unit
    def test_something():
        pass
-       
+
    @pytest.mark.slow
    def test_something_slow():
        pass
@@ -338,6 +338,32 @@ make test-fast   # Without coverage
   git checkout main
   git pull upstream main
   ```
+
+### Branch Cleanup Best Practices
+
+To keep the repository clean and organized:
+
+1. **Delete merged branches:**
+   - GitHub can automatically delete branches after PR merge
+   - Manually delete local branches: `git branch -d branch-name`
+   - Delete remote branches: `git push origin --delete branch-name`
+
+2. **Avoid long-lived feature branches:**
+   - Keep branches short-lived (ideally < 2 weeks)
+   - Break large features into smaller PRs
+   - Regularly sync with main to avoid conflicts
+
+3. **Stale branch policy:**
+   - Branches inactive for 90+ days may be automatically deleted
+   - You'll receive a warning before deletion
+   - Important branches should be documented in issues
+
+4. **Branch naming:**
+   - Use descriptive names that indicate purpose
+   - Follow the naming conventions listed above
+   - Avoid generic names like "test" or "temp"
+
+See [BRANCH_CLEANUP_ANALYSIS.md](BRANCH_CLEANUP_ANALYSIS.md) for detailed branch management guidelines.
 
 ## Project Structure
 
