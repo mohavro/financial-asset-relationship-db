@@ -113,9 +113,11 @@ class UserRepository:
         """
         Create or update a user credential record in the repository.
         
+        Performs an upsert into the user_credentials table using the provided fields so the record for `username` is inserted or updated.
+        
         Parameters:
             username (str): Unique identifier for the user.
-            hashed_password (str): Password hash (must already be hashed).
+            hashed_password (str): Password hash; must already be hashed.
             email (Optional[str]): User email address, if available.
             full_name (Optional[str]): User's full name, if available.
             disabled (bool): Whether the user account is disabled (inactive).
@@ -150,7 +152,7 @@ def verify_password(plain_password, hashed_password):
     Verify whether a plaintext password matches a stored hashed password.
     
     Returns:
-        `true` if the plaintext password matches the hashed password, `false` otherwise.
+        `True` if the plaintext password matches the hashed password, `False` otherwise.
     """
 
     return pwd_context.verify(plain_password, hashed_password)
@@ -209,7 +211,6 @@ def get_user(username: str, repository: Optional[UserRepository] = None) -> Opti
     Retrieve a user by username.
     
     Parameters:
-        username (str): Username to look up.
         repository (Optional[UserRepository]): Repository to query; if omitted the module-level `user_repository` is used.
     
     Returns:
@@ -265,7 +266,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """
-    Retrieve the authenticated user represented by the provided JWT.
+    Return the user represented by the provided JWT.
     
     Returns:
         User: The User model corresponding to the token's subject.

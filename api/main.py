@@ -227,13 +227,13 @@ def validate_origin(origin: str) -> bool:
     """
     Determine whether an HTTP origin is permitted by the application's CORS rules.
     
-    Allows origins that are explicitly listed via the ALLOWED_ORIGINS environment variable, HTTPS origins with a valid domain, Vercel preview hostnames, HTTPS localhost/127.0.0.1 in any environment, and HTTP localhost/127.0.0.1 when ENV is "development".
+    Allows explicitly configured origins, HTTPS origins with a valid domain, Vercel preview hostnames, HTTPS localhost/127.0.0.1 in any environment, and HTTP localhost/127.0.0.1 when ENV is "development".
     
     Parameters:
-        origin (str): The origin URL to validate (for example "https://example.com" or "http://localhost:3000").
+        origin (str): Origin URL to validate (for example "https://example.com" or "http://localhost:3000").
     
     Returns:
-        bool: `True` if the origin is allowed, `False` otherwise.
+        True if the origin is allowed, False otherwise.
     """
     # Read environment dynamically to support runtime overrides (e.g., during tests)
     current_env = os.getenv("ENV", "development").lower()
@@ -311,6 +311,49 @@ def raise_asset_not_found(asset_id: str, resource_type: str = "Asset") -> None:
         resource_type (str): Type of resource (default: "Asset").
     """
     raise HTTPException(status_code=404, detail=f"{resource_type} {asset_id} not found")
+
+def serialize_asset(asset: Any, include_issuer: bool = False) -> Dict[str, Any]:
+    """
+    Serialize an Asset object to a dictionary representation.
+    
+    Args:
+        asset: Asset object to serialize
+        include_issuer: Whether to include issuer_id field (for detail views)
+        
+    Returns:
+        Dictionary containing asset data with additional_fields
+    """
+    asset_dict = {
+        "id": asset.id,
+        "symbol": asset.symbol,
+        "name": asset.name,
+        "asset_class": asset.asset_class.value,
+        "sector": asset.sector,
+        "price": asset.price,
+        "market_cap": asset.market_cap,
+        "currency": asset.currency,
+        "additional_fields": {},
+    }
+
+    # Define field list
+    fields = [
+        "pe_ratio", "dividend_yield", "earnings_per_share", "book_value",
+        "yield_to_maturity", "coupon_rate", "maturity_date", "credit_rating",
+        "contract_size", "delivery_date", "volatility",
+        "exchange_rate", "country", "central_bank_rate",
+    ]
+    
+    if include_issuer:
+        fields.append("issuer_id")
+
+    # Add asset-specific fields
+    for field in fields:
+        value = getattr(asset, field, None)
+        if value is not None:
+            asset_dict["additional_fields"][field] = value
+
+    return asset_dict
+
 
 
 # Pydantic models for API responses
@@ -401,41 +444,8 @@ async def get_assets(asset_class: Optional[str] = None, sector: Optional[str] = 
             if sector and asset.sector != sector:
                 continue
 
-            # Build response
-            asset_dict = {
-                "id": asset.id,
-                "symbol": asset.symbol,
-                "name": asset.name,
-                "asset_class": asset.asset_class.value,
-                "sector": asset.sector,
-                "price": asset.price,
-                "market_cap": asset.market_cap,
-                "currency": asset.currency,
-                "additional_fields": {},
-            }
-
-            # Add asset-specific fields
-            for field in [
-                "pe_ratio",
-                "dividend_yield",
-                "earnings_per_share",
-                "book_value",
-                "yield_to_maturity",
-                "coupon_rate",
-                "maturity_date",
-                "credit_rating",
-                "contract_size",
-                "delivery_date",
-                "volatility",
-                "exchange_rate",
-                "country",
-                "central_bank_rate",
-            ]:
-                if hasattr(asset, field):
-                    value = getattr(asset, field)
-                    if value is not None:
-                        asset_dict["additional_fields"][field] = value
-
+            # Build response using serialization utility
+            asset_dict = serialize_asset(asset)
             assets.append(AssetResponse(**asset_dict))
     except Exception as e:
         logger.exception("Error getting assets:")
@@ -466,41 +476,8 @@ async def get_asset_detail(asset_id: str):
 
         asset = g.assets[asset_id]
 
-        asset_dict = {
-            "id": asset.id,
-            "symbol": asset.symbol,
-            "name": asset.name,
-            "asset_class": asset.asset_class.value,
-            "sector": asset.sector,
-            "price": asset.price,
-            "market_cap": asset.market_cap,
-            "currency": asset.currency,
-            "additional_fields": {},
-        }
-
-        # Add all asset-specific fields
-        for field in [
-            "pe_ratio",
-            "dividend_yield",
-            "earnings_per_share",
-            "book_value",
-            "yield_to_maturity",
-            "coupon_rate",
-            "maturity_date",
-            "credit_rating",
-            "contract_size",
-            "delivery_date",
-            "volatility",
-            "exchange_rate",
-            "country",
-            "central_bank_rate",
-            "issuer_id",
-        ]:
-            if hasattr(asset, field):
-                value = getattr(asset, field)
-                if value is not None:
-                    asset_dict["additional_fields"][field] = value
-
+        # Build response using serialization utility with issuer_id included
+        asset_dict = serialize_asset(asset, include_issuer=True)
         return AssetResponse(**asset_dict)
     except Exception as e:
         if isinstance(e, HTTPException):

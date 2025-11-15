@@ -531,12 +531,9 @@ class TestEdgeCases:
     @patch("api.main.graph")
     def test_empty_graph(self, mock_graph_instance, client):
         """Test handling of empty graph."""
-        empty_graph = AssetRelationshipGraph(database_url="sqlite:///:memory:")
-        # Configure empty graph attributes
-        mock_graph_instance.assets = empty_graph.assets
+        empty_graph = AssetRelationshipGraph()
         mock_graph_instance.relationships = empty_graph.relationships
-        mock_graph_instance.calculate_metrics = empty_graph.calculate_metrics
-        mock_graph_instance.get_3d_visualization_data = empty_graph.get_3d_visualization_data
+        mock_graph_instance.get_3d_visualization_data_enhanced = empty_graph.get_3d_visualization_data_enhanced
 
         response = client.get("/api/assets")
         assert response.status_code == 200
