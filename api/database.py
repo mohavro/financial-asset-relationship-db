@@ -28,10 +28,11 @@ def _get_database_url() -> str:
 
 def _resolve_sqlite_path(url: str) -> str:
     """
-    Resolve a SQLite URL to a filesystem path or the special in-memory indicator.
+    Resolve a SQLite URL to either a filesystem path or the special in-memory indicator.
     
-    Supports common SQLite URL forms such as `sqlite:///relative.db`, `sqlite:////absolute/path.db`
-    and `sqlite:///:memory:`. Percent-encodings in the path are decoded before resolution.
+    Accepts SQLite URLs with schemes like `sqlite:///relative.db`, `sqlite:////absolute/path.db`
+    and `sqlite:///:memory:`. Percent-encodings in the URL path are decoded before resolution.
+    For in-memory URLs (`:memory:` or `/:memory:`) the literal string `":memory:"` is returned.
     
     Parameters:
         url (str): SQLite URL to resolve.
@@ -73,6 +74,10 @@ DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 _MEMORY_CONNECTION: sqlite3.Connection | None = None
 
 
+_memory_connection_lock = threading.Lock()
+_MEMORY_CONNECTION: sqlite3.Connection | None = None
+
+
 def _connect() -> sqlite3.Connection:
     """
     Open a configured SQLite connection for the module's database path.
@@ -85,6 +90,16 @@ def _connect() -> sqlite3.Connection:
     Returns:
         sqlite3.Connection: A connection to DATABASE_PATH with the module's preferred settings.
     """
+    global _MEMORY_CONNECTION
+    
+    if _is_memory_db():
+    
+    if is_memory:
+        with _memory_connection_lock:
+            if _MEMORY_CONNECTION is None:
+                _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+                _MEMORY_CONNECTION.row_factory = sqlite3.Row
+        return _MEMORY_CONNECTION
 
     global _MEMORY_CONNECTION
     
@@ -103,28 +118,30 @@ def _connect() -> sqlite3.Connection:
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Yield a configured SQLite connection for use within a with-statement.
+    Yield a SQLite connection for the configured database as a context manager.
     
-    The connection is closed automatically when the context exits.
+    For file-backed databases the connection is closed when the context exits; for in-memory databases the shared connection is kept open.
     
     Returns:
-        sqlite3.Connection: Configured SQLite connection that will be closed on context exit.
+        sqlite3.Connection: The connection object; closed on context exit for file-backed databases, kept open for in-memory databases.
     """
-
+    is_memory = DATABASE_PATH == ":memory:" or (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
+    
     connection = _connect()
     try:
         yield connection
     finally:
-        connection.close()
+        if not is_memory:
+            connection.close()
 
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
-    Execute and commit a write SQL query using a managed SQLite connection.
+    Execute a SQL write statement and commit the transaction using the module's managed SQLite connection.
     
     Parameters:
         query (str): SQL statement to execute.
-        parameters (tuple | list | None): Sequence of values to bind to the query; pass None or an empty sequence if there are no parameters.
+        parameters (tuple | list | None): Sequence of values to bind to the statement; use `None` or an empty sequence if there are no parameters.
     """
 
     with get_connection() as connection:

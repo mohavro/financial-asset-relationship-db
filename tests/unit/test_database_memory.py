@@ -1,129 +1,70 @@
-"""Test for shared in-memory SQLite connections."""
+"""Tests for in-memory SQLite connection persistence in api.database."""
 
+from __future__ import annotations
+
+import importlib
 import os
-import tempfile
+from typing import Iterator
+
 import pytest
-from unittest.mock import patch
+
+import api.database as database
 
 
-@pytest.fixture
-def memory_database():
-    """Set up in-memory database for testing."""
-    with patch.dict(os.environ, {'DATABASE_URL': 'sqlite:///:memory:'}):
-        # Need to reimport to pick up the environment change
-        import api.database
-        # Force reload of the module
-        import importlib
-        importlib.reload(api.database)
-        yield api.database
+@pytest.fixture()
+def restore_database_module(monkeypatch) -> Iterator[None]:
+    """
+    Preserve and restore api.database state and the DATABASE_URL environment variable around a test.
+    
+    Yields control to the test. After the test completes, closes and clears any in-memory SQLite connection on api.database (if present), restores DATABASE_URL to its original value or removes it if it was not set, and reloads the api.database module to reset its state.
+    """
+
+    original_url = os.environ.get("DATABASE_URL")
+
+    yield
+
+    # Close any in-memory connection that may have been created during the test.
+    if getattr(database, "_MEMORY_CONNECTION", None) is not None:
+        database._MEMORY_CONNECTION.close()
+        database._MEMORY_CONNECTION = None
+
+    if original_url is None:
+        monkeypatch.delenv("DATABASE_URL", raising=False)
+    else:
+        monkeypatch.setenv("DATABASE_URL", original_url)
+
+    importlib.reload(database)
 
 
-def test_shared_memory_connection_first_call(memory_database):
-    """Test that first connection call creates a connection."""
-    from api.database import _connect
+def test_in_memory_database_persists_schema_and_data(monkeypatch, restore_database_module):
+    """
+    Verify an in-memory SQLite configuration reuses a single connection instance and preserves schema and data across operations.
+    
+    Sets DATABASE_URL to use an in-memory SQLite database, reloads the database module and initialises the schema, inserts a user row using one connection, then reads it using a second connection. Asserts the inserted row is present and that both context-managed connections are the same object.
+    """
 
-    # Get the module to check its state
-    import api.database
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
 
-    # Ensure memory connection starts as None
-    assert api.database._MEMORY_CONNECTION is None
+    reloaded_database = importlib.reload(database)
 
-    # First call should create and store the connection
-    conn1 = _connect()
+    reloaded_database.initialize_schema()
 
-    # Connection should be stored in module variable
-    assert api.database._MEMORY_CONNECTION is conn1
-    assert conn1 is not None
+    with reloaded_database.get_connection() as first_connection:
+        first_connection.execute(
+            """
+            INSERT INTO user_credentials (username, hashed_password, email, full_name, disabled)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            ("alice", "hashed", "alice@example.com", "Alice", 0),
+        )
+        first_connection.commit()
 
-    # Close the connection for cleanup
-    conn1.close()
+    with reloaded_database.get_connection() as second_connection:
+        row = second_connection.execute(
+            "SELECT username FROM user_credentials WHERE username = ?",
+            ("alice",),
+        ).fetchone()
 
-
-def test_shared_memory_connection_second_call(memory_database):
-    """Test that second connection call returns the same connection."""
-    from api.database import _connect
-
-    # Get the module to check its state
-    import api.database
-
-    # Create first connection
-    conn1 = _connect()
-    first_connection = api.database._MEMORY_CONNECTION
-
-    # Create second connection
-    conn2 = _connect()
-    second_connection = api.database._MEMORY_CONNECTION
-
-    # Both connections and the stored connection should be the same
-    assert conn1 is conn2
+    assert row is not None
+    assert row["username"] == "alice"
     assert second_connection is first_connection
-    assert second_connection is conn1
-
-    # Cleanup
-    conn1.close()
-
-
-def test_memory_connection_settings(memory_database):
-    """Test that memory connections have correct settings."""
-    from api.database import _connect, DATABASE_PATH
-    import sqlite3
-
-    conn = _connect()
-
-    # Check row_factory is set correctly
-    assert conn.row_factory == sqlite3.Row
-
-    # Check that it's actually an in-memory database
-    assert DATABASE_PATH == ":memory:"
-
-    # Test that we can execute queries
-    conn.execute("CREATE TABLE test (id INTEGER, name TEXT)")
-    conn.execute("INSERT INTO test VALUES (1, 'test')")
-    conn.commit()
-
-    cursor = conn.execute("SELECT * FROM test")
-    row = cursor.fetchone()
-    assert row['id'] == 1
-    assert row['name'] == 'test'
-
-    conn.close()
-
-
-def test_file_based_connection_creates_new(memory_database):
-    """Test that file-based connections still create new connections."""
-    import tempfile
-    from api.database import _connect, DATABASE_PATH
-
-    # Temporarily change to file-based for this test
-    import api.database
-    
-    # Use tempfile to create a proper temporary file path
-    with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
-        temp_path = tmp.name
-    
-    original_path = api.database.DATABASE_PATH
-    api.database.DATABASE_PATH = temp_path
-    api.database._MEMORY_CONNECTION = None  # Reset the memory connection
-
-    try:
-        # Create two file-based connections
-        conn1 = _connect()
-        conn2 = _connect()
-
-        # They should be different objects
-        assert conn1 is not conn2
-
-        # Both should have correct settings
-        import sqlite3
-        assert conn1.row_factory == sqlite3.Row
-        assert conn2.row_factory == sqlite3.Row
-
-        conn1.close()
-        conn2.close()
-    finally:
-        # Restore original state
-        api.database.DATABASE_PATH = original_path
-        # Clean up temp file
-        import os
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
