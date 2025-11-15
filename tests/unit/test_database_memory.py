@@ -16,7 +16,7 @@ def restore_database_module(monkeypatch) -> Iterator[None]:
     """
     Preserve and restore api.database state and the DATABASE_URL environment variable around a test.
     
-    Yields to the test; after the test completes it closes and clears any in-memory SQLite connection on api.database, restores DATABASE_URL to its original value (or removes it if it was not set), and reloads the api.database module to reset its state.
+    Yields control to the test. After the test completes, closes and clears any in-memory SQLite connection on api.database (if present), restores DATABASE_URL to its original value or removes it if it was not set, and reloads the api.database module to reset its state.
     """
 
     original_url = os.environ.get("DATABASE_URL")
