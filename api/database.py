@@ -92,10 +92,7 @@ def _connect() -> sqlite3.Connection:
     """
     global _MEMORY_CONNECTION
     
-    is_memory = (
-        DATABASE_PATH == ":memory:" or
-        (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
-    )
+    if _is_memory_db():
     
     if is_memory:
         with _memory_connection_lock:
