@@ -71,6 +71,7 @@ DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 
 
+_memory_connection_lock = threading.Lock()
 _MEMORY_CONNECTION: sqlite3.Connection | None = None
 
 
