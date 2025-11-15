@@ -30,7 +30,7 @@ Comprehensive analysis of all branches in the repository including:
 #### `.github/workflows/branch-cleanup.yml` (NEW)
 Automated GitHub Actions workflow that:
 - Runs weekly to identify stale branches
-- Creates issues for branches inactive for 90+ days
+- Adds a stale branch report to the workflow run summary
 - Provides branch activity reports
 - Can be triggered manually for on-demand analysis
 - Helps maintain repository hygiene automatically
