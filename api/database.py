@@ -86,7 +86,10 @@ def _connect() -> sqlite3.Connection:
     """
     global _MEMORY_CONNECTION
     
-    is_memory = DATABASE_PATH == ":memory:" or (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
+    is_memory = (
+        DATABASE_PATH == ":memory:" or
+        DATABASE_PATH.startswith("file::memory:")
+    )
     
     if is_memory:
         if _MEMORY_CONNECTION is None:
