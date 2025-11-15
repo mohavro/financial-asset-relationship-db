@@ -28,10 +28,11 @@ def _get_database_url() -> str:
 
 def _resolve_sqlite_path(url: str) -> str:
     """
-    Resolve a SQLite URL to a filesystem path or the special in-memory indicator.
+    Resolve a SQLite URL to either a filesystem path or the special in-memory indicator.
     
-    Supports common SQLite URL forms such as `sqlite:///relative.db`, `sqlite:////absolute/path.db`
-    and `sqlite:///:memory:`. Percent-encodings in the path are decoded before resolution.
+    Accepts SQLite URLs with schemes like `sqlite:///relative.db`, `sqlite:////absolute/path.db`
+    and `sqlite:///:memory:`. Percent-encodings in the URL path are decoded before resolution.
+    For in-memory URLs (`:memory:` or `/:memory:`) the literal string `":memory:"` is returned.
     
     Parameters:
         url (str): SQLite URL to resolve.
@@ -119,12 +120,12 @@ def _connect() -> sqlite3.Connection:
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Provide a context manager that yields a SQLite connection for the configured database.
+    Yield a SQLite connection for the configured database as a context manager.
     
-    Yields a SQLite connection for use inside a with-statement. For file-backed databases the connection is closed when the context exits; for in-memory databases the shared connection is left open.
+    For file-backed databases the connection is closed when the context exits; for in-memory databases the shared connection is kept open.
     
     Returns:
-        sqlite3.Connection: A SQLite connection object; closed on context exit for file-backed databases, kept open for in-memory databases.
+        sqlite3.Connection: The connection object; closed on context exit for file-backed databases, kept open for in-memory databases.
     """
     is_memory = DATABASE_PATH == ":memory:" or (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
     
@@ -138,11 +139,11 @@ def get_connection() -> Iterator[sqlite3.Connection]:
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
-    Execute a write SQL statement and commit the transaction using the module's managed SQLite connection.
+    Execute a SQL write statement and commit the transaction using the module's managed SQLite connection.
     
     Parameters:
         query (str): SQL statement to execute.
-        parameters (tuple | list | None): Sequence of values to bind to the statement; pass `None` or an empty sequence if there are no parameters.
+        parameters (tuple | list | None): Sequence of values to bind to the statement; use `None` or an empty sequence if there are no parameters.
     """
 
     with get_connection() as connection:
