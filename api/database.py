@@ -98,9 +98,10 @@ def _connect() -> sqlite3.Connection:
     )
     
     if is_memory:
-        if _MEMORY_CONNECTION is None:
-            _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
-            _MEMORY_CONNECTION.row_factory = sqlite3.Row
+        with _memory_connection_lock:
+            if _MEMORY_CONNECTION is None:
+                _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+                _MEMORY_CONNECTION.row_factory = sqlite3.Row
         return _MEMORY_CONNECTION
 
     global _MEMORY_CONNECTION
