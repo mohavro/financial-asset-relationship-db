@@ -13,6 +13,8 @@
 - 4 ts files
 - 9 tsx files
 - 8 js files
+- 5 ts files
+- 12 tsx files
 
 ## Key Dependencies by Type
 
@@ -20,6 +22,21 @@
 
 No common dependencies found
 
+### JS
+
+Top dependencies:
+- @testing-library/jest-dom
+
+### TS
+
+Top dependencies:
+- axios
+- ../../app/lib/api
+- ../../app/types/api
+- ../types/api
+- ../api
+
+### TSX
 ### TS
 
 Top dependencies:
@@ -44,5 +61,14 @@ Top dependencies:
 ### JS
 
 Top dependencies:
+- react
+- @testing-library/react
 - @testing-library/jest-dom
+- ../../app/components/NetworkVisualization
+- ../../app/types/api
+- ../../app/components/MetricsDashboard
+- ../../app/components/AssetList
+- ../../app/lib/api
+- ./lib/api
+- ./components/NetworkVisualization
 
