@@ -7,7 +7,6 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
-from urllib.parse import urlparse
 
 
 def _get_database_url() -> str:
@@ -70,6 +69,9 @@ def _resolve_sqlite_path(url: str) -> str:
 DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 
+# Module-level shared in-memory connection
+_MEMORY_CONNECTION: sqlite3.Connection | None = None
+
 
 _memory_connection_lock = threading.Lock()
 _MEMORY_CONNECTION: sqlite3.Connection | None = None
@@ -78,6 +80,9 @@ _MEMORY_CONNECTION: sqlite3.Connection | None = None
 def _connect() -> sqlite3.Connection:
     """
     Open a configured SQLite connection for the module's database path.
+    
+    For in-memory databases, returns a shared connection. For file-based databases,
+    creates a new connection each time.
     
     The returned connection has type detection enabled, allows use from multiple threads, and yields rows as sqlite3.Row.
     
@@ -97,6 +102,15 @@ def _connect() -> sqlite3.Connection:
             _MEMORY_CONNECTION.row_factory = sqlite3.Row
         return _MEMORY_CONNECTION
 
+    global _MEMORY_CONNECTION
+    
+    if DATABASE_PATH == ":memory:":
+        if _MEMORY_CONNECTION is None:
+            _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+            _MEMORY_CONNECTION.row_factory = sqlite3.Row
+        return _MEMORY_CONNECTION
+    
+    # For file-backed databases, create a new connection each time
     connection = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
     connection.row_factory = sqlite3.Row
     return connection

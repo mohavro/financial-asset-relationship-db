@@ -161,3 +161,12 @@ max-parents = 7
 max-public-methods = 25
 max-returns = 6
 max-statements = 50
+
+[tool.codeflash]
+# All paths are relative to this pyproject.toml's directory.
+module-root = "."
+tests-root = "tests"
+test-framework = "pytest"
+ignore-paths = []
+disable-telemetry = true
+formatter-cmds = ["disabled"]
