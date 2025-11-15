@@ -348,10 +348,9 @@ def serialize_asset(asset: Any, include_issuer: bool = False) -> Dict[str, Any]:
 
     # Add asset-specific fields
     for field in fields:
-        if hasattr(asset, field):
-            value = getattr(asset, field)
-            if value is not None:
-                asset_dict["additional_fields"][field] = value
+        value = getattr(asset, field, None)
+        if value is not None:
+            asset_dict["additional_fields"][field] = value
 
     return asset_dict
 
