@@ -134,6 +134,7 @@ def _connect() -> sqlite3.Connection:
         DATABASE_PATH,
         detect_types=sqlite3.PARSE_DECLTYPES,
         check_same_thread=False,
+        uri=DATABASE_PATH.startswith("file:"),
     )
     connection.row_factory = sqlite3.Row
     return connection
