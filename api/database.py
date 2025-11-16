@@ -83,7 +83,7 @@ DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 
 # Module-level shared in-memory connection
-    return target.startswith("file:") and ":memory:" in target
+_MEMORY_CONNECTION = None
 _memory_connection_lock = threading.Lock()
 
 
@@ -103,7 +103,7 @@ def _is_memory_db(path: str | None = None) -> bool:
 
     # SQLite supports URI-style memory databases such as ``file::memory:?cache=shared``.
     # These start with ``file:`` and include the ``:memory:`` segment in the URI.
-return target.startswith("file:") and ":memory:" in target or ":memory:" in target
+    return target.startswith("file:") and ":memory:" in target
 
 
 def _connect() -> sqlite3.Connection:
