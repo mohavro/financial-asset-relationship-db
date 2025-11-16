@@ -34,12 +34,14 @@ def _resolve_sqlite_path(url: str) -> str:
     Accepts SQLite URLs with schemes like `sqlite:///relative.db`, `sqlite:////absolute/path.db`
     and `sqlite:///:memory:`. Percent-encodings in the URL path are decoded before resolution.
     For in-memory URLs (`:memory:` or `/:memory:`) the literal string `":memory:"` is returned.
+    URI-style memory databases like `sqlite:///file::memory:?cache=shared` are returned as-is.
     
     Parameters:
         url (str): SQLite URL to resolve.
     
     Returns:
-        str: Filesystem path for file-based URLs, or the literal string `":memory:"` for in-memory databases.
+        str: Filesystem path for file-based URLs, or the literal string `":memory:"` for in-memory databases,
+             or the original path for URI-style memory databases.
     """
 
     from urllib.parse import urlparse, unquote
@@ -48,13 +50,22 @@ def _resolve_sqlite_path(url: str) -> str:
     if parsed.scheme != "sqlite":
         raise ValueError(f"Not a valid sqlite URI: {url}")
 
-    # Handle in-memory database
-    if parsed.path == "/:memory:" or parsed.path == ":memory:":
+    MEMORY_DB_PATHS = {":memory:", "/:memory:"}
+normalized_path = parsed.path.rstrip('/')
+    if normalized_path in MEMORY_DB_PATHS:
         return ":memory:"
+    
+    # Handle URI-style memory databases (e.g., file::memory:?cache=shared)
+    # These need to be passed to sqlite3.connect with uri=True
+    path = unquote(parsed.path)
+    if path.lstrip("/").startswith("file:") and ":memory:" in path:
+        result = path.lstrip("/")
+        if parsed.query:
+            result += "?" + parsed.query
+        return result
 
     # Remove leading slash for relative paths (sqlite:///foo.db)
     # For absolute paths (sqlite:////abs/path.db), keep leading slash
-    path = unquote(parsed.path)
     if path.startswith("/") and not path.startswith("//"):
         # This is an absolute path
         resolved_path = Path(path).resolve()
