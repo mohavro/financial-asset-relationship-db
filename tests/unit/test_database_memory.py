@@ -357,6 +357,64 @@ class TestGetConnectionWithMemoryDb:
             conn1.execute(
                 "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
 
+
+        # If we get here without exception, check_same_thread is properly disabled
+
+    def test_connect_enables_check_same_thread_false(self, monkeypatch, restore_database_module):
+        """Test that _connect disables check_same_thread for thread safety."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        conn = reloaded_database._connect()
+        
+        # Verify we can use the connection from different threads
+        # by attempting to execute a query (would fail if check_same_thread=True)
+        import threading
+        import queue
+        
+        thread_exception = queue.Queue()
+        
+        def query_from_thread():
+            try:
+                cursor = conn.execute("SELECT 1")
+                cursor.fetchone()
+            except Exception as e:
+                thread_exception.put(e)
+        
+        thread = threading.Thread(target=query_from_thread)
+        thread.start()
+        thread.join()
+        
+        # Check if any exception occurred in the thread
+        if not thread_exception.empty():
+            exception = thread_exception.get()
+            raise AssertionError(f"Thread raised an exception: {exception}")
+
+    def test_connect_with_uri_parameter(self, monkeypatch, restore_database_module):
+        """Test that _connect correctly sets uri parameter for file: URIs."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///file::memory:?cache=shared")
+        reloaded_database = importlib.reload(database)
+        
+        # This should not raise an exception
+        conn = reloaded_database._connect()
+        assert conn is not None
+
+
+class TestGetConnectionWithMemoryDb:
+    """Tests for get_connection context manager with memory databases."""
+
+    def test_get_connection_does_not_close_memory_db(self, monkeypatch, restore_database_module):
+        """Test that get_connection keeps memory database connections open."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        reloaded_database.initialize_schema()
+        
+        # Insert data in first context
+        with reloaded_database.get_connection() as conn1:
+            conn1.execute(
+                "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
+
                 "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
                 ("testuser", "hashed_password")
             )
