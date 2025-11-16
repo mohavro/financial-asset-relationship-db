@@ -162,19 +162,25 @@ class TestIsMemoryDb:
 
     def test_is_memory_db_with_various_uri_formats(self, monkeypatch, restore_database_module):
         """Test _is_memory_db with various URI-style memory database formats."""
-        # Various valid memory database URI formats
-        memory_uris = [
+        # URI formats that should be detected as memory databases (contain :memory:)
+        memory_uris_with_memory_keyword = [
             "file::memory:?cache=shared",
             "file::memory:?mode=memory",
             "file::memory:?cache=shared&mode=memory",
-            "file:memdb1?mode=memory&cache=shared",
             "file::memory:",
         ]
         
-        for uri in memory_uris:
-            # These should be detected as memory databases if they contain :memory:
-            if ":memory:" in uri:
-                assert database._is_memory_db(uri) is True, f"Failed for URI: {uri}"
+        for uri in memory_uris_with_memory_keyword:
+            assert database._is_memory_db(uri) is True, f"Failed for URI: {uri}"
+        
+        # URI formats that use mode=memory but not :memory: keyword
+        # These are NOT currently detected as memory databases by _is_memory_db
+        memory_uris_mode_parameter = [
+            "file:memdb1?mode=memory&cache=shared",
+        ]
+        
+        for uri in memory_uris_mode_parameter:
+            assert database._is_memory_db(uri) is False, f"Unexpectedly detected as memory DB: {uri}"
 
     def test_is_memory_db_case_sensitivity(self, monkeypatch, restore_database_module):
         """Test that _is_memory_db is case-sensitive."""
