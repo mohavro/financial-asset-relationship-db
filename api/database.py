@@ -83,8 +83,9 @@ DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 
 # Module-level shared in-memory connection
-_MEMORY_CONNECTION = None
+_MEMORY_CONNECTION: sqlite3.Connection | None = None
 _MEMORY_CONNECTION_LOCK = threading.Lock()
+
 
 
 def _is_memory_db(path: str | None = None) -> bool:
@@ -102,8 +103,13 @@ def _is_memory_db(path: str | None = None) -> bool:
         return True
 
     # SQLite supports URI-style memory databases such as ``file::memory:?cache=shared``.
-    # These start with ``file:`` and include the ``:memory:`` segment in the URI.
-    return target.startswith("file:") and ":memory:" in target
+    # Parse the URI to properly identify in-memory databases
+    from urllib.parse import urlparse
+    parsed = urlparse(target)
+    if parsed.scheme == 'file' and (parsed.path == ':memory:' or ':memory:' in parsed.query):
+        return True
+    
+    return False
 
 
 def _connect() -> sqlite3.Connection:
@@ -115,11 +121,13 @@ def _connect() -> sqlite3.Connection:
     Returns:
         sqlite3.Connection: A sqlite3 connection to the configured DATABASE_PATH (shared for in-memory, new per call for file-backed).
     """
+
     global _MEMORY_CONNECTION
 
     if _is_memory_db():
         with _MEMORY_CONNECTION_LOCK:
             if _MEMORY_CONNECTION is None:
+
                 _MEMORY_CONNECTION = sqlite3.connect(
                     DATABASE_PATH,
                     detect_types=sqlite3.PARSE_DECLTYPES,
@@ -140,6 +148,7 @@ def _connect() -> sqlite3.Connection:
     return connection
 
 
+
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
@@ -157,6 +166,19 @@ def get_connection() -> Iterator[sqlite3.Connection]:
         if not _is_memory_db():
             connection.close()
 
+
+import atexit
+
+
+def _cleanup_memory_connection():
+    """Clean up the global memory connection when the program exits."""
+    global _MEMORY_CONNECTION
+    if _MEMORY_CONNECTION is not None:
+        _MEMORY_CONNECTION.close()
+        _MEMORY_CONNECTION = None
+
+
+atexit.register(_cleanup_memory_connection)
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
