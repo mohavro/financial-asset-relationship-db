@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import type { VisualizationData } from '../types/api';
 
 // Dynamically import Plotly to avoid SSR issues
-const Plot = dynamic(() => import('react-plotly.js'), { 
+const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
   loading: () => <div className="text-center p-8">Loading visualization...</div>
 });
@@ -28,55 +28,19 @@ type EdgeTrace = {
   showlegend: false;
 };
 
-/**
- * Renders a 3D asset relationship network using the provided visualization data.
- *
- * The component builds Plotly traces for nodes (scatter3d markers with labels) and edges (3D lines)
- * and displays a loading message while traces are being constructed or data is missing.
- *
- * @param data - Visualization payload containing `nodes` and `edges`.
- *   - `nodes`: Array of node objects, each with properties:
- *       - `id`: string
- *       - `x`, `y`, `z`: number (3D coordinates)
- *       - `symbol`: string
- *       - `name`: string
- *       - `asset_class`: string
- *       - `size`: number
- *       - `color`: string
- *   - `edges`: Array of edge objects, each with properties:
- *       - `source`: string (node id)
- *       - `target`: string (node id)
- *       - `strength`: number
- * @returns A JSX element that renders the interactive 3D network plot (or a loading placeholder when data is unavailable).
- */
-export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
-  const [plotData, setPlotData] = useState<any[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'tooLarge'>('loading');
-  const [message, setMessage] = useState('Loading visualization...');
-
-  useEffect(() => {
-    if (!data) {
-      setPlotData([]);
-      setStatus('empty');
-      setMessage('No visualization data available.');
-      return;
-    }
-
-    const nodes = Array.isArray(data.nodes) ? data.nodes : [];
-    const edges = Array.isArray(data.edges) ? data.edges : [];
-
-    if (nodes.length === 0 || edges.length === 0) {
-      setPlotData([]);
-      setStatus('empty');
-      setMessage('Visualization data is missing nodes or edges.');
-      return;
-    }
-
 const MAX_NODES = Number(process.env.NEXT_PUBLIC_MAX_NODES) || 500;
 const MAX_EDGES = Number(process.env.NEXT_PUBLIC_MAX_EDGES) || 2000;
 
+/**
+ * Display an interactive 3D network of assets from the provided visualization payload.
+ *
+ * @param data - Visualization payload containing `nodes` and `edges`.
+ *   Nodes are objects with at least: `id`, `x`, `y`, `z`, `symbol`, `name`, `asset_class`, `size`, `color`.
+ *   Edges are objects with at least: `source`, `target`, `relationship_type`, `strength`.
+ * @returns A JSX element rendering the 3D network plot when data is valid, or a centred status message when data is missing, invalid or too large.
+ */
 export default function NetworkVisualization({ data }: NetworkVisualizationProps) {
-  const [plotData, setPlotData] = useState<any[]>([]);
+const [plotData, setPlotData] = useState<(EdgeTrace | NodeTrace)[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'tooLarge'>('loading');
   const [message, setMessage] = useState('Loading visualization...');
 

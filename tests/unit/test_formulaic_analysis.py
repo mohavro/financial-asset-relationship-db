@@ -135,24 +135,12 @@ class TestFormulaicdAnalyzer:
         empty_graph.add_asset(sample_currency)
         assert analyzer._has_currencies(empty_graph)
 
-    def test_has_dividend_stocks_detection(self, analyzer, empty_graph):
+    def test_has_dividend_stocks_detection(self, analyzer, empty_graph, dividend_stock):
         """Test detection of dividend-paying stocks."""
         # Empty graph should have no dividend stocks
         assert not analyzer._has_dividend_stocks(empty_graph)
 
         # Add equity with dividend
-        dividend_stock = Equity(
-            id="DIV_STOCK",
-            symbol="DIVS",
-            name="Dividend Stock",
-            asset_class=AssetClass.EQUITY,
-            sector="Utilities",
-            price=100.0,
-            market_cap=1e10,
-            pe_ratio=15.0,
-            dividend_yield=0.04,
-            earnings_per_share=6.67,
-        )
         empty_graph.add_asset(dividend_stock)
         assert analyzer._has_dividend_stocks(empty_graph)
 
@@ -198,20 +186,8 @@ class TestFormulaicdAnalyzer:
         formula_names = [f.name for f in formulas]
         assert "Bond Yield-to-Maturity (Approximation)" in formula_names
 
-    def test_extract_fundamental_formulas_with_dividend_stocks(self, analyzer, empty_graph):
+    def test_extract_fundamental_formulas_with_dividend_stocks(self, analyzer, empty_graph, dividend_stock):
         """Test extraction of dividend yield formula."""
-        dividend_stock = Equity(
-            id="DIV_STOCK",
-            symbol="DIVS",
-            name="Dividend Stock",
-            asset_class=AssetClass.EQUITY,
-            sector="Utilities",
-            price=100.0,
-            market_cap=1e10,
-            pe_ratio=15.0,
-            dividend_yield=0.04,
-            earnings_per_share=6.67,
-        )
         empty_graph.add_asset(dividend_stock)
 
         # Execute
@@ -526,20 +502,8 @@ class TestExampleCalculationMethods:
         assert len(examples) > 0
         assert "PE" in examples or "calculation requires EPS data" in examples
 
-    def test_calculate_dividend_examples(self, analyzer, empty_graph):
+    def test_calculate_dividend_examples(self, analyzer, empty_graph, dividend_stock):
         """Test dividend yield example calculations."""
-        dividend_stock = Equity(
-            id="DIV_STOCK",
-            symbol="DIVS",
-            name="Dividend Stock",
-            asset_class=AssetClass.EQUITY,
-            sector="Utilities",
-            price=100.0,
-            market_cap=1e10,
-            pe_ratio=15.0,
-            dividend_yield=0.04,
-            earnings_per_share=6.67,
-        )
         empty_graph.add_asset(dividend_stock)
 
         # Execute

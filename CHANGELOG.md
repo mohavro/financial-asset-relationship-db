@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- Removed inappropriate CI/CD workflow files that were causing build failures:
+  - Deleted `.github/workflows/objective-c-xcode.yml` - Xcode/Objective-C workflow not applicable to Python/JavaScript project
+  - Deleted `.github/workflows/go.yml` - Go workflow not applicable to Python/JavaScript project
+  - Deleted `.github/workflows/dotnet-desktop.yml` - .NET Desktop workflow not applicable to Python/JavaScript project
+
+### Improved
+- Cleaned up CI/CD configuration to only include relevant workflows for the project's tech stack (Python, JavaScript/TypeScript, Next.js)
+- Reduced CI/CD execution time and resource usage by removing unnecessary workflow runs
+- Improved maintainability by removing duplicate and conflicting workflow configurations
+
+# Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
