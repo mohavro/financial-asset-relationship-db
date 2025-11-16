@@ -23,7 +23,7 @@ The diff introduced the following changes to `api/database.py`:
 
 ## Test Coverage
 
-### 1. TestIsMemoryDb (10 test methods)
+### 1. TestIsMemoryDb (9 test methods)
 Comprehensive tests for the new `_is_memory_db()` function:
 
 - ✅ `test_is_memory_db_with_literal_memory` - Validates detection of literal `:memory:` string
