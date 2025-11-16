@@ -148,6 +148,7 @@ def _connect() -> sqlite3.Connection:
     return connection
 
 
+
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
@@ -165,6 +166,19 @@ def get_connection() -> Iterator[sqlite3.Connection]:
         if not _is_memory_db():
             connection.close()
 
+
+import atexit
+
+
+def _cleanup_memory_connection():
+    """Clean up the global memory connection when the program exits."""
+    global _MEMORY_CONNECTION
+    if _MEMORY_CONNECTION is not None:
+        _MEMORY_CONNECTION.close()
+        _MEMORY_CONNECTION = None
+
+
+atexit.register(_cleanup_memory_connection)
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
