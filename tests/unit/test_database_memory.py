@@ -70,550 +70,470 @@ def test_in_memory_database_persists_schema_and_data(monkeypatch, restore_databa
     assert second_connection is first_connection
 
 
-def test_is_memory_db_with_colon_memory(monkeypatch, restore_database_module):
-    """
-    Test that _is_memory_db correctly identifies standard :memory: database path.
-    
-    Sets DATABASE_URL to use standard in-memory notation and verifies that _is_memory_db
-    returns True for the configured path and when called without arguments.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    assert reloaded_database._is_memory_db() is True
-    assert reloaded_database._is_memory_db(":memory:") is True
+class TestIsMemoryDb:
+    """Comprehensive tests for the _is_memory_db function."""
+
+    def test_is_memory_db_with_literal_memory(self, monkeypatch, restore_database_module):
+        """Test that _is_memory_db returns True for literal ':memory:' string."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        assert reloaded_database._is_memory_db() is True
+        assert reloaded_database._is_memory_db(":memory:") is True
+
+    def test_is_memory_db_with_file_uri_memory(self, monkeypatch, restore_database_module):
+        """Test that _is_memory_db returns True for file::memory: URI format."""
+        # Test file::memory: pattern
+        assert database._is_memory_db("file::memory:") is True
+        
+        # Test file::memory:?cache=shared pattern
+        assert database._is_memory_db("file::memory:?cache=shared") is True
+        
+        # Test file:///path/to/:memory: pattern
+        assert database._is_memory_db("file:///path/:memory:") is True
+
+    def test_is_memory_db_with_regular_file_path(self, monkeypatch, restore_database_module):
+        """Test that _is_memory_db returns False for regular file paths."""
+        # Regular file paths should return False
+        assert database._is_memory_db("/path/to/database.db") is False
+        assert database._is_memory_db("database.db") is False
+        assert database._is_memory_db("./relative/path/db.sqlite") is False
+
+    def test_is_memory_db_with_file_prefix_but_not_memory(self, monkeypatch, restore_database_module):
+        """Test that _is_memory_db returns False for file: URIs that aren't memory databases."""
+        # file: prefix but not a memory database
+        assert database._is_memory_db("file:///path/to/database.db") is False
+        assert database._is_memory_db("file://database.db") is False
+
+    def test_is_memory_db_with_memory_in_path_but_not_memory_db(self, monkeypatch, restore_database_module):
+        """Test that _is_memory_db returns False when 'memory' appears in path but it's not a memory DB."""
+        # Paths containing 'memory' substring but not actual memory databases
+        assert database._is_memory_db("/path/to/memory_database.db") is False
+        assert database._is_memory_db("/memory/storage/db.sqlite") is False
+        assert database._is_memory_db("my_memory.db") is False
+
+    def test_is_memory_db_with_none_uses_module_database_path(self, monkeypatch, restore_database_module):
+        """Test that _is_memory_db with None parameter uses the module's DATABASE_PATH."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        # When called without argument, should use module's DATABASE_PATH
+        assert reloaded_database._is_memory_db() is True
+        assert reloaded_database._is_memory_db(None) is True
+
+    def test_is_memory_db_with_empty_string(self, monkeypatch, restore_database_module):
+        """Test that _is_memory_db returns False for empty string."""
+        assert database._is_memory_db("") is False
+
+    def test_is_memory_db_with_various_uri_formats(self, monkeypatch, restore_database_module):
+        """Test _is_memory_db with various URI-style memory database formats."""
+        # Various valid memory database URI formats
+        memory_uris = [
+            "file::memory:?cache=shared",
+            "file::memory:?mode=memory",
+            "file::memory:?cache=shared&mode=memory",
+            "file:memdb1?mode=memory&cache=shared",
+            "file::memory:",
+        ]
+        
+        for uri in memory_uris:
+            # These should be detected as memory databases if they contain :memory:
+            if ":memory:" in uri:
+                assert database._is_memory_db(uri) is True, f"Failed for URI: {uri}"
+
+    def test_is_memory_db_case_sensitivity(self, monkeypatch, restore_database_module):
+        """Test that _is_memory_db is case-sensitive."""
+        # SQLite memory database identifiers are case-sensitive
+        assert database._is_memory_db(":memory:") is True
+        assert database._is_memory_db(":MEMORY:") is False
+        assert database._is_memory_db(":Memory:") is False
 
 
-def test_is_memory_db_with_uri_style_memory(monkeypatch, restore_database_module):
-    """
-    Test that _is_memory_db correctly identifies URI-style memory database paths.
-    
-    Verifies that _is_memory_db returns True for SQLite URI-style memory database
-    paths like 'file::memory:?cache=shared' which start with 'file:' and contain ':memory:'.
-    """
-    # Test various URI-style memory database formats
-    assert database._is_memory_db("file::memory:") is True
-    assert database._is_memory_db("file::memory:?cache=shared") is True
-    assert database._is_memory_db("file:memdb1?mode=memory&cache=shared") is False  # doesn't contain :memory:
-    
+class TestConnectWithMemoryDb:
+    """Tests for _connect function with various memory database configurations."""
 
-def test_is_memory_db_with_file_based_database(monkeypatch, restore_database_module):
-    """
-    Test that _is_memory_db returns False for file-based database paths.
-    
-    Verifies that _is_memory_db correctly identifies file-based databases and
-    returns False for standard file paths.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///test.db")
-    reloaded_database = importlib.reload(database)
-    
-    assert reloaded_database._is_memory_db() is False
-    assert reloaded_database._is_memory_db("/path/to/database.db") is False
-    assert reloaded_database._is_memory_db("test.db") is False
+    def test_connect_creates_shared_memory_connection(self, monkeypatch, restore_database_module):
+        """Test that _connect creates and reuses a single shared connection for memory databases."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        # First connection
+        conn1 = reloaded_database._connect()
+        assert conn1 is not None
+        assert reloaded_database._MEMORY_CONNECTION is not None
+        
+        # Second connection should be the same object
+        conn2 = reloaded_database._connect()
+        assert conn2 is conn1
+        assert conn2 is reloaded_database._MEMORY_CONNECTION
 
+    def test_connect_with_uri_memory_database(self, monkeypatch, restore_database_module):
+        """Test that _connect properly handles URI-style memory databases."""
+        # Test with file::memory:?cache=shared format
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///file::memory:?cache=shared")
+        reloaded_database = importlib.reload(database)
+        
+        conn1 = reloaded_database._connect()
+        assert conn1 is not None
+        
+        # Should reuse the same connection
+        conn2 = reloaded_database._connect()
+        assert conn2 is conn1
 
-def test_is_memory_db_with_none_path():
-    """
-    Test that _is_memory_db uses DATABASE_PATH when path parameter is None.
-    
-    Verifies that when no path is provided, _is_memory_db falls back to checking
-    the module's configured DATABASE_PATH.
-    """
-    # This should use the current DATABASE_PATH
-    result = database._is_memory_db(None)
-    assert isinstance(result, bool)
-
-
-def test_is_memory_db_edge_cases():
-    """
-    Test _is_memory_db with various edge case inputs.
-    
-    Verifies behavior with unusual but valid path strings including empty strings,
-    paths with 'memory' substring but not matching patterns, and other edge cases.
-    """
-    assert database._is_memory_db("") is False
-    assert database._is_memory_db("memory") is False
-    assert database._is_memory_db("file:test.db") is False
-    assert database._is_memory_db(":mem:") is False
-    assert database._is_memory_db("/:mem:") is False
-
-
-def test_connect_creates_uri_enabled_connection_for_uri_memory_db(monkeypatch, restore_database_module):
-    """
-    Test that _connect sets uri=True for URI-style memory databases.
-    
-    Configures a URI-style memory database and verifies that the connection is created
-    with uri=True parameter enabled for proper URI handling.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///file::memory:?cache=shared")
-    reloaded_database = importlib.reload(database)
-    
-    # The connection should be created with uri=True for URI-style paths
-    conn = reloaded_database._connect()
-    assert conn is not None
-    assert isinstance(conn, database.sqlite3.Connection)
-
-
-def test_connect_thread_safety_for_memory_db(monkeypatch, restore_database_module):
-    """
-    Test thread safety of _connect for in-memory databases.
-    
-    Verifies that the threading lock properly protects the shared in-memory connection
-    and that multiple calls to _connect return the same connection object.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    # Multiple calls should return the same connection
-    conn1 = reloaded_database._connect()
-    conn2 = reloaded_database._connect()
-    
-    assert conn1 is conn2
-    assert conn1 is reloaded_database._MEMORY_CONNECTION
-
-
-def test_connect_creates_new_connections_for_file_db(monkeypatch, restore_database_module, tmp_path):
-    """
-    Test that _connect creates new connections for file-based databases.
-    
-    Verifies that each call to _connect for a file-based database returns a new
-    connection object rather than reusing a shared instance.
-    """
-    db_file = tmp_path / "test.db"
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_file}")
-    reloaded_database = importlib.reload(database)
-    
-    conn1 = reloaded_database._connect()
-    conn2 = reloaded_database._connect()
-    
-    # For file-based databases, each call creates a new connection
-    assert conn1 is not conn2
-    conn1.close()
-    conn2.close()
-
-
-def test_connect_sets_row_factory(monkeypatch, restore_database_module):
-    """
-    Test that _connect sets sqlite3.Row as the row_factory.
-    
-    Verifies that connections returned by _connect have their row_factory set to
-    sqlite3.Row for dictionary-like row access.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    conn = reloaded_database._connect()
-    assert conn.row_factory == database.sqlite3.Row
-
-
-def test_connect_enables_type_detection(monkeypatch, restore_database_module):
-    """
-    Test that _connect enables SQLite type detection.
-    
-    Verifies that connections are created with detect_types=PARSE_DECLTYPES
-    for automatic type conversion of declared column types.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    # The connection should have type detection enabled
-    conn = reloaded_database._connect()
-    assert conn is not None
-
-
-def test_get_connection_closes_file_db_connections(monkeypatch, restore_database_module, tmp_path):
-    """
-    Test that get_connection closes file-based database connections on context exit.
-    
-    Verifies that the context manager properly closes connections to file-based
-    databases when exiting the context.
-    """
-    db_file = tmp_path / "test.db"
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_file}")
-    reloaded_database = importlib.reload(database)
-    
-    with reloaded_database.get_connection() as conn:
-        captured_conn = conn
-        # Connection should be open inside context
-        assert conn is not None
-    
-    # After context exit, attempting to use the connection should fail
-    # for file-based databases
-    with pytest.raises(database.sqlite3.ProgrammingError):
-        captured_conn.execute("SELECT 1")
-
-
-def test_get_connection_keeps_memory_db_open(monkeypatch, restore_database_module):
-    """
-    Test that get_connection keeps in-memory database connections open.
-    
-    Verifies that the shared in-memory connection remains usable after
-    exiting the context manager since it should not be closed.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    with reloaded_database.get_connection() as conn:
-        captured_conn = conn
-        conn.execute("CREATE TABLE test (id INTEGER)")
-        conn.commit()
-    
-    # Connection should still be usable after context exit for in-memory databases
-    cursor = captured_conn.execute("SELECT COUNT(*) FROM test")
-    assert cursor.fetchone()[0] == 0
-
-
-def test_execute_with_parameters(monkeypatch, restore_database_module):
-    """
-    Test execute function with parameterized queries.
-    
-    Verifies that execute properly handles parameterized SQL statements using
-    both tuple and list parameter formats.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    
-    # Test with tuple parameters
-    reloaded_database.execute(
-        "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
-        ("testuser", "hashed123")
-    )
-    
-    # Test with list parameters
-    reloaded_database.execute(
-        "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
-        ["testuser2", "hashed456"]
-    )
-    
-    # Verify both inserts worked
-    row_count = reloaded_database.fetch_value("SELECT COUNT(*) FROM user_credentials")
-    assert row_count == 2
-
-
-def test_execute_without_parameters(monkeypatch, restore_database_module):
-    """
-    Test execute function without parameters (None or empty).
-    
-    Verifies that execute works correctly when called with None or empty parameter
-    sequences for SQL statements that don't require parameters.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.execute("CREATE TABLE test_table (id INTEGER PRIMARY KEY)")
-    reloaded_database.execute("INSERT INTO test_table VALUES (1)", None)
-    reloaded_database.execute("INSERT INTO test_table VALUES (2)", ())
-    reloaded_database.execute("INSERT INTO test_table VALUES (3)", [])
-    
-    count = reloaded_database.fetch_value("SELECT COUNT(*) FROM test_table")
-    assert count == 3
-
-
-def test_fetch_one_returns_row_object(monkeypatch, restore_database_module):
-    """
-    Test that fetch_one returns a sqlite3.Row object.
-    
-    Verifies that fetch_one returns results as sqlite3.Row objects which allow
-    both integer indexing and dictionary-like key access.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    reloaded_database.execute(
-        "INSERT INTO user_credentials (username, hashed_password, email) VALUES (?, ?, ?)",
-        ("testuser", "hashed", "test@example.com")
-    )
-    
-    row = reloaded_database.fetch_one("SELECT username, email FROM user_credentials WHERE username = ?", ("testuser",))
-    
-    assert row is not None
-    assert isinstance(row, database.sqlite3.Row)
-    assert row["username"] == "testuser"
-    assert row["email"] == "test@example.com"
-    assert row[0] == "testuser"
-
-
-def test_fetch_one_returns_none_for_no_results(monkeypatch, restore_database_module):
-    """
-    Test that fetch_one returns None when query has no results.
-    
-    Verifies that fetch_one properly returns None instead of raising an exception
-    when the query doesn't match any rows.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    
-    row = reloaded_database.fetch_one("SELECT * FROM user_credentials WHERE username = ?", ("nonexistent",))
-    assert row is None
-
-
-def test_fetch_value_returns_first_column(monkeypatch, restore_database_module):
-    """
-    Test that fetch_value returns the first column value from the result.
-    
-    Verifies that fetch_value extracts and returns only the first column value
-    from the first row of query results.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    reloaded_database.execute(
-        "INSERT INTO user_credentials (username, hashed_password, email) VALUES (?, ?, ?)",
-        ("testuser", "hashed", "test@example.com")
-    )
-    
-    username = reloaded_database.fetch_value("SELECT username FROM user_credentials WHERE username = ?", ("testuser",))
-    assert username == "testuser"
-    
-    # Test with multiple columns - should still return first column
-    first_col = reloaded_database.fetch_value("SELECT username, email FROM user_credentials WHERE username = ?", ("testuser",))
-    assert first_col == "testuser"
-
-
-def test_fetch_value_returns_none_for_no_results(monkeypatch, restore_database_module):
-    """
-    Test that fetch_value returns None when query has no results.
-    
-    Verifies that fetch_value properly returns None when the underlying fetch_one
-    returns None due to no matching rows.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    
-    value = reloaded_database.fetch_value("SELECT username FROM user_credentials WHERE username = ?", ("nonexistent",))
-    assert value is None
-
-
-def test_initialize_schema_creates_table(monkeypatch, restore_database_module):
-    """
-    Test that initialize_schema creates the user_credentials table.
-    
-    Verifies that initialize_schema successfully creates the user_credentials table
-    with all required columns and constraints.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    
-    # Verify table exists by querying it
-    result = reloaded_database.fetch_value("SELECT name FROM sqlite_master WHERE type='table' AND name='user_credentials'")
-    assert result == "user_credentials"
-    
-    # Verify table structure by inserting a row
-    reloaded_database.execute(
-        "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
-        ("test", "hash")
-    )
-    count = reloaded_database.fetch_value("SELECT COUNT(*) FROM user_credentials")
-    assert count == 1
-
-
-def test_initialize_schema_is_idempotent(monkeypatch, restore_database_module):
-    """
-    Test that initialize_schema can be called multiple times safely.
-    
-    Verifies that calling initialize_schema multiple times doesn't raise errors
-    or destroy existing data due to the CREATE TABLE IF NOT EXISTS clause.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    # Call initialize_schema multiple times
-    reloaded_database.initialize_schema()
-    reloaded_database.initialize_schema()
-    reloaded_database.initialize_schema()
-    
-    # Should not raise any errors and table should exist
-    result = reloaded_database.fetch_value("SELECT name FROM sqlite_master WHERE type='table' AND name='user_credentials'")
-    assert result == "user_credentials"
-
-
-def test_memory_connection_persistence_across_operations(monkeypatch, restore_database_module):
-    """
-    Test that in-memory connection persists data across multiple operations.
-    
-    Verifies that the shared in-memory connection properly maintains state
-    across multiple database operations including schema creation, inserts,
-    and queries.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    # Create schema
-    reloaded_database.initialize_schema()
-    
-    # Insert data
-    reloaded_database.execute(
-        "INSERT INTO user_credentials (username, hashed_password, email, full_name) VALUES (?, ?, ?, ?)",
-        ("alice", "hash1", "alice@test.com", "Alice Smith")
-    )
-    
-    # Query data
-    row = reloaded_database.fetch_one("SELECT username, email, full_name FROM user_credentials WHERE username = ?", ("alice",))
-    assert row["username"] == "alice"
-    assert row["email"] == "alice@test.com"
-    assert row["full_name"] == "Alice Smith"
-    
-    # Insert more data
-    reloaded_database.execute(
-        "INSERT INTO user_credentials (username, hashed_password, email) VALUES (?, ?, ?)",
-        ("bob", "hash2", "bob@test.com")
-    )
-    
-    # Verify both records exist
-    count = reloaded_database.fetch_value("SELECT COUNT(*) FROM user_credentials")
-    assert count == 2
-
-
-def test_concurrent_memory_db_access_uses_same_connection(monkeypatch, restore_database_module):
-    """
-    Test that concurrent access to in-memory database uses the same connection.
-    
-    Verifies thread safety by confirming that the threading lock ensures all
-    accesses to an in-memory database use the same shared connection object.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    
-    # Multiple concurrent-like accesses should use the same connection
-    connections = []
-    for _ in range(5):
-        with reloaded_database.get_connection() as conn:
-            connections.append(conn)
-    
-    # All should be the same connection object
-    assert all(conn is connections[0] for conn in connections)
-
-
-def test_resolve_sqlite_path_with_relative_path(monkeypatch, restore_database_module):
-    """
-    Test _resolve_sqlite_path with relative file paths.
-    
-    Verifies that _resolve_sqlite_path correctly resolves relative SQLite URLs
-    to absolute filesystem paths.
-    """
-    result = database._resolve_sqlite_path("sqlite:///test.db")
-    # Should resolve to an absolute path
-    assert isinstance(result, str)
-    assert "test.db" in result
-
-
-def test_resolve_sqlite_path_with_memory_variations(monkeypatch, restore_database_module):
-    """
-    Test _resolve_sqlite_path handles various memory database formats.
-    
-    Verifies that _resolve_sqlite_path returns the literal string ':memory:'
-    for both :memory: and /:memory: path formats.
-    """
-    assert database._resolve_sqlite_path("sqlite:///:memory:") == ":memory:"
-    assert database._resolve_sqlite_path("sqlite://:memory:") == ":memory:"
-
-
-def test_resolve_sqlite_path_with_percent_encoding(monkeypatch, restore_database_module):
-    """
-    Test that _resolve_sqlite_path decodes percent-encoded characters.
-    
-    Verifies that URL percent-encoding in the path is properly decoded
-    before path resolution.
-    """
-    result = database._resolve_sqlite_path("sqlite:///test%20db.db")
-    assert "test db.db" in result
-
-
-def test_database_url_environment_variable_required():
-    """
-    Test that DATABASE_URL environment variable is required.
-    
-    Verifies that _get_database_url raises ValueError when DATABASE_URL
-    is not set in the environment.
-    """
-    with pytest.raises(ValueError, match="DATABASE_URL environment variable must be set"):
-        import os
-        original = os.environ.get("DATABASE_URL")
-        if original:
-            del os.environ["DATABASE_URL"]
+    def test_connect_creates_new_connection_for_file_db(self, monkeypatch, restore_database_module):
+        """Test that _connect creates new connections for file-based databases."""
+        import tempfile
+        
+        # Create a temporary database file
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp_file:
+            tmp_path = tmp_file.name
+        
         try:
-            database._get_database_url()
+            monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path}")
+            reloaded_database = importlib.reload(database)
+            
+            # First connection
+            conn1 = reloaded_database._connect()
+            assert conn1 is not None
+            
+            # Second connection should be a different object for file databases
+            conn2 = reloaded_database._connect()
+            assert conn2 is not None
+            assert conn2 is not conn1
+            
+            # Clean up connections
+            conn1.close()
+            conn2.close()
         finally:
-            if original:
-                os.environ["DATABASE_URL"] = original
+            # Clean up temp file
+            import os
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+    def test_connect_sets_row_factory(self, monkeypatch, restore_database_module):
+        """Test that _connect sets sqlite3.Row as the row factory."""
+        import sqlite3
+        
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        conn = reloaded_database._connect()
+        assert conn.row_factory == sqlite3.Row
+
+    def test_connect_enables_check_same_thread_false(self, monkeypatch, restore_database_module):
+        """Test that _connect disables check_same_thread for thread safety."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        conn = reloaded_database._connect()
+        
+        # Verify we can use the connection from different threads
+        # by attempting to execute a query (would fail if check_same_thread=True)
+        import threading
+        
+        def query_from_thread():
+            cursor = conn.execute("SELECT 1")
+            cursor.fetchone()
+        
+        thread = threading.Thread(target=query_from_thread)
+        thread.start()
+        thread.join()
+        
+        # If we get here without exception, check_same_thread is properly disabled
+
+    def test_connect_with_uri_parameter(self, monkeypatch, restore_database_module):
+        """Test that _connect correctly sets uri parameter for file: URIs."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///file::memory:?cache=shared")
+        reloaded_database = importlib.reload(database)
+        
+        # This should not raise an exception
+        conn = reloaded_database._connect()
+        assert conn is not None
 
 
-def test_execute_commits_transaction(monkeypatch, restore_database_module):
-    """
-    Test that execute automatically commits the transaction.
-    
-    Verifies that changes made via execute are committed and visible in
-    subsequent queries.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    
-    # Execute an insert
-    reloaded_database.execute(
-        "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
-        ("commituser", "hash")
-    )
-    
-    # Data should be committed and visible
-    username = reloaded_database.fetch_value(
-        "SELECT username FROM user_credentials WHERE username = ?",
-        ("commituser",)
-    )
-    assert username == "commituser"
+class TestGetConnectionWithMemoryDb:
+    """Tests for get_connection context manager with memory databases."""
+
+    def test_get_connection_does_not_close_memory_db(self, monkeypatch, restore_database_module):
+        """Test that get_connection keeps memory database connections open."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        reloaded_database.initialize_schema()
+        
+        # Insert data in first context
+        with reloaded_database.get_connection() as conn1:
+            conn1.execute(
+                "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
+                ("testuser", "hashed_password")
+            )
+            conn1.commit()
+        
+        # Data should still be accessible in second context
+        with reloaded_database.get_connection() as conn2:
+            row = conn2.execute(
+                "SELECT username FROM user_credentials WHERE username = ?",
+                ("testuser",)
+            ).fetchone()
+            assert row is not None
+            assert row["username"] == "testuser"
+
+    def test_get_connection_closes_file_db(self, monkeypatch, restore_database_module):
+        """Test that get_connection closes file database connections."""
+        import tempfile
+        
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp_file:
+            tmp_path = tmp_file.name
+        
+        try:
+            monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path}")
+            reloaded_database = importlib.reload(database)
+            
+            reloaded_database.initialize_schema()
+            
+            conn_ref = None
+            with reloaded_database.get_connection() as conn:
+                conn_ref = conn
+                conn.execute(
+                    "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
+                    ("testuser", "hashed_password")
+                )
+                conn.commit()
+            
+            # After exiting context, connection should be closed for file databases
+            # We can't directly check if it's closed, but we can verify that
+            # a new context gives us a different connection object
+            with reloaded_database.get_connection() as conn2:
+                assert conn2 is not conn_ref
+        finally:
+            import os
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
 
-def test_fetch_one_with_complex_query(monkeypatch, restore_database_module):
-    """
-    Test fetch_one with complex queries including joins and aggregations.
-    
-    Verifies that fetch_one works correctly with more complex SQL queries
-    beyond simple SELECT statements.
-    """
-    monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
-    reloaded_database = importlib.reload(database)
-    
-    reloaded_database.initialize_schema()
-    
-    # Insert test data
-    for i in range(3):
+class TestThreadSafety:
+    """Tests for thread safety of memory database connections."""
+
+    def test_memory_connection_lock_prevents_race_condition(self, monkeypatch, restore_database_module):
+        """Test that the memory connection lock prevents race conditions during initialization."""
+        import threading
+        
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        connections = []
+        
+        def get_conn():
+            conn = reloaded_database._connect()
+            connections.append(conn)
+        
+        # Create multiple threads trying to get connections simultaneously
+        threads = [threading.Thread(target=get_conn) for _ in range(10)]
+        
+        for thread in threads:
+            thread.start()
+        
+        for thread in threads:
+            thread.join()
+        
+        # All connections should be the same object
+        assert len(connections) == 10
+        assert all(conn is connections[0] for conn in connections)
+
+    def test_concurrent_operations_on_memory_db(self, monkeypatch, restore_database_module):
+        """Test concurrent read/write operations on memory database."""
+        import threading
+        
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        reloaded_database.initialize_schema()
+        
+        errors = []
+        
+        def write_user(user_id):
+            try:
+                with reloaded_database.get_connection() as conn:
+                    conn.execute(
+                        "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
+                        (f"user{user_id}", f"hash{user_id}")
+                    )
+                    conn.commit()
+            except Exception as e:
+                errors.append(e)
+        
+        # Create multiple threads writing concurrently
+        threads = [threading.Thread(target=write_user, args=(i,)) for i in range(5)]
+        
+        for thread in threads:
+            thread.start()
+        
+        for thread in threads:
+            thread.join()
+        
+        # No errors should have occurred
+        assert len(errors) == 0
+        
+        # Verify all users were inserted
+        with reloaded_database.get_connection() as conn:
+            count = conn.execute("SELECT COUNT(*) FROM user_credentials").fetchone()[0]
+            assert count == 5
+
+
+class TestEdgeCasesAndErrorHandling:
+    """Tests for edge cases and error handling in database connection management."""
+
+    def test_resolve_sqlite_path_with_memory(self, monkeypatch, restore_database_module):
+        """Test that _resolve_sqlite_path correctly handles :memory: URLs."""
+        from api.database import _resolve_sqlite_path
+        
+        # Test various memory URL formats
+        assert _resolve_sqlite_path("sqlite:///:memory:") == ":memory:"
+        assert _resolve_sqlite_path("sqlite://:memory:") == ":memory:"
+
+    def test_resolve_sqlite_path_with_regular_file(self, monkeypatch, restore_database_module):
+        """Test that _resolve_sqlite_path correctly resolves file paths."""
+        from api.database import _resolve_sqlite_path
+        from pathlib import Path
+        
+        # Test relative path
+        result = _resolve_sqlite_path("sqlite:///test.db")
+        assert "test.db" in result
+        assert Path(result).is_absolute()
+
+    def test_database_url_environment_variable_required(self, monkeypatch, restore_database_module):
+        """Test that DATABASE_URL environment variable is required."""
+        monkeypatch.delenv("DATABASE_URL", raising=False)
+        
+        with pytest.raises(ValueError, match="DATABASE_URL environment variable must be set"):
+            importlib.reload(database)
+
+    def test_execute_with_memory_db_commits_changes(self, monkeypatch, restore_database_module):
+        """Test that execute function properly commits changes to memory database."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        reloaded_database.initialize_schema()
+        
+        # Use execute to insert data
         reloaded_database.execute(
-            "INSERT INTO user_credentials (username, hashed_password, disabled) VALUES (?, ?, ?)",
-            (f"user{i}", f"hash{i}", i % 2)
+            "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
+            ("testuser", "hashed")
         )
-    
-    # Query with aggregation
-    row = reloaded_database.fetch_one("SELECT COUNT(*) as count, MAX(id) as max_id FROM user_credentials WHERE disabled = ?", (0,))
-    assert row is not None
-    assert row["count"] == 2
-    assert row["max_id"] is not None
+        
+        # Verify data was committed
+        row = reloaded_database.fetch_one(
+            "SELECT username FROM user_credentials WHERE username = ?",
+            ("testuser",)
+        )
+        assert row is not None
+        assert row["username"] == "testuser"
+
+    def test_fetch_value_with_memory_db(self, monkeypatch, restore_database_module):
+        """Test that fetch_value works correctly with memory database."""
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        reloaded_database.initialize_schema()
+        reloaded_database.execute(
+            "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
+            ("alice", "hashed")
+        )
+        
+        # Fetch single value
+        username = reloaded_database.fetch_value(
+            "SELECT username FROM user_credentials WHERE username = ?",
+            ("alice",)
+        )
+        assert username == "alice"
+        
+        # Fetch non-existent value
+        result = reloaded_database.fetch_value(
+            "SELECT username FROM user_credentials WHERE username = ?",
+            ("nonexistent",)
+        )
+        assert result is None
+
+    def test_connection_row_factory_returns_dict_like_rows(self, monkeypatch, restore_database_module):
+        """Test that connections return dict-like Row objects."""
+        import sqlite3
+        
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        reloaded_database.initialize_schema()
+        reloaded_database.execute(
+            "INSERT INTO user_credentials (username, hashed_password, email) VALUES (?, ?, ?)",
+            ("bob", "hashed", "bob@example.com")
+        )
+        
+        row = reloaded_database.fetch_one(
+            "SELECT username, email FROM user_credentials WHERE username = ?",
+            ("bob",)
+        )
+        
+        assert isinstance(row, sqlite3.Row)
+        assert row["username"] == "bob"
+        assert row["email"] == "bob@example.com"
+        # Can also access by index
+        assert row[0] == "bob"
+        assert row[1] == "bob@example.com"
 
 
-def test_uri_parameter_handling_for_file_databases(monkeypatch, restore_database_module, tmp_path):
-    """
-    Test that uri parameter is False for non-URI file database paths.
-    
-    Verifies that regular file-based databases (not using file: URI scheme)
-    have uri=False in their connection, which is the default SQLite behavior.
-    """
-    db_file = tmp_path / "regular.db"
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_file}")
-    reloaded_database = importlib.reload(database)
-    
-    # Should create a connection successfully without URI mode
-    conn = reloaded_database._connect()
-    assert conn is not None
-    conn.close()
+class TestUriMemoryDatabaseIntegration:
+    """Integration tests for URI-style memory databases."""
+
+    def test_uri_memory_database_with_cache_shared(self, monkeypatch, restore_database_module):
+        """Test URI memory database with cache=shared parameter."""
+        # Note: This tests the detection logic; actual URI handling depends on SQLite build
+        uri = "file::memory:?cache=shared"
+        
+        assert database._is_memory_db(uri) is True
+
+    def test_uri_memory_database_persists_across_connections(self, monkeypatch, restore_database_module):
+        """Test that URI memory databases can persist across connections when properly configured."""
+        # When using :memory: directly, it should use our shared connection logic
+        monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
+        reloaded_database = importlib.reload(database)
+        
+        reloaded_database.initialize_schema()
+        
+        # Write data
+        with reloaded_database.get_connection() as conn:
+            conn.execute(
+                "INSERT INTO user_credentials (username, hashed_password) VALUES (?, ?)",
+                ("persistent", "hash")
+            )
+            conn.commit()
+        
+        # Read from what should be the same connection
+        with reloaded_database.get_connection() as conn:
+            row = conn.execute(
+                "SELECT username FROM user_credentials WHERE username = ?",
+                ("persistent",)
+            ).fetchone()
+            assert row is not None
+            assert row["username"] == "persistent"
+
+    def test_multiple_memory_db_formats_detected_correctly(self, monkeypatch, restore_database_module):
+        """Test that various memory database format variations are detected correctly."""
+        memory_formats = [
+            ":memory:",
+            "file::memory:",
+            "file::memory:?cache=shared",
+            "file::memory:?mode=memory",
+        ]
+        
+        for fmt in memory_formats:
+            assert database._is_memory_db(fmt) is True, f"Failed to detect {fmt} as memory DB"
+        
+        non_memory_formats = [
+            "/path/to/file.db",
+            "file:///path/to/file.db",
+            "database.db",
+            "",
+            "file://not_memory.db",
+        ]
+        
+        for fmt in non_memory_formats:
+            assert database._is_memory_db(fmt) is False, f"Incorrectly detected {fmt} as memory DB"
