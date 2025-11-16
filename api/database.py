@@ -51,7 +51,7 @@ def _resolve_sqlite_path(url: str) -> str:
         raise ValueError(f"Not a valid sqlite URI: {url}")
 
     MEMORY_DB_PATHS = {":memory:", "/:memory:"}
-normalized_path = parsed.path.rstrip('/')
+    normalized_path = parsed.path.rstrip('/')
     if normalized_path in MEMORY_DB_PATHS:
         return ":memory:"
     
