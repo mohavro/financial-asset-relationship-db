@@ -88,9 +88,17 @@ _memory_connection_lock = threading.Lock()
 
 
 def _is_memory_db(path: str | None = None) -> bool:
-    """Return ``True`` when the configured database represents an in-memory SQLite DB."""
+    """
+    Determine whether the given or configured database refers to an in-memory SQLite database.
+    
+    Parameters:
+        path (str | None): Optional database path or URI to evaluate. If omitted, the configured DATABASE_PATH is used.
+    
+    Returns:
+        True if the path (or configured database) is an in-memory SQLite database (for example ":memory:" or a URI like "file::memory:?cache=shared"), False otherwise.
+    """
 
-    target = path or DATABASE_PATH
+    target = DATABASE_PATH if path is None else path
     if target == ":memory:":
         return True
 
@@ -103,13 +111,10 @@ def _connect() -> sqlite3.Connection:
     """
     Open a configured SQLite connection for the module's database path.
     
-    For in-memory databases, returns a shared connection. For file-based databases,
-    creates a new connection each time.
-    
-    The returned connection has type detection enabled, allows use from multiple threads, and yields rows as sqlite3.Row.
+    Returns a persistent shared connection when the configured database is in-memory; for file-backed databases, returns a new connection instance. The connection has type detection enabled (PARSE_DECLTYPES), allows use from multiple threads (check_same_thread=False) and uses sqlite3.Row for rows. When the database path is a URI beginning with "file:" the connection is opened with URI handling enabled.
     
     Returns:
-        sqlite3.Connection: A connection to DATABASE_PATH with the module's preferred settings.
+        sqlite3.Connection: A sqlite3 connection to the configured DATABASE_PATH (shared for in-memory, new per call for file-backed).
     """
     global _MEMORY_CONNECTION
 
@@ -138,12 +143,12 @@ def _connect() -> sqlite3.Connection:
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Yield a SQLite connection for the configured database as a context manager.
+    Provide a context-managed SQLite connection for the configured database.
     
     For file-backed databases the connection is closed when the context exits; for in-memory databases the shared connection is kept open.
     
     Returns:
-        sqlite3.Connection: The connection object; closed on context exit for file-backed databases, kept open for in-memory databases.
+        sqlite3.Connection: The SQLite connection — closed on context exit for file-backed databases, kept open for in-memory databases.
     """
     connection = _connect()
     try:
@@ -204,15 +209,15 @@ def fetch_value(query: str, parameters: tuple | list | None = None):
 
 def initialize_schema() -> None:
     """
-    Create the user_credentials table if it does not already exist.
+    Create the `user_credentials` table if it does not already exist.
     
-    Creates a table named `user_credentials` with columns:
-    - `id` INTEGER PRIMARY KEY AUTOINCREMENT
-    - `username` TEXT UNIQUE NOT NULL
-    - `email` TEXT
-    - `full_name` TEXT
-    - `hashed_password` TEXT NOT NULL
-    - `disabled` INTEGER NOT NULL DEFAULT 0
+    The table has the following columns:
+    - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+    - `username`: TEXT, unique and not null
+    - `email`: TEXT
+    - `full_name`: TEXT
+    - `hashed_password`: TEXT, not null
+    - `disabled`: INTEGER, not null, defaults to 0
     """
 
     execute(
