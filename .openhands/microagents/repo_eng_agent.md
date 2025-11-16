@@ -42,14 +42,14 @@ The agent will make suggestions and commit changes for:
 - Bug fixes
 - Branch cleanups
 
+
 ### Review Management
 - **PR/Issue Creation**: Create new PRs or Issues, ensuring titles, descriptions, and objectives/outcomes are meaningful.
 - **Template Usage**: Use repository templates as required.
-- **Commenting**: Comment on all changes made and all reviews provided by the agent.
+- **Commenting**: Comment on all changes made, and all reviews provided by the agent.
 - **Summarization**:
-    - Summarise an open PR when the post/comment contains the keyword `"summary"` posted by `@mohavro`.
-    - Summarise outstanding PR issues preventing merge when the post/comment contains the keyword `"status"`.
-
+  - Summarise an open PR when the post/comment contains the keyword `"summary"` posted by `@mohavro`.
+  - Summarise outstanding PR issues preventing merge when the post/comment contains the keyword `"status"`.
 ## Workflow Notes
 - All changes committed by this agent must include descriptive commit messages referencing the context (e.g., issue number, PR number, or specific feedback addressed).
 - When creating PRs, follow the repository's PR template if one exists.
