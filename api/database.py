@@ -87,6 +87,7 @@ _MEMORY_CONNECTION: sqlite3.Connection | None = None
 _MEMORY_CONNECTION_LOCK = threading.Lock()
 
 
+
 def _is_memory_db(path: str | None = None) -> bool:
     """
     Determine whether the given or configured database refers to an in-memory SQLite database.
@@ -102,8 +103,13 @@ def _is_memory_db(path: str | None = None) -> bool:
         return True
 
     # SQLite supports URI-style memory databases such as ``file::memory:?cache=shared``.
-    # These start with ``file:`` and include the ``:memory:`` segment in the URI.
-    return target.startswith("file:") and ":memory:" in target or ":memory:" in target
+    # Parse the URI to properly identify in-memory databases
+    from urllib.parse import urlparse
+    parsed = urlparse(target)
+    if parsed.scheme == 'file' and (parsed.path == ':memory:' or ':memory:' in parsed.query):
+        return True
+    
+    return False
 
 
 def _connect() -> sqlite3.Connection:
