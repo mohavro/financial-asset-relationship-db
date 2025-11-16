@@ -83,7 +83,7 @@ DATABASE_URL = _get_database_url()
 DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 
 # Module-level shared in-memory connection
-    return target.startswith("file:") and ":memory:" in target
+_MEMORY_CONNECTION: sqlite3.Connection | None = None
 _MEMORY_CONNECTION_LOCK = threading.Lock()
 
 
