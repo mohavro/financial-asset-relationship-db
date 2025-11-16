@@ -50,9 +50,9 @@ def _resolve_sqlite_path(url: str) -> str:
     if parsed.scheme != "sqlite":
         raise ValueError(f"Not a valid sqlite URI: {url}")
 
-    # Handle in-memory database
-    if parsed.path == "/:memory:" or parsed.path == ":memory:":
-        return ":memory:"
+MEMORY_DB_PATHS = {":memory:", "/:memory:"}
+if parsed.path in MEMORY_DB_PATHS:
+    return ":memory:"
     
     # Handle URI-style memory databases (e.g., file::memory:?cache=shared)
     # These need to be passed to sqlite3.connect with uri=True
