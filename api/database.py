@@ -50,15 +50,19 @@ def _resolve_sqlite_path(url: str) -> str:
     if parsed.scheme != "sqlite":
         raise ValueError(f"Not a valid sqlite URI: {url}")
 
-MEMORY_DB_PATHS = {":memory:", "/:memory:"}
-if parsed.path in MEMORY_DB_PATHS:
-    return ":memory:"
+    MEMORY_DB_PATHS = {":memory:", "/:memory:"}
+normalized_path = parsed.path.rstrip('/')
+    if normalized_path in MEMORY_DB_PATHS:
+        return ":memory:"
     
     # Handle URI-style memory databases (e.g., file::memory:?cache=shared)
     # These need to be passed to sqlite3.connect with uri=True
     path = unquote(parsed.path)
     if path.lstrip("/").startswith("file:") and ":memory:" in path:
-        return path.lstrip("/")
+        result = path.lstrip("/")
+        if parsed.query:
+            result += "?" + parsed.query
+        return result
 
     # Remove leading slash for relative paths (sqlite:///foo.db)
     # For absolute paths (sqlite:////abs/path.db), keep leading slash
