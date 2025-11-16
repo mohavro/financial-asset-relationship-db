@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
@@ -33,12 +34,14 @@ def _resolve_sqlite_path(url: str) -> str:
     Accepts SQLite URLs with schemes like `sqlite:///relative.db`, `sqlite:////absolute/path.db`
     and `sqlite:///:memory:`. Percent-encodings in the URL path are decoded before resolution.
     For in-memory URLs (`:memory:` or `/:memory:`) the literal string `":memory:"` is returned.
+    URI-style memory databases like `sqlite:///file::memory:?cache=shared` are returned as-is.
     
     Parameters:
         url (str): SQLite URL to resolve.
     
     Returns:
-        str: Filesystem path for file-based URLs, or the literal string `":memory:"` for in-memory databases.
+        str: Filesystem path for file-based URLs, or the literal string `":memory:"` for in-memory databases,
+             or the original path for URI-style memory databases.
     """
 
     from urllib.parse import urlparse, unquote
@@ -47,13 +50,22 @@ def _resolve_sqlite_path(url: str) -> str:
     if parsed.scheme != "sqlite":
         raise ValueError(f"Not a valid sqlite URI: {url}")
 
-    # Handle in-memory database
-    if parsed.path == "/:memory:" or parsed.path == ":memory:":
+    MEMORY_DB_PATHS = {":memory:", "/:memory:"}
+    normalized_path = parsed.path.rstrip('/')
+    if normalized_path in MEMORY_DB_PATHS:
         return ":memory:"
+    
+    # Handle URI-style memory databases (e.g., file::memory:?cache=shared)
+    # These need to be passed to sqlite3.connect with uri=True
+    path = unquote(parsed.path)
+    if path.lstrip("/").startswith("file:") and ":memory:" in path:
+        result = path.lstrip("/")
+        if parsed.query:
+            result += "?" + parsed.query
+        return result
 
     # Remove leading slash for relative paths (sqlite:///foo.db)
     # For absolute paths (sqlite:////abs/path.db), keep leading slash
-    path = unquote(parsed.path)
     if path.startswith("/") and not path.startswith("//"):
         # This is an absolute path
         resolved_path = Path(path).resolve()
@@ -72,68 +84,101 @@ DATABASE_PATH = _resolve_sqlite_path(DATABASE_URL)
 
 # Module-level shared in-memory connection
 _MEMORY_CONNECTION: sqlite3.Connection | None = None
+_MEMORY_CONNECTION_LOCK = threading.Lock()
 
 
-_memory_connection_lock = threading.Lock()
-_MEMORY_CONNECTION: sqlite3.Connection | None = None
+
+def _is_memory_db(path: str | None = None) -> bool:
+    """
+    Determine whether the given or configured database refers to an in-memory SQLite database.
+    
+    Parameters:
+        path (str | None): Optional database path or URI to evaluate. If omitted, the configured DATABASE_PATH is used.
+    Returns:
+        True if the path (or configured database) is an in-memory SQLite database (for example ":memory:" or a URI like "file::memory:?cache=shared"), False otherwise.
+    """
+
+    target = DATABASE_PATH if path is None else path
+    if target == ":memory:":
+        return True
+
+    # SQLite supports URI-style memory databases such as ``file::memory:?cache=shared``.
+    # Parse the URI to properly identify in-memory databases
+    from urllib.parse import urlparse
+    parsed = urlparse(target)
+    if parsed.scheme == 'file' and (parsed.path == ':memory:' or ':memory:' in parsed.query):
+        return True
+    
+    return False
 
 
 def _connect() -> sqlite3.Connection:
     """
     Open a configured SQLite connection for the module's database path.
     
-    For in-memory databases, returns a shared connection. For file-based databases,
-    creates a new connection each time.
-    
-    The returned connection has type detection enabled, allows use from multiple threads, and yields rows as sqlite3.Row.
+    Returns a persistent shared connection when the configured database is in-memory; for file-backed databases, returns a new connection instance. The connection has type detection enabled (PARSE_DECLTYPES), allows use from multiple threads (check_same_thread=False) and uses sqlite3.Row for rows. When the database path is a URI beginning with "file:" the connection is opened with URI handling enabled.
     
     Returns:
-        sqlite3.Connection: A connection to DATABASE_PATH with the module's preferred settings.
+        sqlite3.Connection: A sqlite3 connection to the configured DATABASE_PATH (shared for in-memory, new per call for file-backed).
     """
+
     global _MEMORY_CONNECTION
-    
+
     if _is_memory_db():
-    
-    if is_memory:
-        with _memory_connection_lock:
+        with _MEMORY_CONNECTION_LOCK:
             if _MEMORY_CONNECTION is None:
-                _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+
+                _MEMORY_CONNECTION = sqlite3.connect(
+                    DATABASE_PATH,
+                    detect_types=sqlite3.PARSE_DECLTYPES,
+                    check_same_thread=False,
+                    uri=DATABASE_PATH.startswith("file:"),
+                )
                 _MEMORY_CONNECTION.row_factory = sqlite3.Row
         return _MEMORY_CONNECTION
 
-    global _MEMORY_CONNECTION
-    
-    if DATABASE_PATH == ":memory:":
-        if _MEMORY_CONNECTION is None:
-            _MEMORY_CONNECTION = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
-            _MEMORY_CONNECTION.row_factory = sqlite3.Row
-        return _MEMORY_CONNECTION
-    
     # For file-backed databases, create a new connection each time
-    connection = sqlite3.connect(DATABASE_PATH, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+    connection = sqlite3.connect(
+        DATABASE_PATH,
+        detect_types=sqlite3.PARSE_DECLTYPES,
+        check_same_thread=False,
+        uri=DATABASE_PATH.startswith("file:"),
+    )
     connection.row_factory = sqlite3.Row
     return connection
+
 
 
 @contextmanager
 def get_connection() -> Iterator[sqlite3.Connection]:
     """
-    Yield a SQLite connection for the configured database as a context manager.
+    Provide a context-managed SQLite connection for the configured database.
     
     For file-backed databases the connection is closed when the context exits; for in-memory databases the shared connection is kept open.
     
     Returns:
-        sqlite3.Connection: The connection object; closed on context exit for file-backed databases, kept open for in-memory databases.
+        sqlite3.Connection: The SQLite connection — closed on context exit for file-backed databases, kept open for in-memory databases.
     """
-    is_memory = DATABASE_PATH == ":memory:" or (DATABASE_PATH.startswith("file:") and ":memory:" in DATABASE_PATH)
-    
     connection = _connect()
     try:
         yield connection
     finally:
-        if not is_memory:
+        if not _is_memory_db():
             connection.close()
 
+
+import atexit
+
+
+def _cleanup_memory_connection():
+    """Clean up the global memory connection when the program exits."""
+    global _MEMORY_CONNECTION
+    if _MEMORY_CONNECTION is not None:
+        _MEMORY_CONNECTION.close()
+        _MEMORY_CONNECTION = None
+
+
+atexit.register(_cleanup_memory_connection)
 
 def execute(query: str, parameters: tuple | list | None = None) -> None:
     """
@@ -186,15 +231,15 @@ def fetch_value(query: str, parameters: tuple | list | None = None):
 
 def initialize_schema() -> None:
     """
-    Create the user_credentials table if it does not already exist.
+    Create the `user_credentials` table if it does not already exist.
     
-    Creates a table named `user_credentials` with columns:
-    - `id` INTEGER PRIMARY KEY AUTOINCREMENT
-    - `username` TEXT UNIQUE NOT NULL
-    - `email` TEXT
-    - `full_name` TEXT
-    - `hashed_password` TEXT NOT NULL
-    - `disabled` INTEGER NOT NULL DEFAULT 0
+    The table has the following columns:
+    - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+    - `username`: TEXT, unique and not null
+    - `email`: TEXT
+    - `full_name`: TEXT
+    - `hashed_password`: TEXT, not null
+    - `disabled`: INTEGER, not null, defaults to 0
     """
 
     execute(
