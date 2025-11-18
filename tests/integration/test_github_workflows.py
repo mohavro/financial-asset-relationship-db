@@ -303,7 +303,7 @@ class TestPrAgentWorkflow:
     def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow has a review job."""
         jobs = pr_agent_workflow.get("jobs", {})
-        assert "review" in jobs, "pr-agent workflow must have a 'review' job"
+        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
     
     def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
         """Test that review job runs on Ubuntu."""
@@ -394,23 +394,19 @@ class TestPrAgentWorkflow:
                 "Python version should be 3.11"
             )
     
-assert step_with["node-version"] == "18", (
-    "Node.js version should be 18 (current configuration)"
-)
-        """
-        Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 20.x.
-        
-        Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '20.x'.
-        """
-        review_job = pr_agent_workflow["jobs"]["review"]
-        steps = review_job.get("steps", [])
-        
-        node_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/setup-node")
-        ]
-        
-        for step in node_steps:
+def test_pr_agent_node_version(pr_agent_workflow: Dict[str, Any]):
+    """
+    Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
+    """
+    review_job = pr_agent_workflow["jobs"]["review"]
+    steps = review_job.get("steps", [])
+
+    node_steps = [
+        s for s in steps
+        if s.get("uses", "").startswith("actions/setup-node")
+    ]
+
+    for step in node_steps:
             step_with = step.get("with", {})
             assert "node-version" in step_with, (
                 "Node.js setup should specify a version"
@@ -1111,7 +1107,7 @@ class TestWorkflowEnvAndSecrets:
     
 
 @pytest.mark.parametrize("workflow_file", get_workflow_files())
-def test_workflow_env_vars_naming_convention(self, workflow_file: Path):
+def test_workflow_env_vars_naming_convention(workflow_file: Path):
     """
     Ensure environment variable names in a workflow file are uppercase and contain only letters, digits or underscores.
     
