@@ -35,7 +35,7 @@ Validates GitHub Actions usage:
 - `test_workflow_actions_have_versions` - Ensures all actions specify versions
 - `test_workflow_steps_have_names_or_uses` - Validates step configuration
 
-### TestPrAgentWorkflow (10 tests)
+### TestPrAgentWorkflow (12 tests)
 Specific tests for the pr-agent.yml workflow:
 - `test_pr_agent_name` - Validates workflow name
 - `test_pr_agent_triggers_on_pull_request` - Checks PR triggers
