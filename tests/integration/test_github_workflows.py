@@ -1057,7 +1057,16 @@ class TestWorkflowEnvAndSecrets:
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_env_vars_naming_convention(self, workflow_file: Path):
         """Test that environment variables follow UPPER_CASE naming."""
-        config = load_yaml_safe(workflow_file)
+def test_workflow_env_vars_naming_convention(self, workflow_file: Path):
+        """
+        Validate that environment variables in workflow files follow UPPER_CASE naming convention.
+        
+        Parameters:
+            workflow_file (Path): Path to the workflow YAML file being tested.
+        
+        Notes:
+            Checks environment variables at both workflow level and job level for proper naming.
+        """
         
         def check_env_vars(env_dict):
             """
