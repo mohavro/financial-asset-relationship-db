@@ -154,7 +154,7 @@ The workflow validation tests are now part of the standard test suite and will c
 
 ## Notes
 
-- The actual pr-agent.yml file uses Node.js version '18', but the test expects '20.x' - this discrepancy will be caught by the tests
+- Both the pr-agent.yml workflow and its tests pin Node.js version '18', ensuring the configuration stays consistent
 - All workflow files in `.github/workflows/` are validated, not just pr-agent.yml
 - The tests use pytest fixtures and parameterization for clean, maintainable code
 - Type hints are used throughout for better IDE support and documentation
