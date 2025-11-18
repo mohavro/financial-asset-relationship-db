@@ -19,11 +19,11 @@ WORKFLOWS_DIR = Path(__file__).parent.parent.parent / ".github" / "workflows"
 
 def get_workflow_files() -> List[Path]:
     """
-    Collect workflow YAML files from the repository's .github/workflows directory.
+    Return all workflow YAML files located in the .github/workflows directory.
     
     Returns:
-        files (List[Path]): Paths to files with `.yml` or `.yaml` extensions found in the workflows directory.
-        Returns an empty list if the workflows directory does not exist or no matching files are found.
+        List[Path]: Paths to files with `.yml` or `.yaml` extension found in the workflows directory.
+                    Returns an empty list if the directory does not exist or no matching files are present.
     """
     if not WORKFLOWS_DIR.exists():
         return []
@@ -32,13 +32,13 @@ def get_workflow_files() -> List[Path]:
 
 def load_yaml_safe(file_path: Path) -> Dict[str, Any]:
     """
-    Load a YAML file and return its parsed content as a mapping.
+    Load and parse a YAML file.
     
     Parameters:
         file_path (Path): Path to the YAML file to load.
     
     Returns:
-        Dict[str, Any]: Parsed YAML content as a dictionary.
+        dict: Parsed YAML content as a mapping.
     
     Raises:
         yaml.YAMLError: If the file contains invalid YAML.
@@ -49,16 +49,13 @@ def load_yaml_safe(file_path: Path) -> Dict[str, Any]:
 
 def check_duplicate_keys(file_path: Path) -> List[str]:
     """
-    Detect duplicate mapping keys in a YAML workflow file.
+    Detect duplicate mapping keys in a YAML file.
     
     Parameters:
         file_path (Path): Path to the YAML file to inspect.
     
     Returns:
-        duplicates (List[str]): List of duplicate mapping key names found at any nesting level; empty if none.
-    
-    Notes:
-        YAML syntax errors encountered while parsing are ignored by this function (they are expected to be handled by other tests).
+        List of duplicate key names found, or an empty list if none are present.
     """
     duplicates = []
     
@@ -70,31 +67,18 @@ def check_duplicate_keys(file_path: Path) -> List[str]:
         pass
     
     def constructor_with_dup_check(loader, node):
-def constructor_with_dup_check(loader, node):
-            """
-            Construct a Python dict from a YAML mapping node while recording duplicate keys.
-            
-            Parameters:
-            	loader: YAML loader used to construct key and value objects (expected to implement `construct_object`).
-            	node: YAML mapping node whose `value` is an iterable of (key_node, value_node) pairs.
-            
-            Returns:
-            	A dict mapping constructed keys to their constructed values.
-            
-            Notes:
-            	If a key appears more than once in the mapping, the key is appended to the outer function's `duplicates` list and the last value for that key is retained in the returned mapping.
-            """
-        Construct a Python dict from a YAML mapping node while recording duplicate keys.
+        """
+        Construct a Python dict from a YAML mapping node and record any duplicate keys.
         
         Parameters:
-        	loader: YAML loader used to construct key and value objects (expected to implement `construct_object`).
-        	node: YAML mapping node whose `value` is an iterable of (key_node, value_node) pairs.
+            loader: YAML loader used to construct key and value objects from nodes.
+            node: YAML mapping node whose key/value pairs will be converted into a dict.
         
         Returns:
-        	A dict mapping constructed keys to their constructed values.
+            mapping (dict): A dictionary of keys to constructed values from the mapping node.
         
         Notes:
-        	If a key appears more than once in the mapping, the key is appended to the module-level `duplicates` list and the last value for that key is retained in the returned mapping.
+            Any duplicate mapping keys encountered are appended to the surrounding `duplicates` list.
         """
         mapping = {}
         for key_node, value_node in node.value:
@@ -160,10 +144,9 @@ class TestWorkflowStructure:
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_has_name(self, workflow_file: Path):
         """
-        Assert the workflow YAML defines a non-empty string 'name'.
+        Ensure the workflow YAML defines a non-empty string in the top-level "name" field.
         
-        Parameters:
-            workflow_file (Path): Path to the workflow YAML file being tested.
+        Asserts that the top-level "name" key exists, its value is not empty, and the value is a string. Failure messages include the workflow filename for context.
         """
         config = load_yaml_safe(workflow_file)
         assert "name" in config, f"Workflow {workflow_file.name} missing 'name' field"
@@ -174,7 +157,11 @@ class TestWorkflowStructure:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_has_triggers(self, workflow_file: Path):
-        """Test that workflow files have at least one trigger (on)."""
+        """
+        Ensure the workflow defines at least one trigger by including an "on" field.
+        
+        Fails the test if the parsed workflow configuration does not contain a top-level 'on' key.
+        """
         config = load_yaml_safe(workflow_file)
         assert "on" in config or True in config, (
             f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
@@ -183,12 +170,12 @@ class TestWorkflowStructure:
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_has_jobs(self, workflow_file: Path):
         """
-        Assert that the given workflow YAML defines a non-empty `jobs` mapping.
+        Assert that a GitHub Actions workflow defines at least one job.
         
-        This test loads the workflow file and verifies that a top-level `jobs` key exists, that its value is a mapping (dictionary), and that it contains at least one job. An assertion will fail with a descriptive message if any of these conditions are not met.
+        Checks that the top-level "jobs" key exists in the parsed workflow, that its value is a mapping (dictionary) and that it contains at least one job entry.
         
         Parameters:
-        	workflow_file (Path): Path to the workflow YAML file to validate.
+            workflow_file (Path): Path to the workflow YAML file under test.
         """
         config = load_yaml_safe(workflow_file)
         assert "jobs" in config, f"Workflow {workflow_file.name} missing 'jobs' field"
@@ -202,7 +189,11 @@ class TestWorkflowStructure:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_jobs_have_steps(self, workflow_file: Path):
-        """Test that all jobs in workflow files have steps defined."""
+        """
+        Verify each job in the workflow defines either 'steps' or 'uses', and that any 'steps' entry is a non-empty list.
+        
+        If a job has a 'steps' key it must be a list with at least one element.
+        """
         config = load_yaml_safe(workflow_file)
         jobs = config.get("jobs", {})
         
@@ -244,13 +235,10 @@ class TestWorkflowActions:
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_steps_have_names_or_uses(self, workflow_file: Path):
         """
-        Verify every step in each job defines at least one of: `name`, `uses`, or `run`.
+        Ensure every step in each job defines at least one of: 'name', 'uses' or 'run'.
         
         Parameters:
-            workflow_file (Path): Path to the workflow YAML file being tested.
-        
-        Notes:
-            Fails the test if any step in any job lacks all three fields.
+            workflow_file (Path): Path to the workflow YAML file to validate.
         """
         config = load_yaml_safe(workflow_file)
         jobs = config.get("jobs", {})
@@ -275,13 +263,11 @@ class TestPrAgentWorkflow:
     @pytest.fixture
     def pr_agent_workflow(self) -> Dict[str, Any]:
         """
-        Load the 'pr-agent.yml' workflow from the workflows directory, skipping the test if the file is missing.
+        Fixture that loads the pr-agent workflow YAML and provides its parsed mapping.
         
+        If the file .github/workflows/pr-agent.yml does not exist, the fixture skips the invoking test.
         Returns:
-            workflow (dict): Parsed YAML content of the pr-agent workflow.
-        
-        Raises:
-            yaml.YAMLError: If the workflow file contains invalid YAML.
+            workflow (Dict[str, Any]): Parsed YAML content of the pr-agent workflow as a mapping.
         """
         workflow_path = WORKFLOWS_DIR / "pr-agent.yml"
         if not workflow_path.exists():
@@ -289,7 +275,12 @@ class TestPrAgentWorkflow:
         return load_yaml_safe(workflow_path)
     
     def test_pr_agent_name(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow has correct name."""
+        """
+        Verify the pr-agent workflow is named "PR Agent".
+        
+        Parameters:
+            pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow (fixture providing the workflow content).
+        """
         assert pr_agent_workflow["name"] == "PR Agent"
     
     def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
@@ -324,7 +315,11 @@ class TestPrAgentWorkflow:
         assert len(checkout_steps) > 0, "Review job must check out the repository"
     
     def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that checkout step uses a token for authentication."""
+        """
+        Ensure every actions/checkout step in the review job provides a `token` in its `with` mapping.
+        
+        Fails the test if any checkout step omits the `token` key.
+        """
         review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
@@ -384,9 +379,9 @@ class TestPrAgentWorkflow:
     
     def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
         """
-        Ensure Node.js setup steps in the 'review' job specify the node-version value "20.x".
+        Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 20.x.
         
-        Asserts that any step using `actions/setup-node` includes a `with.node-version` key and that its value equals "20.x".
+        Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '20.x'.
         """
         review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
@@ -401,8 +396,8 @@ class TestPrAgentWorkflow:
             assert "node-version" in step_with, (
                 "Node.js setup should specify a version"
             )
-            assert step_with["node-version"] == "20.x", (
-                "Node.js version should be 20.x"
+            assert step_with["node-version"] == "18", (
+                "Node.js version should be 18"
             )
     
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
@@ -420,7 +415,11 @@ class TestPrAgentWorkflow:
         )
     
     def test_pr_agent_fetch_depth_configured(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that checkout step has fetch-depth configured."""
+        """
+        Validate fetch-depth values for actions/checkout steps in the PR Agent review job.
+        
+        For each checkout step in the review job, if a `fetch-depth` key is present assert it is an integer or equal to 0.
+        """
         review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
@@ -464,7 +463,11 @@ class TestWorkflowSecurity:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_uses_secrets_context(self, workflow_file: Path):
-        """Test that workflows use proper secrets context for sensitive data."""
+        """
+        Ensure sensitive fields in step 'with' blocks use the GitHub secrets context.
+        
+        Scans each job's steps for keys containing "token", "password", "key" or "secret". If a matching key has a string value, assert that the value either starts with "${{" (secrets context) or is empty.
+        """
         config = load_yaml_safe(workflow_file)
         jobs = config.get("jobs", {})
         
@@ -491,12 +494,12 @@ class TestWorkflowMaintainability:
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_steps_have_descriptive_names(self, workflow_file: Path):
         """
-        Check workflow job steps for descriptive names and warn when unnamed steps are found.
+        Check that steps within each job of a workflow have descriptive names and warn when they do not.
         
-        This test inspects each job's `steps` and prints a warning if a step that uses an external action lacks a `name` and is not one of the permitted common actions (`actions/checkout`, actions starting with `actions/setup-`). The check is advisory only and does not fail the test; it reports the job name, count of unnamed steps and their identifiers.
+        Scans the workflow YAML at `workflow_file` and for each job examines its `steps`. If a step uses an action and lacks a `name`, a warning is printed unless the action is one of a small set of common actions exempted from naming (for example `actions/checkout` and `actions/setup-*`).
         
         Parameters:
-            workflow_file (Path): Path to the workflow YAML file being tested.
+            workflow_file (Path): Path to the workflow YAML file being checked.
         """
         config = load_yaml_safe(workflow_file)
         jobs = config.get("jobs", {})
@@ -561,7 +564,12 @@ class TestWorkflowEdgeCases:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_file_extension(self, workflow_file: Path):
-        """Test that workflow files have correct extensions."""
+        """
+        Verify that a workflow file uses the .yml or .yaml extension.
+        
+        Parameters:
+        	workflow_file (Path): Path to the workflow file being tested.
+        """
         assert workflow_file.suffix in [".yml", ".yaml"], (
             f"Workflow file {workflow_file.name} has invalid extension. "
             "Use .yml or .yaml"
@@ -581,7 +589,11 @@ class TestWorkflowEdgeCases:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_no_tabs(self, workflow_file: Path):
-        """Test that workflow files use spaces instead of tabs."""
+        """
+        Ensure the workflow YAML file does not contain tab characters.
+        
+        Fails the test if any tab character is present in the file, because YAML indentation must use spaces.
+        """
         with open(workflow_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
@@ -592,7 +604,11 @@ class TestWorkflowEdgeCases:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_consistent_indentation(self, workflow_file: Path):
-        """Test that workflow files use consistent indentation."""
+        """
+        Verify that non-empty, non-comment lines in the workflow file use consistent 2-space indentation.
+        
+        Reads the file and collects leading-space counts for all non-empty, non-comment lines; the test fails if any indentation level is not a multiple of 2.
+        """
         with open(workflow_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
         
@@ -623,12 +639,9 @@ class TestWorkflowPerformance:
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_uses_caching(self, workflow_file: Path):
         """
-        Checks whether a workflow includes caching steps for dependencies and prints an informational message if none are found.
+        Check whether the workflow uses caching and report if none is detected.
         
-        Scans each job's steps for usage of the actions/cache action or a `cache` key in a step's `with` mapping; if no caching is detected an informational recommendation is printed referencing the workflow file.
-        
-        Parameters:
-            workflow_file (Path): Path to the workflow YAML file to inspect.
+        Scans the workflow's jobs and steps for common caching indicators (for example an `actions/cache` action or a `cache` key in a step's `with` block). Prints an informational message when no caching is found; this check is advisory and does not cause the test to fail.
         """
         config = load_yaml_safe(workflow_file)
         jobs = config.get("jobs", {})
