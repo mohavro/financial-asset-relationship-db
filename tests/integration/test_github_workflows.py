@@ -70,7 +70,20 @@ def check_duplicate_keys(file_path: Path) -> List[str]:
         pass
     
     def constructor_with_dup_check(loader, node):
-        """
+def constructor_with_dup_check(loader, node):
+            """
+            Construct a Python dict from a YAML mapping node while recording duplicate keys.
+            
+            Parameters:
+            	loader: YAML loader used to construct key and value objects (expected to implement `construct_object`).
+            	node: YAML mapping node whose `value` is an iterable of (key_node, value_node) pairs.
+            
+            Returns:
+            	A dict mapping constructed keys to their constructed values.
+            
+            Notes:
+            	If a key appears more than once in the mapping, the key is appended to the outer function's `duplicates` list and the last value for that key is retained in the returned mapping.
+            """
         Construct a Python dict from a YAML mapping node while recording duplicate keys.
         
         Parameters:
