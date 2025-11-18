@@ -1067,53 +1067,54 @@ class TestWorkflowStepConfiguration:
 class TestWorkflowEnvAndSecrets:
     """Tests for environment variables and secrets usage."""
     
-    @pytest.mark.parametrize("workflow_file", get_workflow_files())
-    def test_workflow_env_vars_naming_convention(self, workflow_file: Path):
-        """Test that environment variables follow UPPER_CASE naming."""
+
+@pytest.mark.parametrize("workflow_file", get_workflow_files())
 def test_workflow_env_vars_naming_convention(self, workflow_file: Path):
+    """
+    Validate that environment variables in workflow files follow UPPER_CASE naming convention.
+    
+    Parameters:
+        workflow_file (Path): Path to the workflow YAML file being tested.
+    
+    Notes:
+        Checks environment variables at both workflow level and job level for proper naming.
+    """
+    config = load_yaml_safe(workflow_file)
+    
+    def check_env_vars(env_dict):
         """
-        Validate that environment variables in workflow files follow UPPER_CASE naming convention.
+        Identify environment variable names that do not follow the naming convention of upper-case letters, digits and underscores.
         
         Parameters:
-            workflow_file (Path): Path to the workflow YAML file being tested.
+            env_dict (dict): Mapping of environment variable names to their values. If a non-dict is provided, it is treated as absent.
         
-        Notes:
-            Checks environment variables at both workflow level and job level for proper naming.
+        Returns:
+            invalid_keys (List[str]): List of keys from `env_dict` that are not entirely upper-case or that contain characters other than letters, digits or underscores.
         """
-        
-        def check_env_vars(env_dict):
-            """
-            Identify environment variable names that do not follow the naming convention of upper-case letters, digits and underscores.
-            
-            Parameters:
-                env_dict (dict): Mapping of environment variable names to their values. If a non-dict is provided, it is treated as absent.
-            
-            Returns:
-                invalid_keys (List[str]): List of keys from `env_dict` that are not entirely upper-case or that contain characters other than letters, digits or underscores.
-            """
-            if not isinstance(env_dict, dict):
-                return []
-            invalid = []
-            for key in env_dict.keys():
-                if not key.isupper() or not key.replace("_", "").isalnum():
-                    invalid.append(key)
-            return invalid
-        
-        # Check top-level env
-        if "env" in config:
-            invalid = check_env_vars(config["env"])
+        if not isinstance(env_dict, dict):
+            return []
+        invalid = []
+        for key in env_dict.keys():
+            if not key.isupper() or not key.replace("_", "").isalnum():
+                invalid.append(key)
+        return invalid
+    
+    # Check top-level env
+    if "env" in config:
+        invalid = check_env_vars(config["env"])
+        assert not invalid, (
+            f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
+        )
+    
+    # Check job-level env
+    jobs = config.get("jobs", {})
+    for job_name, job_config in jobs.items():
+        if "env" in job_config:
+            invalid = check_env_vars(job_config["env"])
             assert not invalid, (
-                f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
+                f"Job '{job_name}' in {workflow_file.name} has invalid env var names: {invalid}"
             )
-        
-        # Check job-level env
-        jobs = config.get("jobs", {})
-        for job_name, job_config in jobs.items():
-            if "env" in job_config:
-                invalid = check_env_vars(job_config["env"])
-                assert not invalid, (
-                    f"Job '{job_name}' in {workflow_file.name} has invalid env var names: {invalid}"
-                )
+
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_secrets_not_in_env_values(self, workflow_file: Path):
