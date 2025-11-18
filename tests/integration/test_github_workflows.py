@@ -377,23 +377,19 @@ class TestPrAgentWorkflow:
                 "Python version should be 3.11"
             )
     
-assert step_with["node-version"] == "18", (
-    "Node.js version should be 18 (current configuration)"
-)
-        """
-        Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 20.x.
-        
-        Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '20.x'.
-        """
-        review_job = pr_agent_workflow["jobs"]["review"]
-        steps = review_job.get("steps", [])
-        
-        node_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/setup-node")
-        ]
-        
-        for step in node_steps:
+def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
+    """
+    Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
+    """
+    review_job = pr_agent_workflow["jobs"]["review"]
+    steps = review_job.get("steps", [])
+
+    node_steps = [
+        s for s in steps
+        if s.get("uses", "").startswith("actions/setup-node")
+    ]
+
+    for step in node_steps:
             step_with = step.get("with", {})
             assert "node-version" in step_with, (
                 "Node.js setup should specify a version"
