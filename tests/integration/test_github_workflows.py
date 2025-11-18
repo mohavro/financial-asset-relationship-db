@@ -153,7 +153,16 @@ class TestWorkflowStructure:
         )
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
-    def test_workflow_has_triggers(self, workflow_file: Path):
+def test_workflow_has_triggers(self, workflow_file: Path):
+    """
+    Ensure the workflow defines at least one trigger via a top-level "on" field.
+    
+    Asserts that the loaded workflow mapping contains a top-level "on" key.
+    """
+    config = load_yaml_safe(workflow_file)
+    assert "on" in config, (
+        f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
+    )
         """
         Ensure the workflow defines at least one trigger via a top-level "on" field.
         
