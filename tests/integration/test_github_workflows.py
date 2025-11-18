@@ -377,7 +377,7 @@ class TestPrAgentWorkflow:
                 "Python version should be 3.11"
             )
     
-def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
+def test_pr_agent_node_version(pr_agent_workflow: Dict[str, Any]):
     """
     Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
     """
