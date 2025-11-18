@@ -387,8 +387,8 @@ class TestPrAgentWorkflow:
             assert "node-version" in step_with, (
                 "Node.js setup should specify a version"
             )
-            assert step_with["node-version"] == "20.x", (
-                "Node.js version should be 20.x"
+            assert step_with["node-version"] == "18", (
+                "Node.js version should be 18"
             )
     
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
