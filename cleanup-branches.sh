@@ -63,7 +63,7 @@ done
 echo ""
 echo "=== Remote Branches Not in Local ==="
 # Find remote branches that don't have local counterparts
-for remote_branch in $(git branch -r | grep -v "HEAD" | sed 's/origin\///'); do
+for remote_branch in $(git branch -r | grep -v "HEAD" | grep 'origin/' | sed 's/origin\///'); do
     if ! git show-ref --verify --quiet "refs/heads/$remote_branch"; then
         echo -e "${YELLOW}origin/$remote_branch${NC} - Not tracked locally"
     fi

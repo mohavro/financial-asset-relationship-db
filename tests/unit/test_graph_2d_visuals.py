@@ -34,8 +34,7 @@ def create_relationship_traces_with_defaults(
         "show_income_comparison": True,
         "show_regulatory": True,
         "show_all_relationships": False,
-    }
-    defaults.update(overrides)
+    } | overrides
     return _create_2d_relationship_traces(graph, positions, asset_ids, **defaults)
 
 

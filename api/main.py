@@ -348,10 +348,9 @@ def serialize_asset(asset: Any, include_issuer: bool = False) -> Dict[str, Any]:
 
     # Add asset-specific fields
     for field in fields:
-        if hasattr(asset, field):
-            value = getattr(asset, field)
-            if value is not None:
-                asset_dict["additional_fields"][field] = value
+        value = getattr(asset, field, None)
+        if value is not None:
+            asset_dict["additional_fields"][field] = value
 
     return asset_dict
 
@@ -688,5 +687,10 @@ async def get_sectors():
 
 if __name__ == "__main__":
     import uvicorn
+    from mangum import Mangum
 
+    # For Vercel Serverless deployment
+    handler = Mangum(app)
+
+    # For local development using uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
