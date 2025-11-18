@@ -60,7 +60,7 @@ Code quality and maintainability:
 - `test_workflow_steps_have_descriptive_names` - Encourages clear naming
 - `test_workflow_reasonable_size` - Prevents overly large workflows
 
-### TestWorkflowEdgeCases (5 tests)
+### TestWorkflowEdgeCases (6 tests)
 Edge cases and error conditions:
 - `test_workflow_directory_exists` - Validates directory structure
 - `test_at_least_one_workflow_exists` - Ensures workflows exist
