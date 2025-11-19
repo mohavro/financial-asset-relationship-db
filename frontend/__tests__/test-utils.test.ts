@@ -776,26 +776,12 @@ describe('test-utils Mock Data Validation', () => {
         });
       });
 
-      it('should have bidirectional edge consistency', () => {
-        const edgeMap = new Map<string, Set<string>>();
-        mockVisualizationData.edges.forEach((edge) => {
-          if (!edgeMap.has(edge.source)) {
-            edgeMap.set(edge.source, new Set());
-          }
-          edgeMap.get(edge.source)?.add(edge.target);
-        });
-        
-        // If edge A->B exists with high strength, check for reasonable reciprocity
+        // If edge A->B exists with high strength, the reverse edge must exist
         mockVisualizationData.edges
           .filter(e => e.strength > 0.8)
           .forEach((edge) => {
-            const hasReverse = edgeMap.get(edge.target)?.has(edge.source);
-            // At least some high-strength edges should be bidirectional
-            if (hasReverse) {
-              expect(hasReverse).toBe(true);
-            }
+            expect(edgeMap.get(edge.target)?.has(edge.source)).toBe(true);
           });
-      });
     });
 
     describe('Additional Fields Validation', () => {
