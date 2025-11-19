@@ -175,12 +175,21 @@ class TestCodeExamples:
         # Look for test file references
         test_file_pattern = r'tests/integration/test_\w+\.py'
         mentioned_files = re.findall(test_file_pattern, summary_content)
-        
+
         repo_root = Path(__file__).parent.parent.parent
+        missing: List[str] = []
+
         for file_path in mentioned_files:
             full_path = repo_root / file_path
-            assert full_path.exists(), \
-                f"Referenced file {file_path} should exist"
+            if not full_path.exists():
+                missing.append(f"{file_path} (resolved: {full_path})")
+
+        # Fail only once with a consolidated, informative message if any are missing
+        assert not missing, (
+            "One or more referenced files in documentation were not found:\n"
+            + "\n".join(f"- {m}" for m in missing)
+            + "\nIf files were recently moved or renamed, update the documentation examples accordingly."
+        )
 
 
 class TestDocumentCompleteness:
