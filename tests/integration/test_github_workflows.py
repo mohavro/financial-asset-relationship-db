@@ -340,7 +340,14 @@ def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
         """
         Asserts the workflow's "review" job includes at least one step that uses actions/setup-python.
         
-        Parameters:
+def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
+    """
+    Asserts the workflow's "pr-agent-trigger" job includes at least one step that uses actions/setup-python.
+    
+    Parameters:
+        pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow; expected to contain a "jobs" mapping with a "pr-agent-trigger" job.
+    """
+    trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
             pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow; expected to contain a "jobs" mapping with a "review" job.
         """
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
