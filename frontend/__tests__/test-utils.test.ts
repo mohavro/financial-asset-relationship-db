@@ -797,7 +797,10 @@ describe('test-utils Mock Data Validation', () => {
           expect(missingReciprocity).toHaveLength(0);
         }
         }
-      });
+        // All high-strength edges should be bidirectional
+        highStrengthEdges.forEach((edge) => {
+          expect(edgeMap.get(edge.target)?.has(edge.source)).toBe(true);
+        });
     });
 
     describe('Additional Fields Validation', () => {
