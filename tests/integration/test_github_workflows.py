@@ -1152,8 +1152,10 @@ class TestWorkflowEnvAndSecrets:
         # Check top-level env
         if "env" in config:
             invalid = check_env_vars(config["env"])
-            if invalid:
-                print(f"\nRecommendation: Workflow {workflow_file.name} has non-standard env var names: {invalid}")
+if invalid:
+    print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
+          f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
+          f"readability and consistency across workflows.")
         
         # Check job-level env
         jobs = config.get("jobs", {})
