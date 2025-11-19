@@ -364,8 +364,8 @@ class TestPrAgentWorkflow:
             s for s in steps 
             if s.get("uses", "").startswith("actions/setup-python")
         ]
-        if len(python_steps) == 0:
-            print("\nRecommendation: pr-agent-trigger job should set up Python if needed")
+if len(python_steps) == 0:
+    print(f"WARNING: pr-agent-trigger job may require Python setup for PR Agent functionality")
     
     def test_pr_agent_has_node_setup(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job sets up Node.js if needed."""
