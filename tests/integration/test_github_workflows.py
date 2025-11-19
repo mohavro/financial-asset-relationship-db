@@ -237,8 +237,14 @@ class TestWorkflowActions:
                     # Action should have a version tag (e.g., @v1, @main, @sha)
                     assert "@" in action, (
                         f"Step {idx} in job '{job_name}' of {workflow_file.name} "
-                        f"must specify a version for action '{action}' (e.g., @v1, @main, or @sha). "
-                        f"Pinning action versions is a security best practice."
+                        f"must specify a pinned version for action '{action}' (e.g., @v1, @v3.5.2, or @<commit-sha>). "
+                        f"Pinning action versions is a critical security best practice."
+                    )
+                    # Disallow floating branches like @main or @master
+                    ref = action.split("@", 1)[1].strip()
+                    assert ref and ref.lower() not in {"main", "master", "latest", "stable"}, (
+                        f"Step {idx} in job '{job_name}' of {workflow_file.name} "
+                        f"uses a floating branch '{ref}' for action '{action}'. Use a tagged release or commit SHA."
                     )
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
@@ -294,11 +300,22 @@ class TestPrAgentWorkflow:
         assert "name" in pr_agent_workflow, (
             "pr-agent workflow must have a descriptive 'name' field"
         )
+        assert isinstance(pr_agent_workflow["name"], str) and pr_agent_workflow["name"].strip(), (
+            "pr-agent workflow 'name' must be a non-empty string"
+        )
     
     def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow triggers on pull request events."""
-        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
-        triggers = pr_agent_workflow.get("on", pr_agent_workflow.get(True, {}))
+        # Normalize triggers to a dict, handling cases where YAML might parse "on" oddly
+        triggers_raw = pr_agent_workflow.get("on", pr_agent_workflow.get(True, {}))
+        if isinstance(triggers_raw, str):
+            triggers = {triggers_raw: None}
+        elif isinstance(triggers_raw, list):
+            triggers = {t: None for t in triggers_raw}
+        elif isinstance(triggers_raw, dict):
+            triggers = triggers_raw
+        else:
+            triggers = {}
         assert "pull_request" in triggers, (
             "pr-agent workflow must trigger on pull_request events"
         )
@@ -343,8 +360,9 @@ class TestPrAgentWorkflow:
         
         for step in checkout_steps:
             step_with = step.get("with", {})
-            assert step_with.get("token"), (
-                "Checkout step must specify a token for better security. "
+            token = step_with.get("token")
+            assert isinstance(token, str) and token.strip(), (
+                "Checkout step must specify a non-empty token for better security. "
                 "Use ${{ secrets.GITHUB_TOKEN }} or similar."
             )
     
