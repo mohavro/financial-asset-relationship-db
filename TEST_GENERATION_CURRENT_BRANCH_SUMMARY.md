@@ -17,7 +17,7 @@ Comprehensive unit tests have been generated for all testable files that changed
 ### 1. tests/integration/test_github_workflows_helpers.py (NEW)
 **Purpose**: Unit tests for helper functions in test_github_workflows.py
 
-**Test Classes**: 7
++**Test Classes**: 2
 - `TestGetWorkflowFiles` - 10 tests for workflow file discovery
 - `TestLoadYamlSafe` - 8 tests for YAML loading
 - `TestCheckDuplicateKeys` - 10 tests for duplicate key detection
@@ -83,7 +83,7 @@ Comprehensive unit tests have been generated for all testable files that changed
 ### 4. tests/integration/test_requirements_dev.py (NEW)
 **Purpose**: Validates development dependencies file
 
-**Test Classes**: 7
++**Test Classes**: 7
 - `TestRequirementsFileExists` - 3 tests for file validation
 - `TestRequirementsFileFormat` - 4 tests for format/encoding
 - `TestRequiredPackages` - 7 tests for required dependencies
