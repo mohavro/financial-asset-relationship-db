@@ -7,6 +7,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Home from '../../app/page';
 import { api } from '../../app/lib/api';
+import { mockMetrics, mockVisualizationData } from '../test-utils';
 
 jest.mock('../../app/lib/api');
 jest.mock('../../app/components/NetworkVisualization', () => {
@@ -27,26 +28,13 @@ jest.mock('../../app/components/AssetList', () => {
 
 const mockedApi = api as jest.Mocked<typeof api>;
 
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockedApi.getMetrics.mockResolvedValue(mockMetrics);
+  mockedApi.getVisualizationData.mockResolvedValue(mockVisualizationData);
+});
+
 describe('Home Page', () => {
-  const mockMetrics = {
-    total_assets: 15,
-    total_relationships: 42,
-    asset_classes: { EQUITY: 6 },
-    avg_degree: 5.6,
-    max_degree: 12,
-    network_density: 0.42,
-  };
-
-  const mockVizData = {
-    nodes: [],
-    edges: [],
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockedApi.getMetrics.mockResolvedValue(mockMetrics);
-    mockedApi.getVisualizationData.mockResolvedValue(mockVizData);
-  });
 
   it('should render header', async () => {
     render(<Home />);
@@ -182,7 +170,7 @@ describe('Home Page', () => {
       mockedApi.getMetrics
         .mockRejectedValueOnce(new Error('Network Error'))
         .mockResolvedValueOnce(mockMetrics);
-      mockedApi.getVisualizationData.mockResolvedValue(mockVizData);
+      mockedApi.getVisualizationData.mockResolvedValue(mockVisualizationData);
       
       const consoleError = jest.spyOn(console, 'error').mockImplementation();
       render(<Home />);
@@ -281,8 +269,10 @@ describe('Home Page', () => {
       render(<Home />);
       
       await waitFor(() => {
-        fireEvent.click(screen.getByText('Metrics & Analytics'));
+        expect(screen.getByTestId('network-visualization')).toBeInTheDocument();
       });
+      
+      fireEvent.click(screen.getByText('Metrics & Analytics'));
       
       expect(screen.getByTestId('metrics-dashboard')).toBeInTheDocument();
     });
