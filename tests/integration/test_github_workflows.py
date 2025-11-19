@@ -303,7 +303,7 @@ def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, An
             "pr-agent workflow must trigger on pull_request events"
         )
     
-    def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
+    def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow has a pr-agent-trigger job."""
         jobs = pr_agent_workflow.get("jobs", {})
         assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
@@ -408,7 +408,7 @@ def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any])
     def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
         """
         Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-
+        
         Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
         """
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
@@ -1155,9 +1155,9 @@ class TestWorkflowEnvAndSecrets:
                 print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
                       f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
                       f"readability and consistency across workflows.")
-            assert not invalid, (
-                f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
-            )
+                assert not invalid, (
+                    f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
+                )
         
         jobs = config.get("jobs", {})
         for job_name, job_config in jobs.items():
