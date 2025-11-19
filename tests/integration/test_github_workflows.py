@@ -421,7 +421,14 @@ def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any])
         
         for step in node_steps:
             step_with = step.get("with", {})
-            if "node-version" not in step_with:
+for step in node_steps:
+            step_with = step.get("with", {})
+            assert "node-version" in step_with, (
+                "Node.js setup should specify a version"
+            )
+            assert step_with["node-version"] == "18", (
+                "Node.js version should be 18"
+            )
                 print("\nRecommendation: Node.js setup should specify a version")
     
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
