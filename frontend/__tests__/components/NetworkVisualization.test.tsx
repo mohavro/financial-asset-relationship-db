@@ -107,7 +107,7 @@ describe('NetworkVisualization Component', () => {
           id: `N${i}`, name: `Node ${i}`, symbol: `S${i}`,
           asset_class: 'EQUITY', x: 0, y: 0, z: 0, color: '#000', size: 5,
         })),
-        edges: [],
+        edges: [{ source: 'N0', target: 'N1', relationship_type: 'TEST', strength: 0.5 }],
       };
       
       render(<NetworkVisualization data={bigData} />);
