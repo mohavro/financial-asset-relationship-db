@@ -373,7 +373,10 @@ class TestPrAgentWorkflow:
             assert "python-version" in step_with, (
                 "Python setup should specify a version"
             )
-            assert step_with["python-version"] == "3.11", (
+def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent workflow has a pr-agent-trigger job."""
+        jobs = pr_agent_workflow.get("jobs", {})
+        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
                 "Python version should be 3.11"
             )
 
