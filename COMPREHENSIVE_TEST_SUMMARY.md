@@ -6,7 +6,7 @@ This document summarizes the comprehensive unit and integration tests generated 
 
 ## Files Modified in This Branch
 
-Based on `git diff main..HEAD --stat`:
+Key files addressed in this test generation effort:
 
 1. `.github/workflows/pr-agent.yml` - Fixed duplicate YAML key
 2. `TEST_GENERATION_WORKFLOW_SUMMARY.md` - New documentation file
