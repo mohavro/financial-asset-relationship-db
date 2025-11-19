@@ -154,7 +154,6 @@ class TestWorkflowStructure:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_has_triggers(self, workflow_file: Path):
-    def test_workflow_has_triggers(self, workflow_file: Path):
         """
         Ensure the workflow defines at least one trigger via a top-level "on" field.
     
@@ -164,51 +163,6 @@ class TestWorkflowStructure:
         assert isinstance(config, dict), (
             f"Workflow {workflow_file.name} did not load to a mapping"
         )
-        assert "on" in config, (
-            f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
-        )
-        Ensure the workflow defines at least one trigger via a top-level "on" field.
-class TestPrAgentWorkflow:
-    # ... existing tests and fixtures within this class ...
-
-    def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
-        """
-        review_job = pr_agent_workflow["jobs"]["review"]
-        steps = review_job.get("steps", [])
-
-        node_steps = [
-            s for s in steps
-            if s.get("uses", "").startswith("actions/setup-node")
-        ]
-
-        for step in node_steps:
-            step_with = step.get("with", {})
-            assert "node-version" in step_with, (
-                "Node.js setup should specify a version"
-            )
-            assert step_with["node-version"] == "18", (
-                "Node.js version should be 18"
-            )
-    steps = review_job.get("steps", [])
-
-    node_steps = [
-        s for s in steps
-        if s.get("uses", "").startswith("actions/setup-node")
-    ]
-
-    for step in node_steps:
-        step_with = step.get("with", {})
-        assert "node-version" in step_with, (
-            "Node.js setup should specify a version"
-        )
-        assert step_with["node-version"] == "18", (
-            "Node.js version should be 18"
-        )
-        Asserts that the loaded workflow mapping contains a top-level "on" key.
-        """
-        config = load_yaml_safe(workflow_file)
         assert "on" in config, (
             f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
         )
@@ -344,13 +298,10 @@ class TestPrAgentWorkflow:
         if "pull_request" not in triggers:
             print("\nRecommendation: pr-agent workflow should trigger on pull_request events")
     
-    def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow has a review job."""
+    def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent workflow has a pr-agent-trigger job."""
         jobs = pr_agent_workflow.get("jobs", {})
-def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
-    """Test that pr-agent workflow has a pr-agent-trigger job."""
-    jobs = pr_agent_workflow.get("jobs", {})
-    assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
+        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
     
     def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job runs on Ubuntu."""
@@ -438,24 +389,14 @@ def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
             assert "python-version" in step_with, (
                 "Python setup should specify a version"
             )
-def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow has a pr-agent-trigger job."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
+            assert step_with["python-version"] == "3.11", (
                 "Python version should be 3.11"
             )
-
-def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
+    
+    def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
         """
         Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-        """
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "Missing 'pr-agent-trigger' job"
-        trigger_job = jobs["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
-        """
-        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-
+        
         Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
         """
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
@@ -471,9 +412,6 @@ def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
             if "node-version" not in step_with:
                 print("\nRecommendation: Node.js setup should specify a version")
     
-# [Lines 397-435 containing the malformed block should be completely removed]
-# The previous test (test_pr_agent_python_version) ends before line 397
-# and the next test (test_pr_agent_no_duplicate_setup_steps) should follow directly
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
         """Test that there are no duplicate setup steps in the workflow."""
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
@@ -702,10 +640,10 @@ class TestWorkflowEdgeCases:
                 level for level in indentation_levels 
                 if level % 2 != 0
             ]
-if inconsistent:
-    print(f"FORMATTING: Workflow {workflow_file.name} has inconsistent indentation "
-          f"levels: {sorted(indentation_levels)}. YAML requires consistent "
-          f"indentation (typically 2 spaces) to prevent parsing errors.")
+            if inconsistent:
+                print(f"FORMATTING: Workflow {workflow_file.name} has inconsistent indentation "
+                      f"levels: {sorted(indentation_levels)}. YAML requires consistent "
+                      f"indentation (typically 2 spaces) to prevent parsing errors.")
 
 
 class TestWorkflowPerformance:
@@ -1194,13 +1132,13 @@ class TestWorkflowEnvAndSecrets:
         # Check top-level env
         if "env" in config:
             invalid = check_env_vars(config["env"])
-if invalid:
-    print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
-          f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
-          f"readability and consistency across workflows.")
-            assert not invalid, (
-                f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
-            )
+            if invalid:
+                print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
+                      f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
+                      f"readability and consistency across workflows.")
+                assert not invalid, (
+                    f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
+                )
         
         jobs = config.get("jobs", {})
         for job_name, job_config in jobs.items():
