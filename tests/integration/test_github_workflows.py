@@ -313,166 +313,146 @@ class TestPrAgentWorkflow:
     def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow has a pr-agent-trigger job."""
         jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
-    
-
 def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job runs on Ubuntu."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        runs_on = review_job.get("runs-on", "")
-        # Be more specific about expected runner format
-        assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
-            f"PR Agent trigger job should run on standard Ubuntu runner, got '{runs_on}'"
+    """Test that pr-agent-trigger job runs on Ubuntu."""
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    runs_on = review_job.get("runs-on", "")
+    # Be more specific about expected runner format
+    assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
+        f"PR Agent trigger job should run on standard Ubuntu runner, got '{runs_on}'"
+    )
+
+def test_pr_agent_has_checkout_step(self, pr_agent_workflow: Dict[str, Any]):
+    """Test that pr-agent-trigger job checks out the code."""
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
+    
+    checkout_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/checkout")
+    ]
+    assert len(checkout_steps) > 0, "PR Agent trigger job must check out the repository"
+
+def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
+    """
+    Ensure every actions/checkout step in the pr-agent-trigger job provides a `token` in its `with` mapping.
+    
+    Fails the test if any checkout step omits the `token` key.
+    """
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
+    
+    checkout_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/checkout")
+    ]
+    
+    for step in checkout_steps:
+        step_with = step.get("with", {})
+        token = step_with.get("token")
+        assert isinstance(token, str) and token.strip(), (
+            "Checkout step must specify a non-empty token for better security. "
+            "Use ${{ secrets.GITHUB_TOKEN }} or similar."
         )
+
+def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
+    """
+    Asserts the workflow's "pr-agent-trigger" job includes at least one step that uses actions/setup-python.
+    """
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
     
-    def test_pr_agent_has_checkout_step(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job checks out the code."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        checkout_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/checkout")
-        ]
-        assert len(checkout_steps) > 0, "PR Agent trigger job must check out the repository"
+    python_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/setup-python")
+    ]
+    assert len(python_steps) > 0, "PR Agent trigger job must set up Python"
+
+def test_pr_agent_has_node_setup(self, pr_agent_workflow: Dict[str, Any]):
+    """Test that pr-agent-trigger job sets up Node.js."""
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
     
-    def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure every actions/checkout step in the pr-agent-trigger job provides a `token` in its `with` mapping.
-        
-        Fails the test if any checkout step omits the `token` key.
-        """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        checkout_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/checkout")
-        ]
-        
-        for step in checkout_steps:
-            step_with = step.get("with", {})
-            token = step_with.get("token")
-            assert isinstance(token, str) and token.strip(), (
-                "Checkout step must specify a non-empty token for better security. "
-                "Use ${{ secrets.GITHUB_TOKEN }} or similar."
+    node_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/setup-node")
+    ]
+    assert len(node_steps) > 0, "PR Agent trigger job must set up Node.js"
+
+def test_pr_agent_python_version(self, pr_agent_workflow: Dict[str, Any]):
+    """
+    Ensure any actions/setup-python step in the "pr-agent-trigger" job specifies python-version "3.11".
+    """
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
+    
+    python_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/setup-python")
+    ]
+    
+    for step in python_steps:
+        step_with = step.get("with", {})
+        assert "python-version" in step_with, (
+            "Python setup should specify a version"
+        )
+        assert step_with["python-version"] == "3.11", (
+            "Python version should be 3.11"
+        )
+
+def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
+    """
+    Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
+    """
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
+    
+    node_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/setup-node")
+    ]
+    
+    for step in node_steps:
+        step_with = step.get("with", {})
+        assert "node-version" in step_with, (
+            "Node.js setup should specify a version"
+        )
+        assert step_with["node-version"] == "18", (
+            "Node.js version should be 18"
+        )
+
+def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
+    """Test that there are no duplicate setup steps in the workflow."""
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
+    
+    # Check for duplicate step names
+    step_names = [s.get("name", "") for s in steps if s.get("name")]
+    duplicate_names = [name for name in step_names if step_names.count(name) > 1]
+    
+    if duplicate_names:
+        print(f"\nWarning: Found duplicate step names: {set(duplicate_names)}. "
+              "Each step should have a unique name.")
+
+def test_pr_agent_fetch_depth_configured(self, pr_agent_workflow: Dict[str, Any]):
+    """
+    Ensure checkout steps in the PR Agent trigger job have valid fetch-depth values.
+    """
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
+    
+    checkout_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/checkout")
+    ]
+    
+    for step in checkout_steps:
+        step_with = step.get("with", {})
+        if "fetch-depth" in step_with:
+            fetch_depth = step_with["fetch-depth"]
+            assert isinstance(fetch_depth, int) or fetch_depth == 0, (
+                "fetch-depth should be an integer"
             )
-    
-    def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Asserts the workflow's "pr-agent-trigger" job includes at least one step that uses actions/setup-python.
-        
-        Parameters:
-            pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow; expected to contain a "jobs" mapping with a "pr-agent-trigger" job.
-        """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        python_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/setup-python")
-        ]
-        assert len(python_steps) > 0, "PR Agent trigger job must set up Python"
-    
-    def test_pr_agent_has_node_setup(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job sets up Node.js."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        node_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/setup-node")
-        ]
-        assert len(node_steps) > 0, "PR Agent trigger job must set up Node.js"
-    
-    def test_pr_agent_python_version(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure any actions/setup-python step in the "pr-agent-trigger" job specifies python-version "3.11".
-        
-        Parameters:
-            pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow; expected to contain a "jobs" -> "pr-agent-trigger" -> "steps" sequence.
-        
-        """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        python_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/setup-python")
-        ]
-        
-        for step in python_steps:
-            step_with = step.get("with", {})
-            assert "python-version" in step_with, (
-                "Python setup should specify a version"
-            )
-            assert step_with["python-version"] == "3.11", (
-                "Python version should be 3.11"
-            )
-    
-    def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-        
-        Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
-        """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        node_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/setup-node")
-        ]
-        
-        for step in node_steps:
-            step_with = step.get("with", {})
-for step in node_steps:
-            step_with = step.get("with", {})
-            assert "node-version" in step_with, (
-                "Node.js setup should specify a version"
-            )
-            assert step_with["node-version"] == "18", (
-                "Node.js version should be 18"
-            )
-                print("\nRecommendation: Node.js setup should specify a version")
-    
-    def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that there are no duplicate setup steps in the workflow."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        # Check for duplicate step names
-        step_names = [s.get("name", "") for s in steps if s.get("name")]
-        duplicate_names = [name for name in step_names if step_names.count(name) > 1]
-        
-        if duplicate_names:
-            print(f"\nWarning: Found duplicate step names: {set(duplicate_names)}. "
-                  "Each step should have a unique name.")
-    
-    def test_pr_agent_fetch_depth_configured(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure checkout steps in the PR Agent trigger job have valid fetch-depth values.
-        
-        Checks each step in `jobs.pr-agent-trigger` that uses `actions/checkout`; if the step's `with` mapping contains `fetch-depth` the value must be an integer or exactly 0, otherwise an assertion fails.
-        
-        Parameters:
-            pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow.
-        """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        checkout_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/checkout")
-        ]
-        
-        for step in checkout_steps:
-            step_with = step.get("with", {})
-            if "fetch-depth" in step_with:
-                fetch_depth = step_with["fetch-depth"]
-                assert isinstance(fetch_depth, int) or fetch_depth == 0, (
-                    "fetch-depth should be an integer"
-                )
 
 
 class TestWorkflowSecurity:
