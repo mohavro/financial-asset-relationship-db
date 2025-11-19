@@ -278,6 +278,11 @@ class TestLinkValidation:
         s = s.strip('-')
         return s
 
+    # Extract headers and internal links from the document
+    headers = [line.lstrip('#').strip() for line in summary_lines if line.startswith('#')]
+    internal_links = re.findall(r'\[([^\]]+)\]\(#([^)]+)\)', summary_content)
+
+    # Build set of valid anchors from headers
     for header in headers:
         valid_anchors.add(_to_gfm_anchor(header))
 
@@ -285,7 +290,6 @@ class TestLinkValidation:
     for text, anchor in internal_links:
         assert anchor in valid_anchors, \
             f"Internal link to #{anchor} references non-existent header"
-
 class TestSecurityAndBestPractices:
     """Test suite for security and best practices in documentation."""
     
