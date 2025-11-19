@@ -1183,10 +1183,9 @@ class TestWorkflowEnvAndSecrets:
                 f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
             )
         
-        # Check job-level env
         jobs = config.get("jobs", {})
         for job_name, job_config in jobs.items():
-            if "env" in job_config:
+            if isinstance(job_config, dict) and "env" in job_config:
                 invalid = check_env_vars(job_config["env"])
                 assert not invalid, (
                     f"Job '{job_name}' in {workflow_file.name} has invalid env var names: {invalid}"
