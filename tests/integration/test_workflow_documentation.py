@@ -213,7 +213,7 @@ class TestDocumentationLinks:
                 file_path = repo_root / match
                 # Some paths might be examples, so just warn if many are missing
                 if not file_path.exists():
-                    print(f"Warning: Referenced file may not exist: {match}")
+                    pytest.fail(f"Referenced file does not exist: {match}")
 
 
 class TestDocumentationBestPractices:
