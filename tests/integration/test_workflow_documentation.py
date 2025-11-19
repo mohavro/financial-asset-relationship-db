@@ -58,22 +58,27 @@ class TestDocumentationStructure:
         """Provide the documentation as a list of lines once per session."""
         return doc_content.splitlines(keepends=True)
     
+    @pytest.fixture(scope='session')
+    def section_headers(doc_lines: List[str]) -> List[str]:
+        """Extract markdown section headers from the documentation lines."""
+        return [line.strip() for line in doc_lines if line.lstrip().startswith('#')]
+
     def test_has_overview(self, section_headers: List[str]):
         """Test that there's an Overview section."""
         overview = [h for h in section_headers if 'overview' in h.lower()]
         assert len(overview) > 0, "Should have an Overview section"
-    
+
     def test_has_generated_files_section(self, section_headers: List[str]):
         """Test that there's a section about generated files."""
         generated = [h for h in section_headers 
                     if 'generated' in h.lower() or 'file' in h.lower()]
         assert len(generated) > 0, "Should have a section about generated files"
-    
+
     def test_has_running_section(self, section_headers: List[str]):
         """Test that there's a section about running tests."""
         running = [h for h in section_headers if 'run' in h.lower()]
         assert len(running) > 0, "Should have a section about running tests"
-    
+
     def test_has_sufficient_sections(self, section_headers: List[str]):
         """Test that document has sufficient number of sections."""
         assert len(section_headers) >= 5, \
