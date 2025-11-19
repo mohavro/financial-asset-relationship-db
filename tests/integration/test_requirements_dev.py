@@ -257,7 +257,7 @@ class TestSpecificChanges:
         expected_packages = [
             'pytest',
             'pytest-cov',
-            'pytest-mock',
+            'pytest-asyncio',
             'flake8',
             'pylint',
             'mypy',
