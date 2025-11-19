@@ -6,11 +6,10 @@ workflows, ensuring they are properly formatted and free of common issues like
 duplicate keys, invalid syntax, and missing required fields.
 """
 
-import os
 import pytest
 import yaml
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
 
 
 # Path to workflows directory
