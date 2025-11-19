@@ -106,11 +106,12 @@ class TestWorkflowSyntax:
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_valid_yaml_syntax(self, workflow_file: Path):
         """Test that workflow files contain valid YAML syntax."""
-        try:
-            with open(workflow_file, 'r', encoding='utf-8') as f:
-                yaml.safe_load(f)
-        except yaml.YAMLError as e:
-            pytest.fail(f"Invalid YAML syntax in {workflow_file.name}: {e}")
+        if duplicates:
+            pytest.fail(
+                f"Found duplicate keys in {workflow_file.name}: {duplicates}. "
+                "Duplicate keys can cause unexpected behavior as YAML will "
+                "silently overwrite earlier values."
+            )
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_no_duplicate_keys(self, workflow_file: Path):
