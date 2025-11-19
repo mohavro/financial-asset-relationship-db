@@ -61,24 +61,17 @@ Comprehensive unit tests have been generated for all testable files that changed
 ### 3. tests/integration/test_workflow_documentation.py (NEW)
 **Purpose**: Validates documentation file structure and content
 
-**Test Classes**: 7
+**Test Classes**: 2
 - `TestDocumentationExists` - 4 tests for file existence
-- `TestDocumentationStructure` - 9 tests for Markdown structure
-- `TestDocumentationContent` - 9 tests for required content
-- `TestDocumentationLinks` - 2 tests for link validation
-- `TestDocumentationBestPractices` - 5 tests for quality
-- `TestDocumentationCompleteness` - 3 tests for completeness
-- `TestDocumentationSections` - 4 tests for section structure
+- `TestDocumentationStructure` - 4 tests for Markdown structure
 
 **Key Features**:
-- Validates Markdown syntax and formatting
+- Validates file exists and is readable
 - Checks for required sections (Overview, Running Tests, etc.)
-- Verifies code blocks have proper language tags
-- Tests for broken internal anchor links
-- Validates file references point to existing files
-- Checks formatting best practices (line length, list usage)
+- Validates sufficient section count
+- Tests document structure
 
-**Total Tests**: 36 documentation validation tests
+**Total Tests**: 8 documentation validation tests
 
 ### 4. tests/integration/test_requirements_dev.py (NEW)
 **Purpose**: Validates development dependencies file
@@ -166,9 +159,9 @@ cd frontend && npm test
 |------|-----------|------------|----------------|
 | test_github_workflows.py (helpers) | test_github_workflows_helpers.py | 33 | Helper function validation |
 | test-utils.ts | test-utils.test.ts | 65 | Mock data structure validation |
-| TEST_GENERATION_WORKFLOW_SUMMARY.md | test_workflow_documentation.py | 36 | Documentation quality |
+| TEST_GENERATION_WORKFLOW_SUMMARY.md | test_workflow_documentation.py | 8 | Documentation quality |
 | requirements-dev.txt | test_requirements_dev.py | 27 | Dependency validation |
-| **TOTAL** | **4 new test files** | **161 tests** | **Comprehensive** |
+| **TOTAL** | **4 new test files** | **133 tests** | **Comprehensive** |
 
 ## What These Tests Validate
 
