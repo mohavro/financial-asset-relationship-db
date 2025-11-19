@@ -233,9 +233,17 @@ class TestWorkflowActions:
                     if action.startswith("./"):
                         continue
                     # Action should have a version tag (e.g., @v1, @main, @sha)
-                    if "@" not in action:
-                        print(f"\nRecommendation: Step {idx} in job '{job_name}' of {workflow_file.name} "
-                              f"should specify a version for action '{action}'")
+                    assert "@" in action, (
+                        f"Step {idx} in job '{job_name}' of {workflow_file.name} "
+                        f"must specify a pinned version for action '{action}' (e.g., @v1, @v3.5.2, or @<commit-sha>). "
+                        f"Pinning action versions is a critical security best practice."
+                    )
+                    # Disallow floating branches like @main or @master
+                    ref = action.split("@", 1)[1].strip()
+                    assert ref and ref.lower() not in {"main", "master", "latest", "stable"}, (
+                        f"Step {idx} in job '{job_name}' of {workflow_file.name} "
+                        f"uses a floating branch '{ref}' for action '{action}'. Use a tagged release or commit SHA."
+                    )
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_steps_have_names_or_uses(self, workflow_file: Path):
@@ -287,10 +295,12 @@ class TestPrAgentWorkflow:
         Parameters:
             pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow fixture.
         """
-        if "name" not in pr_agent_workflow:
-            print("\nRecommendation: Workflow should have a descriptive name")
-        elif pr_agent_workflow["name"] != "PR Agent Workflow":
-            print(f"\nInfo: Workflow name is '{pr_agent_workflow['name']}'")
+        assert "name" in pr_agent_workflow, (
+            "pr-agent workflow must have a descriptive 'name' field"
+        )
+        assert isinstance(pr_agent_workflow["name"], str) and pr_agent_workflow["name"].strip(), (
+            "pr-agent workflow 'name' must be a non-empty string"
+        )
     
     def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow triggers on pull request events."""
@@ -350,8 +360,11 @@ def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any])
         
         for step in checkout_steps:
             step_with = step.get("with", {})
-            if not step_with.get("token"):
-                print(f"\nRecommendation: Checkout step should specify a token for better security")
+            token = step_with.get("token")
+            assert isinstance(token, str) and token.strip(), (
+                "Checkout step must specify a non-empty token for better security. "
+                "Use ${{ secrets.GITHUB_TOKEN }} or similar."
+            )
     
     def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
         """
@@ -963,7 +976,8 @@ class TestWorkflowTriggers:
             AssertionError: If an unrecognised event type is found in the workflow's `on` configuration.
         """
         config = load_yaml_safe(workflow_file)
-        triggers = config.get("on", {})
+        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
+        triggers = config.get("on", config.get(True, {}))
         
         if isinstance(triggers, str):
             triggers = {triggers: None}
@@ -976,7 +990,8 @@ class TestWorkflowTriggers:
             "create", "delete", "fork", "watch", "check_suite", "check_run",
             "deployment", "deployment_status", "page_build", "project", "project_card",
             "project_column", "public", "registry_package", "status", "workflow_run",
-            "repository_dispatch", "milestone", "discussion", "discussion_comment"
+            "repository_dispatch", "milestone", "discussion", "discussion_comment",
+            "merge_group"
         }
         
         for event in triggers.keys():
@@ -990,7 +1005,8 @@ class TestWorkflowTriggers:
     def test_workflow_pr_triggers_specify_types(self, workflow_file: Path):
         """Test that pull_request triggers specify activity types."""
         config = load_yaml_safe(workflow_file)
-        triggers = config.get("on", {})
+        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
+        triggers = config.get("on", config.get(True, {}))
         
         if not isinstance(triggers, dict):
             return  # Skip for non-dict triggers
@@ -1327,7 +1343,8 @@ class TestWorkflowBestPractices:
     def test_workflow_uses_concurrency_for_prs(self, workflow_file: Path):
         """Test if PR workflows use concurrency to cancel outdated runs."""
         config = load_yaml_safe(workflow_file)
-        triggers = config.get("on", {})
+        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
+        triggers = config.get("on", config.get(True, {}))
         
         has_pr_trigger = False
         if isinstance(triggers, dict):
