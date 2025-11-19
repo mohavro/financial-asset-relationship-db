@@ -789,15 +789,15 @@ describe('test-utils Mock Data Validation', () => {
         });
         
         // If edge A->B exists with high strength, check for reasonable reciprocity
-        mockVisualizationData.edges
-          .filter(e => e.strength > 0.8)
-          .forEach((edge) => {
-            const hasReverse = edgeMap.get(edge.target)?.has(edge.source);
-            // At least some high-strength edges should be bidirectional
-            if (hasReverse) {
-              expect(hasReverse).toBe(true);
-            }
-          });
+        const highStrengthEdges = mockVisualizationData.edges.filter(e => e.strength > 0.8);
+        const bidirectionalCount = highStrengthEdges.filter((edge) => {
+          return edgeMap.get(edge.target)?.has(edge.source);
+        }).length;
+        
+        // At least some high-strength edges should be bidirectional
+        if (highStrengthEdges.length > 0) {
+          expect(bidirectionalCount).toBeGreaterThan(0);
+        }
       });
     });
 
