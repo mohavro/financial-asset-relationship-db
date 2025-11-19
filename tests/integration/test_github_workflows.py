@@ -373,78 +373,81 @@ class TestPrAgentWorkflow:
             assert "python-version" in step_with, (
                 "Python setup should specify a version"
             )
-def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow has a pr-agent-trigger job."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
-                "Python version should be 3.11"
-            )
+def test_pr_agent_has_review_job(pr_agent_workflow: Dict[str, Any]):
+    """Test that pr-agent workflow has a pr-agent-trigger job."""
+    jobs = pr_agent_workflow.get("jobs", {})
+    assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
 
-def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-        """
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "Missing 'pr-agent-trigger' job"
-        trigger_job = jobs["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
-        """
-        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
+def test_pr_agent_node_version(pr_agent_workflow: Dict[str, Any]):
+    """
+    Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
 
-        Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
-        """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        node_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/setup-node")
-        ]
-        
-        for step in node_steps:
-            step_with = step.get("with", {})
-            assert "node-version" in step_with, (
-                "Node.js setup should specify a version"
-            )
-            assert step_with["node-version"] == "18", (
-                "Node.js version should be 18"
-            )
+    Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
+    """
+    jobs = pr_agent_workflow.get("jobs", {})
+    assert "pr-agent-trigger" in jobs, "Missing 'pr-agent-trigger' job"
+    trigger_job = jobs["pr-agent-trigger"]
+    steps = trigger_job.get("steps", [])
     
-    def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that there are no duplicate setup steps in the workflow."""
-        review_job = pr_agent_workflow["jobs"]["review"]
-        steps = review_job.get("steps", [])
-        
-        # Check for duplicate step names
-        step_names = [s.get("name", "") for s in steps if s.get("name")]
-        duplicate_names = [name for name in step_names if step_names.count(name) > 1]
-        
-        assert not duplicate_names, (
-            f"Found duplicate step names: {set(duplicate_names)}. "
-            "Each step should have a unique name."
+    node_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/setup-node")
+    ]
+    
+    for step in node_steps:
+        step_with = step.get("with", {})
+        assert "node-version" in step_with, (
+            "Node.js setup should specify a version"
         )
+        assert step_with["node-version"] == "18", (
+            "Node.js version should be 18"
+        )
+
+
+@pytest.fixture
+def pr_agent_workflow() -> Dict[str, Any]:
+    """Load pr-agent workflow for testing."""
+    workflow_path = Path(".github/workflows/pr-agent.yml")
+    if not workflow_path.exists():
+        pytest.skip("pr-agent.yml not found")
+    return load_yaml_safe(workflow_path)
+
+
+def test_pr_agent_no_duplicate_setup_steps(pr_agent_workflow: Dict[str, Any]):
+    """Test that there are no duplicate step names in the workflow."""
+    review_job = pr_agent_workflow["jobs"]["review"]
+    steps = review_job.get("steps", [])
     
-    def test_pr_agent_fetch_depth_configured(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Validate fetch-depth values for actions/checkout steps in the PR Agent review job.
-        
-        For each checkout step in the review job, if a `fetch-depth` key is present assert it is an integer or equal to 0.
-        """
-        review_job = pr_agent_workflow["jobs"]["review"]
-        steps = review_job.get("steps", [])
-        
-        checkout_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/checkout")
-        ]
-        
-        for step in checkout_steps:
-            step_with = step.get("with", {})
-            if "fetch-depth" in step_with:
-                fetch_depth = step_with["fetch-depth"]
-                assert isinstance(fetch_depth, int) or fetch_depth == 0, (
-                    "fetch-depth should be an integer"
-                )
+    step_names = [s.get("name", "") for s in steps if s.get("name")]
+    duplicate_names = [name for name in step_names if step_names.count(name) > 1]
+    
+    assert not duplicate_names, (
+        f"Found duplicate step names: {set(duplicate_names)}. "
+        "Each step should have a unique name."
+    )
+
+
+def test_pr_agent_fetch_depth_configured(pr_agent_workflow: Dict[str, Any]):
+    """
+    Validate fetch-depth values for actions/checkout steps in the PR Agent review job.
+    
+    For each checkout step in the review job, if a `fetch-depth` key is present assert it is an integer or equal to 0.
+    """
+    review_job = pr_agent_workflow["jobs"]["review"]
+    steps = review_job.get("steps", [])
+    
+    checkout_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/checkout")
+    ]
+    
+    for step in checkout_steps:
+        step_with = step.get("with", {})
+        if "fetch-depth" in step_with:
+            fetch_depth = step_with["fetch-depth"]
+            assert isinstance(fetch_depth, int) or fetch_depth == 0, (
+                "fetch-depth should be an integer"
+            )
 
 
 class TestWorkflowSecurity:
