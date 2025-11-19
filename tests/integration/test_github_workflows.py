@@ -296,14 +296,26 @@ class TestPrAgentWorkflow:
         """Test that pr-agent workflow triggers on pull request events."""
         triggers = pr_agent_workflow.get("on", {})
         if "pull_request" not in triggers:
-            print("\nRecommendation: pr-agent workflow should trigger on pull_request events")
+def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent workflow triggers on pull request events."""
+        triggers = pr_agent_workflow.get("on", {})
+        assert "pull_request" in triggers, (
+            "pr-agent workflow must trigger on pull_request events"
+        )
     
     def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow has a pr-agent-trigger job."""
         jobs = pr_agent_workflow.get("jobs", {})
         assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
     
-    def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
+def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent-trigger job runs on Ubuntu."""
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        runs_on = review_job.get("runs-on", "")
+        # Be more specific about expected runner format
+        assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
+            f"PR Agent trigger job should run on standard Ubuntu runner, got '{runs_on}'"
+        )
         """Test that pr-agent-trigger job runs on Ubuntu."""
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
         runs_on = review_job.get("runs-on", "")
@@ -409,7 +421,14 @@ class TestPrAgentWorkflow:
         
         for step in node_steps:
             step_with = step.get("with", {})
-            if "node-version" not in step_with:
+for step in node_steps:
+            step_with = step.get("with", {})
+            assert "node-version" in step_with, (
+                "Node.js setup should specify a version"
+            )
+            assert step_with["node-version"] == "18", (
+                "Node.js version should be 18"
+            )
                 print("\nRecommendation: Node.js setup should specify a version")
     
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
