@@ -153,7 +153,6 @@ class TestWorkflowStructure:
         )
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
-    @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_has_triggers(self, workflow_file: Path):
         """
         Ensure the workflow defines at least one trigger via a top-level "on" field.
