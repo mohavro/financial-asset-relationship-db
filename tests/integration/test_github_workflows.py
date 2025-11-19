@@ -160,7 +160,7 @@ class TestWorkflowStructure:
         Asserts that the loaded workflow mapping contains a top-level "on" key.
         """
         config = load_yaml_safe(workflow_file)
-        assert "on" in config or True in config, (
+        assert "on" in config, (
             f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
         )
     
@@ -381,24 +381,34 @@ class TestPrAgentWorkflow:
             assert "python-version" in step_with, (
                 "Python setup should specify a version"
             )
-            assert step_with["python-version"] == "3.11", (
+def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent workflow has a pr-agent-trigger job."""
+        jobs = pr_agent_workflow.get("jobs", {})
+        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
                 "Python version should be 3.11"
             )
-    
-    def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
+
+def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
         """
-        Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
+        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
+        """
+        jobs = pr_agent_workflow.get("jobs", {})
+        assert "pr-agent-trigger" in jobs, "Missing 'pr-agent-trigger' job"
+        trigger_job = jobs["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
+        """
+        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
 
         Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
         """
-        review_job = pr_agent_workflow["jobs"]["review"]
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
         steps = review_job.get("steps", [])
-
+        
         node_steps = [
-            s for s in steps
+            s for s in steps 
             if s.get("uses", "").startswith("actions/setup-node")
         ]
-
+        
         for step in node_steps:
             step_with = step.get("with", {})
             assert "node-version" in step_with, (
@@ -408,6 +418,9 @@ class TestPrAgentWorkflow:
                 "Node.js version should be 18"
             )
     
+# [Lines 397-435 containing the malformed block should be completely removed]
+# The previous test (test_pr_agent_python_version) ends before line 397
+# and the next test (test_pr_agent_no_duplicate_setup_steps) should follow directly
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
         """Test that there are no duplicate setup steps in the workflow."""
         review_job = pr_agent_workflow["jobs"]["review"]
