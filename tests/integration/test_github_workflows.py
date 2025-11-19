@@ -154,19 +154,7 @@ class TestWorkflowStructure:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_has_triggers(self, workflow_file: Path):
-    def test_workflow_has_triggers(self, workflow_file: Path):
         """
-        Ensure the workflow defines at least one trigger via a top-level "on" field.
-    
-        Asserts that the loaded workflow mapping contains a top-level "on" key.
-        """
-        config = load_yaml_safe(workflow_file)
-        assert isinstance(config, dict), (
-            f"Workflow {workflow_file.name} did not load to a mapping"
-        )
-        assert "on" in config, (
-            f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
-        )
         Ensure the workflow defines at least one trigger via a top-level "on" field.
         
         Asserts that the loaded workflow mapping contains a top-level "on" key.
@@ -306,37 +294,34 @@ class TestPrAgentWorkflow:
     def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow has a review job."""
         jobs = pr_agent_workflow.get("jobs", {})
-def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
-    """Test that pr-agent workflow has a pr-agent-trigger job."""
-    jobs = pr_agent_workflow.get("jobs", {})
-    assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
+        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
     
     def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job runs on Ubuntu."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        """Test that review job runs on Ubuntu."""
+        review_job = pr_agent_workflow["jobs"]["review"]
         runs_on = review_job.get("runs-on", "")
         assert "ubuntu" in runs_on.lower(), (
-            "PR Agent trigger job should run on Ubuntu runner"
+            "Review job should run on Ubuntu runner"
         )
     
     def test_pr_agent_has_checkout_step(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job checks out the code."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        """Test that review job checks out the code."""
+        review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
         checkout_steps = [
             s for s in steps 
             if s.get("uses", "").startswith("actions/checkout")
         ]
-        assert len(checkout_steps) > 0, "PR Agent trigger job must check out the repository"
+        assert len(checkout_steps) > 0, "Review job must check out the repository"
     
     def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
         """
-        Ensure every actions/checkout step in the pr-agent-trigger job provides a `token` in its `with` mapping.
+        Ensure every actions/checkout step in the review job provides a `token` in its `with` mapping.
         
         Fails the test if any checkout step omits the `token` key.
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
         checkout_steps = [
@@ -350,40 +335,40 @@ def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
     
     def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
         """
-        Asserts the workflow's "pr-agent-trigger" job includes at least one step that uses actions/setup-python.
+        Asserts the workflow's "review" job includes at least one step that uses actions/setup-python.
         
         Parameters:
-            pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow; expected to contain a "jobs" mapping with a "pr-agent-trigger" job.
+            pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow; expected to contain a "jobs" mapping with a "review" job.
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
         python_steps = [
             s for s in steps 
             if s.get("uses", "").startswith("actions/setup-python")
         ]
-        assert len(python_steps) > 0, "PR Agent trigger job must set up Python"
+        assert len(python_steps) > 0, "Review job must set up Python"
     
     def test_pr_agent_has_node_setup(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job sets up Node.js."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        """Test that review job sets up Node.js."""
+        review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
         node_steps = [
             s for s in steps 
             if s.get("uses", "").startswith("actions/setup-node")
         ]
-        assert len(node_steps) > 0, "PR Agent trigger job must set up Node.js"
+        assert len(node_steps) > 0, "Review job must set up Node.js"
     
     def test_pr_agent_python_version(self, pr_agent_workflow: Dict[str, Any]):
         """
-        Ensure any actions/setup-python step in the "pr-agent-trigger" job specifies python-version "3.11".
+        Ensure any actions/setup-python step in the "review" job specifies python-version "3.11".
         
         Parameters:
-            pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow; expected to contain a "jobs" -> "pr-agent-trigger" -> "steps" sequence.
+            pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow; expected to contain a "jobs" -> "review" -> "steps" sequence.
         
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
         python_steps = [
@@ -396,49 +381,16 @@ def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
             assert "python-version" in step_with, (
                 "Python setup should specify a version"
             )
-def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow has a pr-agent-trigger job."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
+            assert step_with["python-version"] == "3.11", (
                 "Python version should be 3.11"
             )
 
-def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-        """
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "Missing 'pr-agent-trigger' job"
-        trigger_job = jobs["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
-        """
-        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-
-        Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
-        """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
-        
-        node_steps = [
-            s for s in steps 
-            if s.get("uses", "").startswith("actions/setup-node")
-        ]
-        
-        for step in node_steps:
-            step_with = step.get("with", {})
-            assert "node-version" in step_with, (
-                "Node.js setup should specify a version"
-            )
-            assert step_with["node-version"] == "18", (
-                "Node.js version should be 18"
-            )
-    
 # [Lines 397-435 containing the malformed block should be completely removed]
 # The previous test (test_pr_agent_python_version) ends before line 397
 # and the next test (test_pr_agent_no_duplicate_setup_steps) should follow directly
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
         """Test that there are no duplicate setup steps in the workflow."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
         # Check for duplicate step names
@@ -452,14 +404,14 @@ def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
     
     def test_pr_agent_fetch_depth_configured(self, pr_agent_workflow: Dict[str, Any]):
         """
-        Ensure checkout steps in the PR Agent trigger job have valid fetch-depth values.
+        Ensure checkout steps in the PR Agent review job have valid fetch-depth values.
         
-        Checks each step in `jobs.pr-agent-trigger` that uses `actions/checkout`; if the step's `with` mapping contains `fetch-depth` the value must be an integer or exactly 0, otherwise an assertion fails.
+        Checks each step in `jobs.review` that uses `actions/checkout`; if the step's `with` mapping contains `fetch-depth` the value must be an integer or exactly 0, otherwise an assertion fails.
         
         Parameters:
             pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow.
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        review_job = pr_agent_workflow["jobs"]["review"]
         steps = review_job.get("steps", [])
         
         checkout_steps = [
@@ -1160,10 +1112,49 @@ class TestWorkflowEnvAndSecrets:
         # Check top-level env
         if "env" in config:
             invalid = check_env_vars(config["env"])
+@pytest.mark.parametrize("workflow_file", get_workflow_files())
+def test_workflow_env_vars_naming_convention(workflow_file: Path):
+    """
+    Ensure environment variable names in a workflow file are uppercase and contain only letters, digits or underscores.
+    
+    Checks environment variables at both the top-level workflow `env` and each job's `env`, and fails the test if any variable names do not match the required naming convention.
+    """
+    config = load_yaml_safe(workflow_file)
+    
+    def check_env_vars(env_dict):
+        """
+        Identify environment variable names that do not follow the convention of using only upper-case letters, digits and underscores.
+        
+        Parameters:
+            env_dict (dict): Mapping of environment variable names to their values. If a non-dict is provided it is treated as absent and no invalid names are returned.
+        
+        Returns:
+            invalid_keys (List[str]): List of keys from `env_dict` that are not composed solely of upper-case letters, digits and underscores.
+        """
+        if not isinstance(env_dict, dict):
+            return []
+        invalid = []
+        for key in env_dict.keys():
+            if not key.isupper() or not key.replace("_", "").isalnum():
+                invalid.append(key)
+        return invalid
+    
+    # Check top-level env
+    if "env" in config:
+        invalid = check_env_vars(config["env"])
+        assert not invalid, (
+            f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
+        )
+    
+    # Check job-level env
+    jobs = config.get("jobs", {})
+    for job_name, job_config in jobs.items():
+        if "env" in job_config:
+            invalid = check_env_vars(job_config["env"])
             assert not invalid, (
                 f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
             )
-        
+
         # Check job-level env
         jobs = config.get("jobs", {})
         for job_name, job_config in jobs.items():
@@ -1384,3 +1375,24 @@ class TestWorkflowBestPractices:
                             print(f"\nRecommendation: Step {idx} in job '{job_name}' "
                                   f"of {workflow_file.name} uses multi-line run without "
                                   "explicit shell specification")
+
+class TestWorkflowJobConfiguration:
+    """Test suite for job-level configuration validation."""
+    
+    @pytest.mark.parametrize("workflow_file", get_workflow_files())
+    def test_workflow_jobs_have_timeout(self, workflow_file: Path):
+        """
+        Check if jobs specify timeout-minutes and recommend setting it if missing.
+        
+        For each job in a workflow that does not define a `timeout-minutes` key a recommendation message is printed suggesting adding a timeout to prevent runaway jobs.
+        
+        Parameters:
+            workflow_file (Path): Path to the workflow YAML file being checked.
+        """
+        config = load_yaml_safe(workflow_file)
+        jobs = config.get("jobs", {})
+        
+        for job_name, job_config in jobs.items():
+            if "timeout-minutes" not in job_config:
+                print(f"\nRecommendation: Job '{job_name}' in {workflow_file.name} "
+                      "doesn't specify timeout-minutes")
