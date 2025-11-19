@@ -163,9 +163,7 @@ class TestWorkflowStructure:
         assert isinstance(config, dict), (
             f"Workflow {workflow_file.name} did not load to a mapping"
         )
-        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
-        has_triggers = "on" in config or True in config
-        assert has_triggers, (
+        assert "on" in config, (
             f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
         )
     
@@ -306,16 +304,11 @@ class TestPrAgentWorkflow:
     
     def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow triggers on pull request events."""
-        # Normalize triggers to a dict, handling cases where YAML might parse "on" oddly
-        triggers_raw = pr_agent_workflow.get("on", pr_agent_workflow.get(True, {}))
-        if isinstance(triggers_raw, str):
-            triggers = {triggers_raw: None}
-        elif isinstance(triggers_raw, list):
-            triggers = {t: None for t in triggers_raw}
-        elif isinstance(triggers_raw, dict):
-            triggers = triggers_raw
-        else:
-            triggers = {}
+        triggers = pr_agent_workflow.get("on", {})
+        if "pull_request" not in triggers:
+def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent workflow triggers on pull request events."""
+        triggers = pr_agent_workflow.get("on", {})
         assert "pull_request" in triggers, (
             "pr-agent workflow must trigger on pull_request events"
         )
@@ -325,7 +318,14 @@ class TestPrAgentWorkflow:
         jobs = pr_agent_workflow.get("jobs", {})
         assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
     
-    def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
+def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent-trigger job runs on Ubuntu."""
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        runs_on = review_job.get("runs-on", "")
+        # Be more specific about expected runner format
+        assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
+            f"PR Agent trigger job should run on standard Ubuntu runner, got '{runs_on}'"
+        )
         """Test that pr-agent-trigger job runs on Ubuntu."""
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
         runs_on = review_job.get("runs-on", "")
@@ -421,7 +421,7 @@ class TestPrAgentWorkflow:
     def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
         """
         Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-
+        
         Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
         """
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
@@ -434,12 +434,15 @@ class TestPrAgentWorkflow:
         
         for step in node_steps:
             step_with = step.get("with", {})
+for step in node_steps:
+            step_with = step.get("with", {})
             assert "node-version" in step_with, (
                 "Node.js setup should specify a version"
             )
             assert step_with["node-version"] == "18", (
                 "Node.js version should be 18"
             )
+                print("\nRecommendation: Node.js setup should specify a version")
     
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
         """Test that there are no duplicate setup steps in the workflow."""
@@ -1168,9 +1171,9 @@ class TestWorkflowEnvAndSecrets:
                 print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
                       f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
                       f"readability and consistency across workflows.")
-            assert not invalid, (
-                f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
-            )
+                assert not invalid, (
+                    f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
+                )
         
         jobs = config.get("jobs", {})
         for job_name, job_config in jobs.items():
