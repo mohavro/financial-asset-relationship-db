@@ -7,22 +7,9 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MetricsDashboard from '../../app/components/MetricsDashboard';
 import type { Metrics } from '../../app/types/api';
+import { mockMetrics } from '../test-utils';
 
 describe('MetricsDashboard Component', () => {
-  const mockMetrics: Metrics = {
-    total_assets: 15,
-    total_relationships: 42,
-    asset_classes: {
-      EQUITY: 6,
-      FIXED_INCOME: 4,
-      COMMODITY: 3,
-      CURRENCY: 2,
-    },
-    avg_degree: 5.6,
-    max_degree: 12,
-    network_density: 0.42,
-  };
-
   it('should render all metric cards', () => {
     render(<MetricsDashboard metrics={mockMetrics} />);
     

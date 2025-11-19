@@ -11,6 +11,16 @@
 
 import axios from 'axios';
 import type { Asset, Relationship, Metrics, VisualizationData } from '../../app/types/api';
+import {
+  mockAssets,
+  mockAsset,
+  mockRelationships,
+  mockAllRelationships,
+  mockMetrics,
+  mockVizData,
+  mockAssetClasses,
+  mockSectors,
+} from '../test-utils';
 
 // Mock axios
 jest.mock('axios');
@@ -77,31 +87,6 @@ describe('API Client', () => {
   });
 
   describe('getAssets', () => {
-    const mockAssets: Asset[] = [
-      {
-        id: 'ASSET_1',
-        symbol: 'AAPL',
-        name: 'Apple Inc.',
-        asset_class: 'EQUITY',
-        sector: 'Technology',
-        price: 150.0,
-        market_cap: 2400000000000,
-        currency: 'USD',
-        additional_fields: {},
-      },
-      {
-        id: 'ASSET_2',
-        symbol: 'GOOGL',
-        name: 'Alphabet Inc.',
-        asset_class: 'EQUITY',
-        sector: 'Technology',
-        price: 140.0,
-        market_cap: 1800000000000,
-        currency: 'USD',
-        additional_fields: {},
-      },
-    ];
-
     it('should fetch all assets without filters', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
 
@@ -162,21 +147,6 @@ describe('API Client', () => {
   });
 
   describe('getAssetDetail', () => {
-    const mockAsset: Asset = {
-      id: 'ASSET_1',
-      symbol: 'AAPL',
-      name: 'Apple Inc.',
-      asset_class: 'EQUITY',
-      sector: 'Technology',
-      price: 150.0,
-      market_cap: 2400000000000,
-      currency: 'USD',
-      additional_fields: {
-        pe_ratio: 25.5,
-        dividend_yield: 0.005,
-      },
-    };
-
     it('should fetch asset details by ID', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockAsset });
 
@@ -207,21 +177,6 @@ describe('API Client', () => {
   });
 
   describe('getAssetRelationships', () => {
-    const mockRelationships: Relationship[] = [
-      {
-        source_id: 'ASSET_1',
-        target_id: 'ASSET_2',
-        relationship_type: 'SAME_SECTOR',
-        strength: 0.8,
-      },
-      {
-        source_id: 'ASSET_1',
-        target_id: 'ASSET_3',
-        relationship_type: 'ISSUER',
-        strength: 0.95,
-      },
-    ];
-
     it('should fetch relationships for an asset', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockRelationships });
 
@@ -257,28 +212,13 @@ describe('API Client', () => {
   });
 
   describe('getAllRelationships', () => {
-    const mockRelationships: Relationship[] = [
-      {
-        source_id: 'ASSET_1',
-        target_id: 'ASSET_2',
-        relationship_type: 'SAME_SECTOR',
-        strength: 0.8,
-      },
-      {
-        source_id: 'ASSET_3',
-        target_id: 'ASSET_4',
-        relationship_type: 'COMMODITY_EXPOSURE',
-        strength: 0.6,
-      },
-    ];
-
     it('should fetch all relationships', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockRelationships });
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAllRelationships });
 
       const result = await api.getAllRelationships();
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/relationships');
-      expect(result).toEqual(mockRelationships);
+      expect(result).toEqual(mockAllRelationships);
       expect(result).toHaveLength(2);
     });
 
@@ -292,20 +232,6 @@ describe('API Client', () => {
   });
 
   describe('getMetrics', () => {
-    const mockMetrics: Metrics = {
-      total_assets: 15,
-      total_relationships: 42,
-      asset_classes: {
-        EQUITY: 6,
-        FIXED_INCOME: 4,
-        COMMODITY: 3,
-        CURRENCY: 2,
-      },
-      avg_degree: 5.6,
-      max_degree: 12,
-      network_density: 0.42,
-    };
-
     it('should fetch network metrics', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockMetrics });
 
@@ -349,41 +275,6 @@ describe('API Client', () => {
   });
 
   describe('getVisualizationData', () => {
-    const mockVizData: VisualizationData = {
-      nodes: [
-        {
-          id: 'ASSET_1',
-          name: 'Apple Inc.',
-          symbol: 'AAPL',
-          asset_class: 'EQUITY',
-          x: 1.5,
-          y: 2.3,
-          z: 0.8,
-          color: '#1f77b4',
-          size: 10,
-        },
-        {
-          id: 'ASSET_2',
-          name: 'Gold',
-          symbol: 'GOLD',
-          asset_class: 'COMMODITY',
-          x: -1.2,
-          y: 0.5,
-          z: 1.9,
-          color: '#ff7f0e',
-          size: 8,
-        },
-      ],
-      edges: [
-        {
-          source: 'ASSET_1',
-          target: 'ASSET_2',
-          relationship_type: 'COMMODITY_EXPOSURE',
-          strength: 0.7,
-        },
-      ],
-    };
-
     it('should fetch visualization data', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockVizData });
 
@@ -442,10 +333,6 @@ describe('API Client', () => {
   });
 
   describe('getAssetClasses', () => {
-    const mockAssetClasses = {
-      asset_classes: ['EQUITY', 'FIXED_INCOME', 'COMMODITY', 'CURRENCY'],
-    };
-
     it('should fetch asset classes', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockAssetClasses });
 
@@ -476,10 +363,6 @@ describe('API Client', () => {
   });
 
   describe('getSectors', () => {
-    const mockSectors = {
-      sectors: ['Energy', 'Financials', 'Technology'],
-    };
-
     it('should fetch sectors', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockSectors });
 
