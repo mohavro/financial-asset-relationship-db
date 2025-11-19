@@ -91,12 +91,15 @@ class TestMarkdownFormatting:
         assert len(lines_with_trailing) == 0, \
             f"Found {len(lines_with_trailing)} lines with trailing whitespace"
     
-    def test_code_blocks_properly_closed(self, summary_content: str):
+    def test_code_blocks_properly_closed(self, summary_lines: List[str]):
         """Test that code blocks are properly opened and closed."""
-        # Count triple backticks
-        backtick_count = summary_content.count('```')
-        assert backtick_count % 2 == 0, \
-            f"Code blocks not properly closed (found {backtick_count} triple backticks, should be even)"
+        open_block = False
+        for i, line in enumerate(summary_lines, start=1):
+            stripped = line.strip()
+            if stripped.startswith('```'):
+                # Toggle open/close state on a fence line
+                open_block = not open_block
+        assert open_block is False, "Code blocks not properly closed or mismatched triple backticks detected"
     
     def test_lists_properly_formatted(self, summary_lines: List[str]):
         """Test that bullet lists use consistent markers."""
