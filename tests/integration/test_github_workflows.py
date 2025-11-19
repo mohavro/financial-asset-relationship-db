@@ -393,6 +393,24 @@ class TestPrAgentWorkflow:
             assert step_with["python-version"] == "3.11", (
                 "Python version should be 3.11"
             )
+
+assert step_with["node-version"].startswith("18"), (
+                "Node.js version should be 18.x"
+            )
+        """
+        Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
+
+        Checks each step that uses 'actions/setup-node' has a 'with' mapping containing a 'node-version' key whose value equals '18'.
+        """
+        review_job = pr_agent_workflow["jobs"]["review"]
+        steps = review_job.get("steps", [])
+
+        node_steps = [
+            s for s in steps
+            if s.get("uses", "").startswith("actions/setup-node")
+        ]
+
+        for step in node_steps:
     
 def test_pr_agent_node_version(pr_agent_workflow: Dict[str, Any]):
     """
@@ -1104,8 +1122,41 @@ class TestWorkflowStepConfiguration:
 
 class TestWorkflowEnvAndSecrets:
     """Tests for environment variables and secrets usage."""
-    
 
+    @pytest.mark.parametrize("workflow_file", get_workflow_files())
+    def test_workflow_env_vars_naming_convention(self, workflow_file: Path):
+        """
+        Validate that environment variables in workflow files follow UPPER_CASE naming convention.
+
+        Parameters:
+            workflow_file (Path): Path to the workflow YAML file being tested.
+
+        Notes:
+            Checks environment variables at both workflow level and job level for proper naming.
+        """
+        config = load_yaml_safe(workflow_file)
+
+        def check_env_vars(env_dict):
+            """
+            Identify environment variable names that do not follow the naming convention of upper-case letters, digits and underscores.
+
+            Parameters:
+                env_dict (dict): Mapping of environment variable names to their values. If a non-dict is provided, it is treated as absent.
+
+            Returns:
+                invalid_keys (List[str]): List of keys from `env_dict` that are not entirely upper-case or that contain characters other than letters, digits or underscores.
+            """
+            if not isinstance(env_dict, dict):
+                return []
+            invalid = []
+            for key in env_dict.keys():
+                if not key.isupper() or not key.replace("_", "").isalnum():
+                    invalid.append(key)
+            return invalid
+
+        # Check top-level env
+        if "env" in config:
+            invalid = check_env_vars(config["env"])
 @pytest.mark.parametrize("workflow_file", get_workflow_files())
 def test_workflow_env_vars_naming_convention(workflow_file: Path):
     """
@@ -1146,16 +1197,24 @@ def test_workflow_env_vars_naming_convention(workflow_file: Path):
         if "env" in job_config:
             invalid = check_env_vars(job_config["env"])
             assert not invalid, (
-                f"Job '{job_name}' in {workflow_file.name} has invalid env var names: {invalid}"
+                f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
             )
 
-    
+        # Check job-level env
+        jobs = config.get("jobs", {})
+        for job_name, job_config in jobs.items():
+            if "env" in job_config:
+                invalid = check_env_vars(job_config["env"])
+                assert not invalid, (
+                    f"Job '{job_name}' in {workflow_file.name} has invalid env var names: {invalid}"
+                )
+
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_secrets_not_in_env_values(self, workflow_file: Path):
         """Test that secrets are referenced, not hardcoded in env values."""
         with open(workflow_file, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         # Look for patterns that might indicate hardcoded secrets
         suspicious_in_env = [
             "password: \"",
@@ -1163,7 +1222,7 @@ def test_workflow_env_vars_naming_convention(workflow_file: Path):
             "api_key: \"",
             "secret: \"",
         ]
-        
+
         for pattern in suspicious_in_env:
             if pattern in content.lower():
                 # Allow if it's using secrets context
