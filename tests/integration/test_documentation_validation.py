@@ -175,12 +175,21 @@ class TestCodeExamples:
         # Look for test file references
         test_file_pattern = r'tests/integration/test_\w+\.py'
         mentioned_files = re.findall(test_file_pattern, summary_content)
-        
+
         repo_root = Path(__file__).parent.parent.parent
+        missing: List[str] = []
+
         for file_path in mentioned_files:
             full_path = repo_root / file_path
-            assert full_path.exists(), \
-                f"Referenced file {file_path} should exist"
+            if not full_path.exists():
+                missing.append(f"{file_path} (resolved: {full_path})")
+
+        # Fail only once with a consolidated, informative message if any are missing
+        assert not missing, (
+            "One or more referenced files in documentation were not found:\n"
+            + "\n".join(f"- {m}" for m in missing)
+            + "\nIf files were recently moved or renamed, update the documentation examples accordingly."
+        )
 
 
 class TestDocumentCompleteness:
@@ -338,12 +347,29 @@ class TestEdgeCases:
             pytest.fail("File should be valid UTF-8")
     
     def test_consistent_line_endings(self):
-        """Test that file uses consistent line endings."""
+        """Test that file uses consistent line endings throughout."""
         with open(SUMMARY_FILE, 'rb') as f:
             content = f.read()
-        
-        has_crlf = b'\r\n' in content
-        has_lf_only = b'\n' in content and b'\r\n' not in content
-        
-        assert has_lf_only or has_crlf, "File should have consistent line endings"
-        assert not (has_lf_only and has_crlf), "File should not mix line ending styles"
+
+        # Split preserving line endings and detect per-line endings
+        lines = content.splitlines(True)
+        if not lines:
+            pytest.skip("File appears to be empty; skipping line ending consistency check")
+
+        endings = set()
+        for line in lines:
+            if line.endswith(b'\r\n'):
+                endings.add('CRLF')
+            elif line.endswith(b'\n'):
+                endings.add('LF')
+            elif line.endswith(b'\r'):
+                # Rare classic Mac line ending; treat distinctly
+                endings.add('CR')
+            else:
+                # Last line may not have a newline; ignore for consistency purposes
+                pass
+
+        # Require exactly one style among present line-terminated lines
+        assert len(endings) == 1, "File should use a single line ending style throughout"
+        # Additionally ensure the file uses recognized line endings
+        assert endings.pop() in {'LF', 'CRLF'}, "File should use LF or CRLF line endings"
