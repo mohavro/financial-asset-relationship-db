@@ -91,12 +91,15 @@ class TestMarkdownFormatting:
         assert len(lines_with_trailing) == 0, \
             f"Found {len(lines_with_trailing)} lines with trailing whitespace"
     
-    def test_code_blocks_properly_closed(self, summary_content: str):
+    def test_code_blocks_properly_closed(self, summary_lines: List[str]):
         """Test that code blocks are properly opened and closed."""
-        # Count triple backticks
-        backtick_count = summary_content.count('```')
-        assert backtick_count % 2 == 0, \
-            f"Code blocks not properly closed (found {backtick_count} triple backticks, should be even)"
+        open_block = False
+        for i, line in enumerate(summary_lines, start=1):
+            stripped = line.strip()
+            if stripped.startswith('```'):
+                # Toggle open/close state on a fence line
+                open_block = not open_block
+        assert open_block is False, "Code blocks not properly closed or mismatched triple backticks detected"
     
     def test_lists_properly_formatted(self, summary_lines: List[str]):
         """Test that bullet lists use consistent markers."""
@@ -175,12 +178,21 @@ class TestCodeExamples:
         # Look for test file references
         test_file_pattern = r'tests/integration/test_\w+\.py'
         mentioned_files = re.findall(test_file_pattern, summary_content)
-        
+
         repo_root = Path(__file__).parent.parent.parent
+        missing: List[str] = []
+
         for file_path in mentioned_files:
             full_path = repo_root / file_path
-            assert full_path.exists(), \
-                f"Referenced file {file_path} should exist"
+            if not full_path.exists():
+                missing.append(f"{file_path} (resolved: {full_path})")
+
+        # Fail only once with a consolidated, informative message if any are missing
+        assert not missing, (
+            "One or more referenced files in documentation were not found:\n"
+            + "\n".join(f"- {m}" for m in missing)
+            + "\nIf files were recently moved or renamed, update the documentation examples accordingly."
+        )
 
 
 class TestDocumentCompleteness:
@@ -227,8 +239,8 @@ class TestDocumentMaintainability:
     
     def test_has_clear_structure(self, summary_content: str):
         """Test that document has clear hierarchical structure."""
-        h1_count = summary_content.count('\n# ')
-        h2_count = summary_content.count('\n## ')
+        h1_count = len(re.findall(r'^# ', summary_content, re.MULTILINE))
+        h2_count = len(re.findall(r'^## ', summary_content, re.MULTILINE))
         
         assert h1_count >= 1, "Should have at least one H1 heading"
         assert h2_count >= 3, "Should have at least 3 H2 headings for organization"
@@ -247,28 +259,35 @@ class TestDocumentMaintainability:
 
 class TestLinkValidation:
     """Test suite for link validation."""
-    
-    def test_no_broken_internal_links(self, summary_content: str):
-        """Test that internal markdown links reference valid headers."""
-        # Find markdown links [text](#anchor)
-        internal_links = re.findall(r'\[([^\]]+)\]\(#([^\)]+)\)', summary_content)
-        
-        # Find all headers
-        headers = re.findall(r'^#{1,6}\s+(.+)$', summary_content, re.MULTILINE)
-        # Convert headers to anchor format
-        valid_anchors = set()
-        for header in headers:
-            anchor = header.lower().strip()
-            anchor = re.sub(r'[^\w\s-]', '', anchor)
-            anchor = re.sub(r'\s+', '-', anchor)
-            valid_anchors.add(anchor)
-        
+
+    def test_internal_links_valid(self, summary_lines: List[str], summary_content: str):
+        import unicodedata
+
+        def _to_gfm_anchor(text: str) -> str:
+            # Lowercase
+            s = text.strip().lower()
+            # Normalize unicode to NFKD and remove diacritics
+            s = unicodedata.normalize('NFKD', s)
+            s = ''.join(ch for ch in s if not unicodedata.combining(ch))
+            # Remove punctuation/special chars except spaces and hyphens
+            s = re.sub(r'[^\w\s-]', '', s)
+            # Replace whitespace with single hyphen
+            s = re.sub(r'\s+', '-', s)
+            # Collapse multiple hyphens
+            s = re.sub(r'-{2,}', '-', s)
+            # Strip leading/trailing hyphens
+            s = s.strip('-')
+            return s
+
+        # Extract headers and internal links from the document
+        headers = [line.lstrip('#').strip() for line in summary_lines if line.startswith('#')]
+        valid_anchors: Set[str] = set(_to_gfm_anchor(header) for header in headers)
+        internal_links = re.findall(r'\[([^\]]+)\]\(#([^)]+)\)', summary_content)
+
         # Check each internal link
         for text, anchor in internal_links:
             assert anchor in valid_anchors, \
                 f"Internal link to #{anchor} references non-existent header"
-
-
 class TestSecurityAndBestPractices:
     """Test suite for security and best practices in documentation."""
     
@@ -338,12 +357,29 @@ class TestEdgeCases:
             pytest.fail("File should be valid UTF-8")
     
     def test_consistent_line_endings(self):
-        """Test that file uses consistent line endings."""
+        """Test that file uses consistent line endings throughout."""
         with open(SUMMARY_FILE, 'rb') as f:
             content = f.read()
-        
-        has_crlf = b'\r\n' in content
-        has_lf_only = b'\n' in content and b'\r\n' not in content
-        
-        assert has_lf_only or has_crlf, "File should have consistent line endings"
-        assert not (has_lf_only and has_crlf), "File should not mix line ending styles"
+
+        # Split preserving line endings and detect per-line endings
+        lines = content.splitlines(True)
+        if not lines:
+            pytest.skip("File appears to be empty; skipping line ending consistency check")
+
+        endings = set()
+        for line in lines:
+            if line.endswith(b'\r\n'):
+                endings.add('CRLF')
+            elif line.endswith(b'\n'):
+                endings.add('LF')
+            elif line.endswith(b'\r'):
+                # Rare classic Mac line ending; treat distinctly
+                endings.add('CR')
+            else:
+                # Last line may not have a newline; ignore for consistency purposes
+                pass
+
+        # Require exactly one style among present line-terminated lines
+        assert len(endings) == 1, "File should use a single line ending style throughout"
+        # Additionally ensure the file uses recognized line endings
+        assert endings.pop() in {'LF', 'CRLF'}, "File should use LF or CRLF line endings"
