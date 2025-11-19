@@ -418,7 +418,16 @@ def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
         
         Checks each step in `jobs.review` that uses `actions/checkout`; if the step's `with` mapping contains `fetch-depth` the value must be an integer or exactly 0, otherwise an assertion fails.
         
-        Parameters:
+def test_pr_agent_fetch_depth_configured(self, pr_agent_workflow: Dict[str, Any]):
+    """
+    Ensure checkout steps in the PR Agent trigger job have valid fetch-depth values.
+    
+    Checks each step in `jobs.pr-agent-trigger` that uses `actions/checkout`; if the step's `with` mapping contains `fetch-depth` the value must be an integer or exactly 0, otherwise an assertion fails.
+    
+    Parameters:
+        pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow.
+    """
+    trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
             pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow.
         """
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
