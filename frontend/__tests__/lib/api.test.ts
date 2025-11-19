@@ -428,7 +428,6 @@ describe('API Client', () => {
       expect(result).toBeNull();
     });
   });
-});
 
   describe('Advanced Error Handling', () => {
     it('should handle network timeout errors', async () => {
@@ -606,3 +605,4 @@ describe('API Client', () => {
       expect(result.additional_fields.nested.deep.value).toBe(123);
     });
   });
+});
