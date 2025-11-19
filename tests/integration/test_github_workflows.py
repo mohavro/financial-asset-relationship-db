@@ -154,7 +154,6 @@ class TestWorkflowStructure:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_has_triggers(self, workflow_file: Path):
-    def test_workflow_has_triggers(self, workflow_file: Path):
         """
         Ensure the workflow defines at least one trigger via a top-level "on" field.
     
@@ -164,52 +163,9 @@ class TestWorkflowStructure:
         assert isinstance(config, dict), (
             f"Workflow {workflow_file.name} did not load to a mapping"
         )
-        assert "on" in config, (
-            f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
-        )
-        Ensure the workflow defines at least one trigger via a top-level "on" field.
-class TestPrAgentWorkflow:
-    # ... existing tests and fixtures within this class ...
-
-    def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
-        """
-        review_job = pr_agent_workflow["jobs"]["review"]
-        steps = review_job.get("steps", [])
-
-        node_steps = [
-            s for s in steps
-            if s.get("uses", "").startswith("actions/setup-node")
-        ]
-
-        for step in node_steps:
-            step_with = step.get("with", {})
-            assert "node-version" in step_with, (
-                "Node.js setup should specify a version"
-            )
-            assert step_with["node-version"] == "18", (
-                "Node.js version should be 18"
-            )
-    steps = review_job.get("steps", [])
-
-    node_steps = [
-        s for s in steps
-        if s.get("uses", "").startswith("actions/setup-node")
-    ]
-
-    for step in node_steps:
-        step_with = step.get("with", {})
-        assert "node-version" in step_with, (
-            "Node.js setup should specify a version"
-        )
-        assert step_with["node-version"] == "18", (
-            "Node.js version should be 18"
-        )
-        Asserts that the loaded workflow mapping contains a top-level "on" key.
-        """
-        config = load_yaml_safe(workflow_file)
-        assert "on" in config, (
+        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
+        has_triggers = "on" in config or True in config
+        assert has_triggers, (
             f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
         )
     
@@ -279,9 +235,11 @@ class TestWorkflowActions:
                     if action.startswith("./"):
                         continue
                     # Action should have a version tag (e.g., @v1, @main, @sha)
-                    if "@" not in action:
-                        print(f"\nRecommendation: Step {idx} in job '{job_name}' of {workflow_file.name} "
-                              f"should specify a version for action '{action}'")
+                    assert "@" in action, (
+                        f"Step {idx} in job '{job_name}' of {workflow_file.name} "
+                        f"must specify a version for action '{action}' (e.g., @v1, @main, or @sha). "
+                        f"Pinning action versions is a security best practice."
+                    )
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_steps_have_names_or_uses(self, workflow_file: Path):
@@ -333,24 +291,22 @@ class TestPrAgentWorkflow:
         Parameters:
             pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow fixture.
         """
-        if "name" not in pr_agent_workflow:
-            print("\nRecommendation: Workflow should have a descriptive name")
-        elif pr_agent_workflow["name"] != "PR Agent Workflow":
-            print(f"\nInfo: Workflow name is '{pr_agent_workflow['name']}'")
+        assert "name" in pr_agent_workflow, (
+            "pr-agent workflow must have a descriptive 'name' field"
+        )
     
     def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow triggers on pull request events."""
-        triggers = pr_agent_workflow.get("on", {})
-        if "pull_request" not in triggers:
-            print("\nRecommendation: pr-agent workflow should trigger on pull_request events")
+        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
+        triggers = pr_agent_workflow.get("on", pr_agent_workflow.get(True, {}))
+        assert "pull_request" in triggers, (
+            "pr-agent workflow must trigger on pull_request events"
+        )
     
-    def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow has a review job."""
+    def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent workflow has a pr-agent-trigger job."""
         jobs = pr_agent_workflow.get("jobs", {})
-def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
-    """Test that pr-agent workflow has a pr-agent-trigger job."""
-    jobs = pr_agent_workflow.get("jobs", {})
-    assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
+        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
     
     def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job runs on Ubuntu."""
@@ -387,8 +343,10 @@ def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
         
         for step in checkout_steps:
             step_with = step.get("with", {})
-            if not step_with.get("token"):
-                print(f"\nRecommendation: Checkout step should specify a token for better security")
+            assert step_with.get("token"), (
+                "Checkout step must specify a token for better security. "
+                "Use ${{ secrets.GITHUB_TOKEN }} or similar."
+            )
     
     def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
         """
@@ -438,21 +396,11 @@ def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
             assert "python-version" in step_with, (
                 "Python setup should specify a version"
             )
-def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow has a pr-agent-trigger job."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
+            assert step_with["python-version"] == "3.11", (
                 "Python version should be 3.11"
             )
-
-def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
-        """
-        Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
-        """
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "Missing 'pr-agent-trigger' job"
-        trigger_job = jobs["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
+    
+    def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
         """
         Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
 
@@ -468,12 +416,13 @@ def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
         
         for step in node_steps:
             step_with = step.get("with", {})
-            if "node-version" not in step_with:
-                print("\nRecommendation: Node.js setup should specify a version")
+            assert "node-version" in step_with, (
+                "Node.js setup should specify a version"
+            )
+            assert step_with["node-version"] == "18", (
+                "Node.js version should be 18"
+            )
     
-# [Lines 397-435 containing the malformed block should be completely removed]
-# The previous test (test_pr_agent_python_version) ends before line 397
-# and the next test (test_pr_agent_no_duplicate_setup_steps) should follow directly
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
         """Test that there are no duplicate setup steps in the workflow."""
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
@@ -702,10 +651,10 @@ class TestWorkflowEdgeCases:
                 level for level in indentation_levels 
                 if level % 2 != 0
             ]
-if inconsistent:
-    print(f"FORMATTING: Workflow {workflow_file.name} has inconsistent indentation "
-          f"levels: {sorted(indentation_levels)}. YAML requires consistent "
-          f"indentation (typically 2 spaces) to prevent parsing errors.")
+            if inconsistent:
+                print(f"FORMATTING: Workflow {workflow_file.name} has inconsistent indentation "
+                      f"levels: {sorted(indentation_levels)}. YAML requires consistent "
+                      f"indentation (typically 2 spaces) to prevent parsing errors.")
 
 
 class TestWorkflowPerformance:
@@ -1006,7 +955,8 @@ class TestWorkflowTriggers:
             AssertionError: If an unrecognised event type is found in the workflow's `on` configuration.
         """
         config = load_yaml_safe(workflow_file)
-        triggers = config.get("on", {})
+        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
+        triggers = config.get("on", config.get(True, {}))
         
         if isinstance(triggers, str):
             triggers = {triggers: None}
@@ -1019,7 +969,8 @@ class TestWorkflowTriggers:
             "create", "delete", "fork", "watch", "check_suite", "check_run",
             "deployment", "deployment_status", "page_build", "project", "project_card",
             "project_column", "public", "registry_package", "status", "workflow_run",
-            "repository_dispatch", "milestone", "discussion", "discussion_comment"
+            "repository_dispatch", "milestone", "discussion", "discussion_comment",
+            "merge_group"
         }
         
         for event in triggers.keys():
@@ -1033,7 +984,8 @@ class TestWorkflowTriggers:
     def test_workflow_pr_triggers_specify_types(self, workflow_file: Path):
         """Test that pull_request triggers specify activity types."""
         config = load_yaml_safe(workflow_file)
-        triggers = config.get("on", {})
+        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
+        triggers = config.get("on", config.get(True, {}))
         
         if not isinstance(triggers, dict):
             return  # Skip for non-dict triggers
@@ -1194,10 +1146,10 @@ class TestWorkflowEnvAndSecrets:
         # Check top-level env
         if "env" in config:
             invalid = check_env_vars(config["env"])
-if invalid:
-    print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
-          f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
-          f"readability and consistency across workflows.")
+            if invalid:
+                print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
+                      f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
+                      f"readability and consistency across workflows.")
             assert not invalid, (
                 f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
             )
@@ -1370,7 +1322,8 @@ class TestWorkflowBestPractices:
     def test_workflow_uses_concurrency_for_prs(self, workflow_file: Path):
         """Test if PR workflows use concurrency to cancel outdated runs."""
         config = load_yaml_safe(workflow_file)
-        triggers = config.get("on", {})
+        # Handle both "on" and True keys (YAML parses "on:" as True in some cases)
+        triggers = config.get("on", config.get(True, {}))
         
         has_pr_trigger = False
         if isinstance(triggers, dict):
