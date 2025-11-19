@@ -127,7 +127,11 @@ export const mockVisualizationData: VisualizationData = {
   ],
 };
 
-export const mockVizData: VisualizationData = {
+/**
+ * Visualization data with mixed asset classes for testing cross-asset relationships
+ * (e.g., EQUITY to COMMODITY links)
+ */
+export const mockVizDataCrossAsset: VisualizationData = {
   nodes: [
     {
       id: 'ASSET_1',
