@@ -172,7 +172,7 @@ python3 -m pytest tests/integration/ -v --cov=tests --cov-report=term-missing
 |------|---------------|--------------|------------------------|
 | `frontend/__tests__/test-utils.test.ts` | 614 | 10 | 84+ |
 | `tests/integration/test_documentation_validation.py` | 349 | 11 | 37+ |
-| `tests/integration/test_github_workflows.py` | 1,398 | 8 | 40+ (existing) |
+| `tests/integration/test_github_workflows.py` | 1,890 | 8 | 40+ (existing) |
 
 **Total New Tests Generated**: 121+ test cases across 2 new files
 
