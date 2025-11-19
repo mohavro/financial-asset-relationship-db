@@ -429,3 +429,180 @@ describe('API Client', () => {
     });
   });
 });
+
+  describe('Advanced Error Handling', () => {
+    it('should handle network timeout errors', async () => {
+      mockAxiosInstance.get.mockRejectedValue({
+        code: 'ECONNABORTED',
+        message: 'timeout of 5000ms exceeded',
+      });
+
+      await expect(api.healthCheck()).rejects.toMatchObject({
+        code: 'ECONNABORTED',
+      });
+    });
+
+    it('should handle 404 not found errors', async () => {
+      mockAxiosInstance.get.mockRejectedValue({
+        response: { status: 404, data: { detail: 'Not found' } },
+      });
+
+      await expect(api.getAssetDetail('NONEXISTENT')).rejects.toMatchObject({
+        response: { status: 404 },
+      });
+    });
+
+    it('should handle 500 server errors', async () => {
+      mockAxiosInstance.get.mockRejectedValue({
+        response: { status: 500, data: { detail: 'Internal server error' } },
+      });
+
+      await expect(api.getMetrics()).rejects.toMatchObject({
+        response: { status: 500 },
+      });
+    });
+
+    it('should handle malformed JSON responses', async () => {
+      mockAxiosInstance.get.mockRejectedValue(new SyntaxError('Unexpected token'));
+
+      await expect(api.getAssets()).rejects.toThrow(SyntaxError);
+    });
+  });
+
+  describe('Response Validation', () => {
+    it('should return empty array when API returns null', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: null });
+
+      const result = await api.getAllRelationships();
+      expect(result).toBeNull();
+    });
+
+    it('should handle undefined response data', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: undefined });
+
+      const result = await api.getAllRelationships();
+      expect(result).toBeUndefined();
+    });
+
+    it('should preserve response structure for paginated results', async () => {
+      const paginatedResponse = {
+        items: mockAssets,
+        total: 100,
+        page: 2,
+        per_page: 20,
+      };
+      mockAxiosInstance.get.mockResolvedValue({ data: paginatedResponse });
+
+      const result = await api.getAssets({ page: 2, per_page: 20 });
+      
+      expect(result).toEqual(paginatedResponse);
+      expect(result).toHaveProperty('items');
+      expect(result).toHaveProperty('total');
+      expect(result).toHaveProperty('page');
+      expect(result).toHaveProperty('per_page');
+    });
+  });
+
+  describe('Request Parameter Edge Cases', () => {
+    it('should handle zero as valid page number', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+
+      await api.getAssets({ page: 0, per_page: 20 });
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
+        params: { page: 0, per_page: 20 },
+      });
+    });
+
+    it('should handle very large per_page value', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+
+      await api.getAssets({ page: 1, per_page: 10000 });
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
+        params: { page: 1, per_page: 10000 },
+      });
+    });
+
+    it('should handle special characters in asset IDs', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAsset });
+
+      await api.getAssetDetail('ASSET_1-2-3');
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets/ASSET_1-2-3');
+    });
+
+    it('should handle empty string filters', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+
+      await api.getAssets({ asset_class: '', sector: '' });
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
+        params: { asset_class: '', sector: '' },
+      });
+    });
+  });
+
+  describe('Concurrent Request Handling', () => {
+    it('should handle multiple simultaneous getAssets calls', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+
+      const promises = [
+        api.getAssets({ asset_class: 'EQUITY' }),
+        api.getAssets({ sector: 'Technology' }),
+        api.getAssets({ page: 2 }),
+      ];
+
+      const results = await Promise.all(promises);
+
+      expect(results).toHaveLength(3);
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3);
+    });
+
+    it('should handle mixed success and failure in concurrent requests', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({ data: mockAssets })
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce({ data: mockMetrics });
+
+      const results = await Promise.allSettled([
+        api.getAssets(),
+        api.getAllRelationships(),
+        api.getMetrics(),
+      ]);
+
+      expect(results[0].status).toBe('fulfilled');
+      expect(results[1].status).toBe('rejected');
+      expect(results[2].status).toBe('fulfilled');
+    });
+  });
+
+  describe('Response Data Integrity', () => {
+    it('should not mutate response data', async () => {
+      const originalData = { ...mockAsset };
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAsset });
+
+      const result = await api.getAssetDetail('ASSET_1');
+      result.price = 999.99;
+
+      expect(mockAsset.price).toBe(originalData.price);
+    });
+
+    it('should handle deeply nested additional_fields', async () => {
+      const nestedAsset = {
+        ...mockAsset,
+        additional_fields: {
+          nested: {
+            deep: {
+              value: 123,
+            },
+          },
+        },
+      };
+      mockAxiosInstance.get.mockResolvedValue({ data: nestedAsset });
+
+      const result = await api.getAssetDetail('ASSET_1');
+
+      expect(result.additional_fields.nested.deep.value).toBe(123);
+    });
+  });
