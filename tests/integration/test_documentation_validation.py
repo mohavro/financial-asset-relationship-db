@@ -260,26 +260,31 @@ class TestDocumentMaintainability:
 class TestLinkValidation:
     """Test suite for link validation."""
     
-    def test_no_broken_internal_links(self, summary_content: str):
-        """Test that internal markdown links reference valid headers."""
-        # Find markdown links [text](#anchor)
-        internal_links = re.findall(r'\[([^\]]+)\]\(#([^\)]+)\)', summary_content)
-        
-        # Find all headers
-        headers = re.findall(r'^#{1,6}\s+(.+)$', summary_content, re.MULTILINE)
-        # Convert headers to anchor format
-        valid_anchors = set()
-        for header in headers:
-            anchor = header.lower().strip()
-            anchor = re.sub(r'[^\w\s-]', '', anchor)
-            anchor = re.sub(r'\s+', '-', anchor)
-            valid_anchors.add(anchor)
-        
-        # Check each internal link
-        for text, anchor in internal_links:
-            assert anchor in valid_anchors, \
-                f"Internal link to #{anchor} references non-existent header"
+    import unicodedata
 
+    def _to_gfm_anchor(text: str) -> str:
+        # Lowercase
+        s = text.strip().lower()
+        # Normalize unicode to NFKD and remove diacritics
+        s = unicodedata.normalize('NFKD', s)
+        s = ''.join(ch for ch in s if not unicodedata.combining(ch))
+        # Remove punctuation/special chars except spaces and hyphens
+        s = re.sub(r'[^\w\s-]', '', s)
+        # Replace whitespace with single hyphen
+        s = re.sub(r'\s+', '-', s)
+        # Collapse multiple hyphens
+        s = re.sub(r'-{2,}', '-', s)
+        # Strip leading/trailing hyphens
+        s = s.strip('-')
+        return s
+
+    for header in headers:
+        valid_anchors.add(_to_gfm_anchor(header))
+
+    # Check each internal link
+    for text, anchor in internal_links:
+        assert anchor in valid_anchors, \
+            f"Internal link to #{anchor} references non-existent header"
 
 class TestSecurityAndBestPractices:
     """Test suite for security and best practices in documentation."""
