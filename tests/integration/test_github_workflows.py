@@ -153,16 +153,7 @@ class TestWorkflowStructure:
         )
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
-def test_workflow_has_triggers(self, workflow_file: Path):
-    """
-    Ensure the workflow defines at least one trigger via a top-level "on" field.
-    
-    Asserts that the loaded workflow mapping contains a top-level "on" key.
-    """
-    config = load_yaml_safe(workflow_file)
-    assert "on" in config, (
-        f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
-    )
+    def test_workflow_has_triggers(self, workflow_file: Path):
         """
         Ensure the workflow defines at least one trigger via a top-level "on" field.
         
@@ -1157,6 +1148,19 @@ class TestWorkflowEnvAndSecrets:
         # Check top-level env
         if "env" in config:
             invalid = check_env_vars(config["env"])
+            assert not invalid, (
+                f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
+            )
+        
+        # Check job-level env
+        jobs = config.get("jobs", {})
+        for job_name, job_config in jobs.items():
+            if "env" in job_config:
+                invalid = check_env_vars(job_config["env"])
+                assert not invalid, (
+                    f"Job '{job_name}' in {workflow_file.name} has invalid env var names: {invalid}"
+                )
+
 @pytest.mark.parametrize("workflow_file", get_workflow_files())
 def test_workflow_env_vars_naming_convention(workflow_file: Path):
     """
