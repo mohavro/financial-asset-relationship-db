@@ -154,7 +154,19 @@ class TestWorkflowStructure:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_has_triggers(self, workflow_file: Path):
+    def test_workflow_has_triggers(self, workflow_file: Path):
         """
+        Ensure the workflow defines at least one trigger via a top-level "on" field.
+    
+        Asserts that the loaded workflow mapping contains a top-level "on" key.
+        """
+        config = load_yaml_safe(workflow_file)
+        assert isinstance(config, dict), (
+            f"Workflow {workflow_file.name} did not load to a mapping"
+        )
+        assert "on" in config, (
+            f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
+        )
         Ensure the workflow defines at least one trigger via a top-level "on" field.
         
         Asserts that the loaded workflow mapping contains a top-level "on" key.
@@ -298,32 +310,29 @@ class TestPrAgentWorkflow:
     def test_pr_agent_has_review_job(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow has a review job."""
         jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
+def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
+    """Test that pr-agent workflow has a pr-agent-trigger job."""
+    jobs = pr_agent_workflow.get("jobs", {})
+    assert "pr-agent-trigger" in jobs, "pr-agent workflow must have a 'pr-agent-trigger' job"
     
     def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job runs on Ubuntu."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        if "pr-agent-trigger" not in jobs:
-            pytest.skip("pr-agent-trigger job not found")
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        runs_on = trigger_job.get("runs-on", "")
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        runs_on = review_job.get("runs-on", "")
         assert "ubuntu" in runs_on.lower(), (
-            "pr-agent-trigger job should run on Ubuntu runner"
+            "PR Agent trigger job should run on Ubuntu runner"
         )
     
     def test_pr_agent_has_checkout_step(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job checks out the code."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        if "pr-agent-trigger" not in jobs:
-            pytest.skip("pr-agent-trigger job not found")
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = review_job.get("steps", [])
         
         checkout_steps = [
             s for s in steps 
             if s.get("uses", "").startswith("actions/checkout")
         ]
-        assert len(checkout_steps) > 0, "pr-agent-trigger job must check out the repository"
+        assert len(checkout_steps) > 0, "PR Agent trigger job must check out the repository"
     
     def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
         """
@@ -331,11 +340,8 @@ class TestPrAgentWorkflow:
         
         Fails the test if any checkout step omits the `token` key.
         """
-        jobs = pr_agent_workflow.get("jobs", {})
-        if "pr-agent-trigger" not in jobs:
-            pytest.skip("pr-agent-trigger job not found")
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = review_job.get("steps", [])
         
         checkout_steps = [
             s for s in steps 
@@ -354,47 +360,36 @@ class TestPrAgentWorkflow:
         Parameters:
             pr_agent_workflow (Dict[str, Any]): Parsed YAML mapping for the pr-agent workflow; expected to contain a "jobs" mapping with a "pr-agent-trigger" job.
         """
-        jobs = pr_agent_workflow.get("jobs", {})
-        if "pr-agent-trigger" not in jobs:
-            pytest.skip("pr-agent-trigger job not found")
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = review_job.get("steps", [])
         
         python_steps = [
             s for s in steps 
             if s.get("uses", "").startswith("actions/setup-python")
         ]
-if len(python_steps) == 0:
-    print(f"WARNING: pr-agent-trigger job may require Python setup for PR Agent functionality")
+        assert len(python_steps) > 0, "PR Agent trigger job must set up Python"
     
     def test_pr_agent_has_node_setup(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job sets up Node.js if needed."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        if "pr-agent-trigger" not in jobs:
-            pytest.skip("pr-agent-trigger job not found")
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
+        """Test that pr-agent-trigger job sets up Node.js."""
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = review_job.get("steps", [])
         
         node_steps = [
             s for s in steps 
             if s.get("uses", "").startswith("actions/setup-node")
         ]
-        if len(node_steps) == 0:
-            print("\nRecommendation: pr-agent-trigger job should set up Node.js if needed")
+        assert len(node_steps) > 0, "PR Agent trigger job must set up Node.js"
     
     def test_pr_agent_python_version(self, pr_agent_workflow: Dict[str, Any]):
         """
-        Check that any actions/setup-python step in the "pr-agent-trigger" job specifies a python-version.
+        Ensure any actions/setup-python step in the "pr-agent-trigger" job specifies python-version "3.11".
         
         Parameters:
             pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow; expected to contain a "jobs" -> "pr-agent-trigger" -> "steps" sequence.
         
         """
-        jobs = pr_agent_workflow.get("jobs", {})
-        if "pr-agent-trigger" not in jobs:
-            pytest.skip("pr-agent-trigger job not found")
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = review_job.get("steps", [])
         
         python_steps = [
             s for s in steps 
@@ -444,11 +439,8 @@ def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
 # and the next test (test_pr_agent_no_duplicate_setup_steps) should follow directly
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
         """Test that there are no duplicate setup steps in the workflow."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        if "pr-agent-trigger" not in jobs:
-            pytest.skip("pr-agent-trigger job not found")
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = review_job.get("steps", [])
         
         # Check for duplicate step names
         step_names = [s.get("name", "") for s in steps if s.get("name")]
@@ -460,18 +452,15 @@ def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
     
     def test_pr_agent_fetch_depth_configured(self, pr_agent_workflow: Dict[str, Any]):
         """
-        Ensure checkout steps in the PR Agent pr-agent-trigger job have valid fetch-depth values.
+        Ensure checkout steps in the PR Agent trigger job have valid fetch-depth values.
         
         Checks each step in `jobs.pr-agent-trigger` that uses `actions/checkout`; if the step's `with` mapping contains `fetch-depth` the value must be an integer or exactly 0, otherwise an assertion fails.
         
         Parameters:
             pr_agent_workflow (Dict[str, Any]): Parsed workflow mapping for the PR Agent workflow.
         """
-        jobs = pr_agent_workflow.get("jobs", {})
-        if "pr-agent-trigger" not in jobs:
-            pytest.skip("pr-agent-trigger job not found")
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = trigger_job.get("steps", [])
+        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = review_job.get("steps", [])
         
         checkout_steps = [
             s for s in steps 
