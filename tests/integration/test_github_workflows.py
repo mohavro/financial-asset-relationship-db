@@ -153,16 +153,7 @@ class TestWorkflowStructure:
         )
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
-def test_workflow_has_triggers(self, workflow_file: Path):
-    """
-    Ensure the workflow defines at least one trigger via a top-level "on" field.
-    
-    Asserts that the loaded workflow mapping contains a top-level "on" key.
-    """
-    config = load_yaml_safe(workflow_file)
-    assert "on" in config, (
-        f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
-    )
+    def test_workflow_has_triggers(self, workflow_file: Path):
         """
         Ensure the workflow defines at least one trigger via a top-level "on" field.
         
@@ -393,10 +384,8 @@ class TestPrAgentWorkflow:
             assert step_with["python-version"] == "3.11", (
                 "Python version should be 3.11"
             )
-
-assert step_with["node-version"].startswith("18"), (
-                "Node.js version should be 18.x"
-            )
+    
+    def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
         """
         Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
 
@@ -411,20 +400,6 @@ assert step_with["node-version"].startswith("18"), (
         ]
 
         for step in node_steps:
-    
-def test_pr_agent_node_version(pr_agent_workflow: Dict[str, Any]):
-    """
-    Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
-    """
-    review_job = pr_agent_workflow["jobs"]["review"]
-    steps = review_job.get("steps", [])
-
-    node_steps = [
-        s for s in steps
-        if s.get("uses", "").startswith("actions/setup-node")
-    ]
-
-    for step in node_steps:
             step_with = step.get("with", {})
             assert "node-version" in step_with, (
                 "Node.js setup should specify a version"
@@ -1157,45 +1132,6 @@ class TestWorkflowEnvAndSecrets:
         # Check top-level env
         if "env" in config:
             invalid = check_env_vars(config["env"])
-@pytest.mark.parametrize("workflow_file", get_workflow_files())
-def test_workflow_env_vars_naming_convention(workflow_file: Path):
-    """
-    Ensure environment variable names in a workflow file are uppercase and contain only letters, digits or underscores.
-    
-    Checks environment variables at both the top-level workflow `env` and each job's `env`, and fails the test if any variable names do not match the required naming convention.
-    """
-    config = load_yaml_safe(workflow_file)
-    
-    def check_env_vars(env_dict):
-        """
-        Identify environment variable names that do not follow the convention of using only upper-case letters, digits and underscores.
-        
-        Parameters:
-            env_dict (dict): Mapping of environment variable names to their values. If a non-dict is provided it is treated as absent and no invalid names are returned.
-        
-        Returns:
-            invalid_keys (List[str]): List of keys from `env_dict` that are not composed solely of upper-case letters, digits and underscores.
-        """
-        if not isinstance(env_dict, dict):
-            return []
-        invalid = []
-        for key in env_dict.keys():
-            if not key.isupper() or not key.replace("_", "").isalnum():
-                invalid.append(key)
-        return invalid
-    
-    # Check top-level env
-    if "env" in config:
-        invalid = check_env_vars(config["env"])
-        assert not invalid, (
-            f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
-        )
-    
-    # Check job-level env
-    jobs = config.get("jobs", {})
-    for job_name, job_config in jobs.items():
-        if "env" in job_config:
-            invalid = check_env_vars(job_config["env"])
             assert not invalid, (
                 f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
             )
