@@ -167,8 +167,9 @@ cd frontend && npm test
 | test_github_workflows.py (helpers) | test_github_workflows_helpers.py | 33 | Helper function validation |
 | test-utils.ts | test-utils.test.ts | 65 | Mock data structure validation |
 | TEST_GENERATION_WORKFLOW_SUMMARY.md | test_workflow_documentation.py | 36 | Documentation quality |
+| TEST_GENERATION_WORKFLOW_SUMMARY.md | test_documentation_validation.py | 37 | Documentation validation |
 | requirements-dev.txt | test_requirements_dev.py | 27 | Dependency validation |
-| **TOTAL** | **4 new test files** | **161 tests** | **Comprehensive** |
+| **TOTAL** | **5 new test files** | **198 tests** | **Comprehensive** |
 
 ## What These Tests Validate
 
