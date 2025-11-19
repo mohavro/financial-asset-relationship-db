@@ -660,10 +660,10 @@ class TestWorkflowEdgeCases:
                 level for level in indentation_levels 
                 if level % 2 != 0
             ]
-            if inconsistent:
-                print(f"\nRecommendation: Workflow {workflow_file.name} has inconsistent indentation. "
-                      f"Found indentation levels: {sorted(indentation_levels)}. "
-                      "Use 2-space indentation consistently.")
+if inconsistent:
+    print(f"FORMATTING: Workflow {workflow_file.name} has inconsistent indentation "
+          f"levels: {sorted(indentation_levels)}. YAML requires consistent "
+          f"indentation (typically 2 spaces) to prevent parsing errors.")
 
 
 class TestWorkflowPerformance:
