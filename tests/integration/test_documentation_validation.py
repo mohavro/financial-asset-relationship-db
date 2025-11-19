@@ -259,37 +259,35 @@ class TestDocumentMaintainability:
 
 class TestLinkValidation:
     """Test suite for link validation."""
-    
-    import unicodedata
 
-    def _to_gfm_anchor(text: str) -> str:
-        # Lowercase
-        s = text.strip().lower()
-        # Normalize unicode to NFKD and remove diacritics
-        s = unicodedata.normalize('NFKD', s)
-        s = ''.join(ch for ch in s if not unicodedata.combining(ch))
-        # Remove punctuation/special chars except spaces and hyphens
-        s = re.sub(r'[^\w\s-]', '', s)
-        # Replace whitespace with single hyphen
-        s = re.sub(r'\s+', '-', s)
-        # Collapse multiple hyphens
-        s = re.sub(r'-{2,}', '-', s)
-        # Strip leading/trailing hyphens
-        s = s.strip('-')
-        return s
+    def test_internal_links_valid(self, summary_lines: List[str], summary_content: str):
+        import unicodedata
 
-    # Extract headers and internal links from the document
-    headers = [line.lstrip('#').strip() for line in summary_lines if line.startswith('#')]
-    internal_links = re.findall(r'\[([^\]]+)\]\(#([^)]+)\)', summary_content)
+        def _to_gfm_anchor(text: str) -> str:
+            # Lowercase
+            s = text.strip().lower()
+            # Normalize unicode to NFKD and remove diacritics
+            s = unicodedata.normalize('NFKD', s)
+            s = ''.join(ch for ch in s if not unicodedata.combining(ch))
+            # Remove punctuation/special chars except spaces and hyphens
+            s = re.sub(r'[^\w\s-]', '', s)
+            # Replace whitespace with single hyphen
+            s = re.sub(r'\s+', '-', s)
+            # Collapse multiple hyphens
+            s = re.sub(r'-{2,}', '-', s)
+            # Strip leading/trailing hyphens
+            s = s.strip('-')
+            return s
 
-    # Build set of valid anchors from headers
-    for header in headers:
-        valid_anchors.add(_to_gfm_anchor(header))
+        # Extract headers and internal links from the document
+        headers = [line.lstrip('#').strip() for line in summary_lines if line.startswith('#')]
+        valid_anchors: Set[str] = set(_to_gfm_anchor(header) for header in headers)
+        internal_links = re.findall(r'\[([^\]]+)\]\(#([^)]+)\)', summary_content)
 
-    # Check each internal link
-    for text, anchor in internal_links:
-        assert anchor in valid_anchors, \
-            f"Internal link to #{anchor} references non-existent header"
+        # Check each internal link
+        for text, anchor in internal_links:
+            assert anchor in valid_anchors, \
+                f"Internal link to #{anchor} references non-existent header"
 class TestSecurityAndBestPractices:
     """Test suite for security and best practices in documentation."""
     
