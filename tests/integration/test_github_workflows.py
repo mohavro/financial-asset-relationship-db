@@ -299,16 +299,13 @@ class TestPrAgentWorkflow:
             "pr-agent workflow must have a descriptive 'name' field"
         )
         assert isinstance(pr_agent_workflow["name"], str) and pr_agent_workflow["name"].strip(), (
-            "pr-agent workflow 'name' must be a non-empty string"
-        )
-    
 
-    def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow triggers on pull request events."""
-        triggers = pr_agent_workflow.get("on", {})
-        assert "pull_request" in triggers, (
-            "pr-agent workflow must trigger on pull_request events"
-        )
+def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
+    """Test that pr-agent workflow triggers on pull request events."""
+    triggers = pr_agent_workflow.get("on", {})
+    assert "pull_request" in triggers, (
+        "pr-agent workflow must trigger on pull_request events"
+    )
 
     def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow has a pr-agent-trigger job."""
