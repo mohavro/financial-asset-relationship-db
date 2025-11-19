@@ -168,7 +168,44 @@ class TestWorkflowStructure:
             f"Workflow {workflow_file.name} missing trigger configuration ('on' field)"
         )
         Ensure the workflow defines at least one trigger via a top-level "on" field.
-        
+class TestPrAgentWorkflow:
+    # ... existing tests and fixtures within this class ...
+
+    def test_pr_agent_node_version(self, pr_agent_workflow: Dict[str, Any]):
+        """
+        Ensure every actions/setup-node step in the pr-agent 'review' job specifies Node.js version 18.
+        """
+        review_job = pr_agent_workflow["jobs"]["review"]
+        steps = review_job.get("steps", [])
+
+        node_steps = [
+            s for s in steps
+            if s.get("uses", "").startswith("actions/setup-node")
+        ]
+
+        for step in node_steps:
+            step_with = step.get("with", {})
+            assert "node-version" in step_with, (
+                "Node.js setup should specify a version"
+            )
+            assert step_with["node-version"] == "18", (
+                "Node.js version should be 18"
+            )
+    steps = review_job.get("steps", [])
+
+    node_steps = [
+        s for s in steps
+        if s.get("uses", "").startswith("actions/setup-node")
+    ]
+
+    for step in node_steps:
+        step_with = step.get("with", {})
+        assert "node-version" in step_with, (
+            "Node.js setup should specify a version"
+        )
+        assert step_with["node-version"] == "18", (
+            "Node.js version should be 18"
+        )
         Asserts that the loaded workflow mapping contains a top-level "on" key.
         """
         config = load_yaml_safe(workflow_file)
@@ -1165,10 +1202,9 @@ if invalid:
                 f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
             )
         
-        # Check job-level env
         jobs = config.get("jobs", {})
         for job_name, job_config in jobs.items():
-            if "env" in job_config:
+            if isinstance(job_config, dict) and "env" in job_config:
                 invalid = check_env_vars(job_config["env"])
                 if invalid:
                     print(f"\nRecommendation: Job '{job_name}' in {workflow_file.name} has non-standard env var names: {invalid}")
