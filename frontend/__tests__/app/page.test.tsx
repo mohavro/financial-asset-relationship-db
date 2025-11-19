@@ -34,6 +34,43 @@ beforeEach(() => {
   mockedApi.getVisualizationData.mockResolvedValue(mockVisualizationData);
 });
 
+// Sanity check: ensure centralized mocks conform to expected structure
+describe('Centralized Mock Shape Validation', () => {
+  it('mockMetrics should have expected keys and types', () => {
+    expect(mockMetrics).toEqual(
+      expect.objectContaining({
+        total_assets: expect.any(Number),
+        total_relationships: expect.any(Number),
+        asset_classes: expect.any(Object),
+        avg_degree: expect.any(Number),
+        max_degree: expect.any(Number),
+        network_density: expect.any(Number),
+      })
+    );
+  });
+
+  it('mockVisualizationData should have nodes and edges with expected fields', () => {
+    expect(mockVisualizationData).toEqual(
+      expect.objectContaining({
+        nodes: expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            name: expect.any(String),
+            symbol: expect.any(String),
+            asset_class: expect.any(String),
+            x: expect.any(Number),
+            y: expect.any(Number),
+            z: expect.any(Number),
+            color: expect.any(String),
+            size: expect.any(Number),
+          }),
+        ]),
+        edges: expect.any(Array),
+      })
+    );
+  });
+});
+
 describe('Home Page', () => {
 
   it('should render header', async () => {
