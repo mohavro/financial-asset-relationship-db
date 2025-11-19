@@ -622,9 +622,13 @@ class TestWorkflowEdgeCases:
                 if level % 2 != 0
             ]
             if inconsistent:
-                print(f"FORMATTING: Workflow {workflow_file.name} has inconsistent indentation "
-                      f"levels: {sorted(indentation_levels)}. YAML requires consistent "
-                      f"indentation (typically 2 spaces) to prevent parsing errors.")
+                pytest.warns(UserWarning, match="inconsistent indentation")
+                pytest.warn(
+                    UserWarning,
+                    f"FORMATTING: Workflow {workflow_file.name} has inconsistent indentation "
+                    f"levels: {sorted(indentation_levels)}. YAML requires consistent "
+                    f"indentation (typically 2 spaces) to prevent parsing errors."
+                )
 
 
 class TestWorkflowPerformance:
