@@ -49,9 +49,8 @@ class TestGetWorkflowFiles:
         """Test that empty list is returned when workflows directory doesn't exist."""
         nonexistent_dir = tmp_path / "nonexistent" / "workflows"
         
-        with patch('tests.integration.test_github_workflows.WORKFLOWS_DIR', nonexistent_dir):
-            result = get_workflow_files()
-            assert result == []
+        result = get_workflow_files(nonexistent_dir)
+        assert result == []
     
     def test_finds_yml_files(self, tmp_path):
         """Test that .yml files are found."""
@@ -327,40 +326,47 @@ job2:
         result = check_duplicate_keys(yaml_file)
         assert result == []
     
-    def test_handles_invalid_yaml_gracefully(self, tmp_path):
-        """Test that invalid YAML is handled gracefully."""
+    def test_handles_invalid_yaml_gracefully(self, tmp_path, caplog):
+        """Test that invalid YAML is handled gracefully and logs an informative message."""
         yaml_file = tmp_path / "invalid.yml"
         yaml_file.write_text("invalid: yaml: [unclosed")
-        
-        result = check_duplicate_keys(yaml_file)
+
+        with caplog.at_level("ERROR"):
+            result = check_duplicate_keys(yaml_file)
+
+        # Should return an empty list on invalid YAML
         assert isinstance(result, list)
-    
+        assert result == []
+
+        # Should log an error mentioning the file and YAML parse failure
+        assert any(
+            ("invalid.yml" in rec.message or str(yaml_file) in rec.message)
+            and ("yaml" in rec.message.lower() or "parse" in rec.message.lower() or "failed" in rec.message.lower())
+            for rec in caplog.records
+        )
     def test_github_actions_pr_agent_scenario(self, tmp_path):
         """Test the specific PR Agent workflow duplicate key scenario."""
         yaml_content = """
-name: PR Agent
-on:
-  pull_request:
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-"""
+    name: PR Agent
+    on:
+      pull_request:
+    jobs:
+      review:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+            uses: actions/checkout@v3 # Duplicate key
+          - name: Setup Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: '3.11'
+    """
         yaml_file = tmp_path / "pr_agent.yml"
         yaml_file.write_text(yaml_content)
         
         result = check_duplicate_keys(yaml_file)
-        assert isinstance(result, list)
+        assert "uses" in result, "The duplicate 'uses' key should be detected"
     
     def test_detects_duplicate_in_list_of_mappings(self, tmp_path):
         """Test detection of duplicates within a mapping that's in a list."""
