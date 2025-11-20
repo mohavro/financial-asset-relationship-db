@@ -174,7 +174,7 @@ python3 -m pytest tests/integration/ -v --cov=tests --cov-report=term-missing
 | `tests/integration/test_documentation_validation.py` | 374 | 11 | 37+ |
 | `tests/integration/test_github_workflows.py` | 2,339 | 8 | 40+ (existing) |
 
-**Total New Tests Generated**: 121+ test cases across 2 new files
+**Total New Tests Generated**: 121+ test cases across 5 new files
 
 ## What These Tests Validate
 
@@ -310,7 +310,7 @@ All generated tests integrate seamlessly with existing CI/CD pipelines:
 
 This comprehensive test generation effort has resulted in:
 
-- **121+ new test cases** across 2 new test files
+- **121+ new test cases** across 5 new test files
 - **963 lines** of new test code
 - **1 critical bug fix** in existing test file
 - **Extensive validation** of mock data, documentation, and workflows
