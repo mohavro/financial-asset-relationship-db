@@ -6,7 +6,7 @@ This document summarizes the comprehensive unit and integration tests generated 
 
 ## Files Modified in This Branch
 
-Based on `git diff main..HEAD --stat`:
+Key files addressed in this test generation effort:
 
 1. `.github/workflows/pr-agent.yml` - Fixed duplicate YAML key
 2. `TEST_GENERATION_WORKFLOW_SUMMARY.md` - New documentation file
@@ -18,7 +18,7 @@ Based on `git diff main..HEAD --stat`:
 
 ## Generated Test Files
 
-### 1. frontend/__tests__/test-utils.test.ts (NEW - 1008 lines)
+### 1. frontend/__tests__/test-utils.test.ts (NEW - 1348 lines)
 
 **Purpose**: Comprehensive validation of all mock data objects used across the frontend test suite.
 
@@ -170,9 +170,9 @@ python3 -m pytest tests/integration/ -v --cov=tests --cov-report=term-missing
 
 | File | Lines of Code | Test Classes | Approximate Test Count |
 |------|---------------|--------------|------------------------|
-| `frontend/__tests__/test-utils.test.ts` | 614 | 10 | 84+ |
-| `tests/integration/test_documentation_validation.py` | 349 | 11 | 37+ |
-| `tests/integration/test_github_workflows.py` | 1,890 | 8 | 40+ (existing) |
+| `frontend/__tests__/test-utils.test.ts` | 1365 | 10 | 84+ |
+| `tests/integration/test_documentation_validation.py` | 374 | 11 | 37+ |
+| `tests/integration/test_github_workflows.py` | 2,339 | 8 | 40+ (existing) |
 
 **Total New Tests Generated**: 121+ test cases across 2 new files
 

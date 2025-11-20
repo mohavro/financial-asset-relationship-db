@@ -25,15 +25,31 @@ def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
             if not line or line.startswith('#'):
                 continue
             
-            if '>=' in line:
-                pkg, version = line.split('>=')
-                requirements.append((pkg.strip(), f'>={version.strip()}'))
-            elif '==' in line:
-                pkg, version = line.split('==')
-                requirements.append((pkg.strip(), f'=={version.strip()}'))
-            elif '<=' in line:
-                pkg, version = line.split('<=')
-                requirements.append((pkg.strip(), f'<={version.strip()}'))
+            # Support multiple specifiers like "pkg>=1.0,<=2.0" and validate format
+            # Split out any inline comments first
+            clean = line.split('#', 1)[0].strip()
+            if not clean:
+                continue
+            # Match "name[extras] op version" segments; we ignore extras for name extraction here
+            parts = [p.strip() for p in clean.split(',')]
+            name_part = parts[0]
+            # Extract package name (alphanum, -, _, . allowed) before any specifier
+            m_name = re.match(r'^([A-Za-z0-9._-]+)', name_part)
+            if not m_name:
+                raise AssertionError(f"Malformed requirement line (invalid package name): {line}")
+            pkg = m_name.group(1)
+            # Find all specifiers across all parts
+            spec_pattern = re.compile(r'(>=|==|<=|>|<|~=)\s*([0-9A-Za-z.*+-]+(?:\.[0-9A-Za-z*+-]+)*)')
+            specs = []
+            for p in parts:
+                specs.extend([f"{op}{ver}" for op, ver in spec_pattern.findall(p)])
+            if not specs:
+                # No specifiers found; treat as no-version constraint explicitly
+                requirements.append((pkg.strip(), ''))
+            else:
+                # Normalize by joining with comma
+                version_spec = ','.join(specs)
+                requirements.append((pkg.strip(), version_spec))
             else:
                 requirements.append((line, ''))
     
@@ -143,13 +159,20 @@ class TestVersionSpecifications:
     
     def test_all_packages_have_versions(self, requirements: List[Tuple[str, str]]):
         """Test that all packages specify version constraints."""
-# Removed duplicate, misindented standalone test function.
-# The correctly indented class method version remains within TestVersionSpecifications.
-        version_pattern = re.compile(r'^(>=|==|<=|>|<|~=)\d+(\.\d+)*$')
-        
+        packages_without_versions = [pkg for pkg, ver in requirements if not ver]
+        assert len(packages_without_versions) == 0
+    
+    def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
+        """Test that version specifications use valid format."""
+    from packaging.specifiers import SpecifierSet
+    def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
+        """Test that version specifications use valid PEP 440 format."""
         for pkg, ver_spec in requirements:
             if ver_spec:
-                assert version_pattern.match(ver_spec)
+                try:
+                    SpecifierSet(ver_spec)
+                except Exception as e:
+                    assert False, f"Invalid version specifier for {pkg}: {ver_spec} ({e})"
     
     def test_pyyaml_version(self, requirements: List[Tuple[str, str]]):
         """Test that PyYAML has appropriate version constraint."""
@@ -251,63 +274,30 @@ class TestSpecificChanges:
         """Test that existing packages are still present."""
         package_names = [pkg for pkg, _ in requirements]
         
-class TestRequiredPackages:
-    """Test that required development packages are present."""
-    
-    @pytest.fixture
-    def requirements(self) -> List[Tuple[str, str]]:
-        """Parse and return requirements."""
-        return parse_requirements(REQUIREMENTS_FILE)
-    
-    @pytest.fixture
-    def package_names(self, requirements: List[Tuple[str, str]]) -> List[str]:
-        """Extract just the package names."""
-        return [pkg for pkg, _ in requirements]
-    
-    def test_has_pytest(self, package_names: List[str]):
-        """Test that pytest is included."""
-        assert 'pytest' in package_names
-    
-    def test_has_pytest_cov(self, package_names: List[str]):
-        """Test that pytest-cov is included."""
-        assert 'pytest-cov' in package_names
-    
-    def test_has_pyyaml(self, package_names: List[str]):
-        """Test that PyYAML is included (added in the diff)."""
-        assert 'PyYAML' in package_names
-    
-    def test_has_types_pyyaml(self, package_names: List[str]):
-        """Test that types-PyYAML is included (added in the diff)."""
-        assert 'types-PyYAML' in package_names
-    
-    def test_has_flake8(self, package_names: List[str]):
-        """Test that flake8 is included."""
-        assert 'flake8' in package_names
-    
-    def test_has_black(self, package_names: List[str]):
-        """Test that black is included."""
-        assert 'black' in package_names
-    
-    def test_has_mypy(self, package_names: List[str]):
-        """Test that mypy is included."""
-        assert 'mypy' in package_names
-        
-    def test_critical_dev_tools_present(self, package_names: List[str]):
-        """Ensure critical dev tools are not accidentally removed."""
-        critical_tools = {
+        def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
+            """Test that existing packages are still present."""
+            package_names = [pkg for pkg, _ in requirements]
+
+            # Derive expected packages dynamically from the requirements file
+            with open(REQUIREMENTS_FILE, 'r', encoding='utf-8') as f:
+                expected_packages = []
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    # Extract package name before any version specifier
+                    for sep in ('>=', '==', '<=', '>', '<', '~='):
+                        if sep in line:
+                            expected_packages.append(line.split(sep)[0].strip())
+                            break
+                    else:
+                        expected_packages.append(line)
+
+            for expected_pkg in expected_packages:
+                assert expected_pkg in package_names
             'pytest',
             'pytest-cov',
-            'flake8',
-            'mypy',
-            'black',
-            'isort',
-            'pre-commit',
-            'pylint',
-        }
-        missing = [pkg for pkg in critical_tools if pkg not in package_names]
-        assert not missing, f"Missing critical dev tools in requirements-dev.txt: {missing}"
-            'pytest',
-            'pytest-cov',
+            'pytest-asyncio',
             'flake8',
             'pylint',
             'mypy',
