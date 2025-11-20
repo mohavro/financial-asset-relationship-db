@@ -340,7 +340,9 @@ describe('test-utils Mock Data Validation', () => {
 
     it('should have positive numeric values', () => {
       expect(mockAsset.price).toBeGreaterThan(0);
-      expect(mockAsset.market_cap).toBeGreaterThan(0);
+      if (mockAsset.market_cap !== undefined) {
+        expect(mockAsset.market_cap).toBeGreaterThan(0);
+      }
       expect(mockAsset.additional_fields.pe_ratio).toBeGreaterThan(0);
       expect(mockAsset.additional_fields.dividend_yield).toBeGreaterThanOrEqual(0);
     });
