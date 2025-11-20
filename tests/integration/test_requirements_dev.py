@@ -164,6 +164,7 @@ class TestVersionSpecifications:
     def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
         """Test that version specifications use valid format."""
     # Add at the top of the file with other imports
+    # Add at the top with other imports
     from packaging.specifiers import SpecifierSet
     def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
         """Test that version specifications use valid PEP 440 format."""
