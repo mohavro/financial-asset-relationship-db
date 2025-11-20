@@ -303,7 +303,23 @@ class TestPrAgentWorkflow:
         )
     
     def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow triggers on pull request events."""
+    def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
+        """Test that pr-agent workflow triggers on pull_request events."""
+        raw_triggers = pr_agent_workflow.get("on", {})
+
+        # Normalize triggers to a set of explicit event names
+        if isinstance(raw_triggers, str):
+            normalized = {raw_triggers}
+        elif isinstance(raw_triggers, list):
+            normalized = set(raw_triggers)
+        elif isinstance(raw_triggers, dict):
+            normalized = set(raw_triggers.keys())
+        else:
+            normalized = set()
+
+        assert "pull_request" in normalized, (
+            "pr-agent workflow must trigger on pull_request events"
+        )
         triggers = pr_agent_workflow.get("on", {})
         assert "pull_request" in triggers, (
             "pr-agent workflow must trigger on pull_request events"
