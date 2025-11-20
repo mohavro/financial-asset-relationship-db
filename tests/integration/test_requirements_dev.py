@@ -306,7 +306,29 @@ class TestSpecificChanges:
         assert len(types_entries) == 1
     
     def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
+    def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
         """Test that existing packages are still present."""
+        package_names = [pkg for pkg, _ in requirements]
+
+        expected_packages: List[str] = []
+        with open(REQUIREMENTS_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                clean = line.split('#', 1)[0].strip()
+                if not clean:
+                    continue
+                # Extract the package name before any version specifier tokens
+                for sep in ('>=', '==', '<=', '>', '<', '~='):
+                    if sep in clean:
+                        expected_packages.append(clean.split(sep, 1)[0].strip())
+                        break
+                else:
+                    expected_packages.append(clean.strip())
+
+        for expected_pkg in expected_packages:
+            assert expected_pkg in package_names
         package_names = [pkg for pkg, _ in requirements]
         
         expected_packages = [
