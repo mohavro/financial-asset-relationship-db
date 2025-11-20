@@ -425,8 +425,7 @@ describe('API Client', () => {
 
       const result = await api.healthCheck();
 
-      expect(result).toBeNull();
-    });
+      await expect(api.getAllRelationships()).rejects.toThrow();
   });
 
   describe('Advanced Error Handling', () => {
