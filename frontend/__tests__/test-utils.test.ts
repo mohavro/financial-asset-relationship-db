@@ -1026,11 +1026,9 @@ describe('test-utils Mock Data Validation', () => {
         expect(mockMetrics.max_degree).toBeLessThan(mockMetrics.total_assets);
       });
 
-      it('should have sum of asset class counts equal total assets', () => {
       it('should have sum of asset class counts less than or equal to total assets', () => {
         const sum = Object.values(mockMetrics.asset_classes).reduce((a, b) => a + b, 0);
         expect(sum).toBeLessThanOrEqual(mockMetrics.total_assets);
-      });
       });
     });
 
