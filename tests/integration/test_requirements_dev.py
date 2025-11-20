@@ -174,6 +174,14 @@ class TestVersionSpecifications:
                     SpecifierSet(ver_spec)
                 except Exception as e:
                     assert False, f"Invalid version specifier for {pkg}: {ver_spec} ({e})"
+    def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
+        """Test that version specifications use valid PEP 440 format."""
+        for pkg, ver_spec in requirements:
+            if ver_spec:
+                try:
+                    SpecifierSet(ver_spec)
+                except Exception as e:
+                    assert False, f"Invalid version specifier for {pkg}: {ver_spec} ({e})"
     
     def test_pyyaml_version(self, requirements: List[Tuple[str, str]]):
         """Test that PyYAML has appropriate version constraint."""
