@@ -53,7 +53,7 @@ class TestDocumentationStructure:
     @pytest.fixture(scope='session')
     # Move this fixture to module level (outside the class)
     @pytest.fixture(scope='session')
-    def doc_lines(doc_content: str) -> List[str]:
+    def doc_lines(self, doc_content: str) -> List[str]:
         """Provide the documentation as a list of lines once per session."""
         return doc_content.splitlines(keepends=True)
     
