@@ -1153,7 +1153,13 @@ class TestWorkflowEnvAndSecrets:
         if "env" in config:
             invalid = check_env_vars(config["env"])
             if invalid:
+# Check top-level env
+        if "env" in config:
+            invalid = check_env_vars(config["env"])
+            if invalid:
                 print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
+                      f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
+                      f"readability and consistency across workflows.")
                       f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
                       f"readability and consistency across workflows.")
 
