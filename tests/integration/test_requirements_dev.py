@@ -51,7 +51,6 @@ def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
                 version_spec = ','.join(specs)
                 requirements.append((pkg.strip(), version_spec))
             # Removed stray else that caused a syntax error and incorrect behavior
-                requirements.append((line, ''))
     
     return requirements
 
