@@ -50,7 +50,6 @@ def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
                 # Normalize by joining with comma
                 version_spec = ','.join(specs)
                 requirements.append((pkg.strip(), version_spec))
-    
     return requirements
 
 
@@ -161,8 +160,21 @@ class TestVersionSpecifications:
         assert len(packages_without_versions) == 0
     
     def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
+        """Test that version specifications use valid format."""
+    # Add at the top of the file with other imports
+    # Add at the top with other imports
+    from packaging.specifiers import SpecifierSet
+    def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
         """Test that version specifications use valid PEP 440 format."""
         from packaging.specifiers import SpecifierSet
+        for pkg, ver_spec in requirements:
+            if ver_spec:
+                try:
+                    SpecifierSet(ver_spec)
+                except Exception as e:
+                    assert False, f"Invalid version specifier for {pkg}: {ver_spec} ({e})"
+    def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
+        """Test that version specifications use valid PEP 440 format."""
         for pkg, ver_spec in requirements:
             if ver_spec:
                 try:
