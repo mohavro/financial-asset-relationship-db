@@ -219,20 +219,20 @@ class TestWorkflowActions:
     
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_actions_have_versions(self, workflow_file: Path):
-        """Test that all GitHub Actions specify a version/tag."""
+        """Test that all GitHub Actions specify a version/tag and flag floating branches."""
         config = load_yaml_safe(workflow_file)
         jobs = config.get("jobs", {})
-        
+
         for job_name, job_config in jobs.items():
             steps = job_config.get("steps", [])
-            
+
             for idx, step in enumerate(steps):
                 if "uses" in step:
                     action = step["uses"]
                     # Local actions (starting with ./) don't need version tags
                     if action.startswith("./"):
                         continue
-                    # Action should have a version tag (e.g., @v1, @main, @sha)
+                    # Action should have a version tag (e.g., @v1, @v3.5.2, or @<commit-sha>)
                     assert "@" in action, (
                         f"Step {idx} in job '{job_name}' of {workflow_file.name} "
                         f"must specify a pinned version for action '{action}' (e.g., @v1, @v3.5.2, or @<commit-sha>). "
@@ -244,7 +244,12 @@ class TestWorkflowActions:
                         f"Step {idx} in job '{job_name}' of {workflow_file.name} "
                         f"uses a floating branch '{ref}' for action '{action}'. Use a tagged release or commit SHA."
                     )
-    
+                    # Informational: if pinned by full SHA, recommend considering semver tags for maintainability
+                    if len(ref) == 40 and all(c in "0123456789abcdef" for c in ref.lower()):
+                        print(
+                            f"Info: Step {idx} in job '{job_name}' of {workflow_file.name} "
+                            f"pins '{action}' by commit SHA. Consider using a semantic version tag for easier maintenance."
+                        )
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_steps_have_names_or_uses(self, workflow_file: Path):
         """
