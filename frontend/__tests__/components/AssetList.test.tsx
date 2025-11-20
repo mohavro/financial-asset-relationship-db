@@ -41,7 +41,20 @@ describe('AssetList Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRouterReplace.mockClear();
+    mockRouterReplace.mockImplementation((url: string) => {
+      const queryString = url.split('?')[1] ?? '';
+      mockSearch = queryString;
+    });
+    mockSearch = '';
+    mockedApi.getAssets.mockResolvedValue({
+      items: mockAssets,
+      total: mockAssets.length,
+      page: 1,
+      per_page: 20,
+    });
+    mockedApi.getAssetClasses.mockResolvedValue(mockAssetClasses);
+    mockedApi.getSectors.mockResolvedValue(mockSectors);
+  });
     mockRouterReplace.mockImplementation((url: string) => {
       const queryString = url.split('?')[1] ?? '';
       mockSearch = queryString;
