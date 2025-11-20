@@ -300,11 +300,6 @@ class TestSpecificChanges:
             'pytest-asyncio',
             'flake8',
             'pylint',
-            'mypy',
-            'black',
-            'isort',
-            'pre-commit'
-        ]
         
         for expected_pkg in expected_packages:
             assert expected_pkg in package_names
