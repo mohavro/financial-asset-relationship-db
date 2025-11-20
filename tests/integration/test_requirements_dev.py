@@ -259,7 +259,61 @@ class TestSpecificChanges:
         """Test that existing packages are still present."""
         package_names = [pkg for pkg, _ in requirements]
         
-        expected_packages = [
+class TestRequiredPackages:
+    """Test that required development packages are present."""
+    
+    @pytest.fixture
+    def requirements(self) -> List[Tuple[str, str]]:
+        """Parse and return requirements."""
+        return parse_requirements(REQUIREMENTS_FILE)
+    
+    @pytest.fixture
+    def package_names(self, requirements: List[Tuple[str, str]]) -> List[str]:
+        """Extract just the package names."""
+        return [pkg for pkg, _ in requirements]
+    
+    def test_has_pytest(self, package_names: List[str]):
+        """Test that pytest is included."""
+        assert 'pytest' in package_names
+    
+    def test_has_pytest_cov(self, package_names: List[str]):
+        """Test that pytest-cov is included."""
+        assert 'pytest-cov' in package_names
+    
+    def test_has_pyyaml(self, package_names: List[str]):
+        """Test that PyYAML is included (added in the diff)."""
+        assert 'PyYAML' in package_names
+    
+    def test_has_types_pyyaml(self, package_names: List[str]):
+        """Test that types-PyYAML is included (added in the diff)."""
+        assert 'types-PyYAML' in package_names
+    
+    def test_has_flake8(self, package_names: List[str]):
+        """Test that flake8 is included."""
+        assert 'flake8' in package_names
+    
+    def test_has_black(self, package_names: List[str]):
+        """Test that black is included."""
+        assert 'black' in package_names
+    
+    def test_has_mypy(self, package_names: List[str]):
+        """Test that mypy is included."""
+        assert 'mypy' in package_names
+        
+    def test_critical_dev_tools_present(self, package_names: List[str]):
+        """Ensure critical dev tools are not accidentally removed."""
+        critical_tools = {
+            'pytest',
+            'pytest-cov',
+            'flake8',
+            'mypy',
+            'black',
+            'isort',
+            'pre-commit',
+            'pylint',
+        }
+        missing = [pkg for pkg in critical_tools if pkg not in package_names]
+        assert not missing, f"Missing critical dev tools in requirements-dev.txt: {missing}"
             'pytest',
             'pytest-cov',
             'flake8',
