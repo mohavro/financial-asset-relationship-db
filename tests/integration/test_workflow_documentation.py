@@ -45,11 +45,10 @@ class TestDocumentationStructure:
     
     @pytest.fixture(scope='session')
     @pytest.fixture(scope='session')
-    def doc_content(self) -> str:
+    def doc_content() -> str:
         """Load the documentation content once per test session."""
         with open(DOC_FILE, 'r', encoding='utf-8') as f:
             return f.read()
-
     @pytest.fixture(scope='session')
     # Move this fixture to module level (outside the class)
     @pytest.fixture(scope='session')
