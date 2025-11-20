@@ -43,11 +43,11 @@ class TestDocumentationExists:
 class TestDocumentationStructure:
     """Test the structure and formatting of the documentation."""
     
-    @pytest.fixture(scope='session')
-    def doc_content(self) -> str:
-        """Load the documentation content once per test session."""
-        with open(DOC_FILE, 'r', encoding='utf-8') as f:
-            return f.read()
+@pytest.fixture(scope='session')
+def doc_content() -> str:
+    """Load the documentation content once per test session."""
+    with open(DOC_FILE, 'r', encoding='utf-8') as f:
+        return f.read()
 
     @pytest.fixture(scope='session')
     def doc_lines(doc_content: str) -> List[str]:
