@@ -50,8 +50,6 @@ def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
                 # Normalize by joining with comma
                 version_spec = ','.join(specs)
                 requirements.append((pkg.strip(), version_spec))
-            # Removed stray else that caused a syntax error and incorrect behavior
-    
     return requirements
 
 
