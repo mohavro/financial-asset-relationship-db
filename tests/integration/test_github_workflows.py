@@ -304,12 +304,11 @@ class TestPrAgentWorkflow:
         jobs = pr_agent_workflow.get("jobs", {})
         assert "review" in jobs, "pr-agent workflow must have a 'review' job"
     
-    def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that review job runs on Ubuntu."""
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
         runs_on = review_job.get("runs-on", "")
         assert "ubuntu" in runs_on.lower(), (
             "Review job should run on Ubuntu runner"
+        )
         )
     
     def test_pr_agent_has_checkout_step(self, pr_agent_workflow: Dict[str, Any]):
