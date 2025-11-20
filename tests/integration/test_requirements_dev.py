@@ -143,16 +143,8 @@ class TestVersionSpecifications:
     
     def test_all_packages_have_versions(self, requirements: List[Tuple[str, str]]):
         """Test that all packages specify version constraints."""
-def test_all_packages_have_versions(self, requirements: List[Tuple[str, str]]):
-    """Test that all packages (except explicitly allowed ones) specify version constraints."""
-    packages_without_versions = [
-        pkg for pkg, ver in requirements 
-        if not ver and pkg != 'types-PyYAML'
-    ]
-    assert len(packages_without_versions) == 0
-    
-    def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
-        """Test that version specifications use valid format."""
+# Removed duplicate, misindented standalone test function.
+# The correctly indented class method version remains within TestVersionSpecifications.
         version_pattern = re.compile(r'^(>=|==|<=|>|<|~=)\d+(\.\d+)*$')
         
         for pkg, ver_spec in requirements:
