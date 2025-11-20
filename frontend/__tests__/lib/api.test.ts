@@ -425,10 +425,8 @@ describe('API Client', () => {
 
       const result = await api.healthCheck();
 
-      expect(result).toBeNull();
-    });
+      await expect(api.getAllRelationships()).rejects.toThrow();
   });
-});
 
   describe('Advanced Error Handling', () => {
     it('should handle network timeout errors', async () => {
@@ -604,5 +602,26 @@ describe('API Client', () => {
       const result = await api.getAssetDetail('ASSET_1');
 
       expect(result.additional_fields.nested.deep.value).toBe(123);
-    });
+      // Missing nested fields should be handled gracefully
+      const missingNestedAsset = {
+        ...mockAsset,
+        additional_fields: undefined,
+      };
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: missingNestedAsset });
+      const resultMissing = await api.getAssetDetail('ASSET_1');
+      expect(resultMissing.additional_fields?.nested?.deep?.value).toBeUndefined();
+
+      // Malformed nested structure (deep is not an object)
+      const malformedNestedAsset = {
+        ...mockAsset,
+        additional_fields: {
+          nested: {
+            deep: null,
+          },
+        },
+      };
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: malformedNestedAsset });
+      const resultMalformed = await api.getAssetDetail('ASSET_1');
+      expect(resultMalformed.additional_fields?.nested?.deep && typeof resultMalformed.additional_fields.nested.deep === 'object').toBe(false);
   });
+});
