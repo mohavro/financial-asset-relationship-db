@@ -44,14 +44,18 @@ def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
             for p in parts:
                 specs.extend([f"{op}{ver}" for op, ver in spec_pattern.findall(p)])
             if not specs:
-                # No specifiers found; treat as no-version constraint explicitly
-                requirements.append((pkg.strip(), ''))
-            else:
-                # Normalize by joining with comma
-                version_spec = ','.join(specs)
-                requirements.append((pkg.strip(), version_spec))
-    return requirements
-
+    # Find all specifiers across all parts
+    spec_pattern = re.compile(r'(>=|==|<=|>|<|~=)\s*([0-9A-Za-z.*+-]+(?:\.[0-9A-Za-z*+-]+)*)')
+    specs = []
+    for p in parts:
+        specs.extend([f"{op}{ver}" for op, ver in spec_pattern.findall(p)])
+    if not specs:
+        # No specifiers found; treat as no-version constraint explicitly
+        requirements.append((pkg.strip(), ''))
+    else:
+        # Normalize by joining with comma
+        version_spec = ','.join(specs)
+        requirements.append((pkg.strip(), version_spec))
 
 class TestRequirementsFileExists:
     """Test that requirements-dev.txt exists and is readable."""
@@ -159,13 +163,57 @@ class TestVersionSpecifications:
         packages_without_versions = [pkg for pkg, ver in requirements if not ver]
         assert len(packages_without_versions) == 0
     
-    def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
+from packaging.specifiers import SpecifierSet
+
+def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
+    """Parse requirements file and return list of (package, version_spec) tuples."""
+    requirements: List[Tuple[str, str]] = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                # Remove inline comments
+                clean = line.split('#', 1)[0].strip()
+                if not clean:
+                    continue
+                # Support multiple specifiers separated by commas
+                parts = [p.strip() for p in clean.split(',')]
+                name_part = parts[0]
+                m_name = re.match(r'^([A-Za-z0-9._-]+)', name_part)
+                if not m_name:
+                    raise AssertionError(f"Malformed requirement line (invalid package name): {line}")
+                pkg = m_name.group(1)
+
+                spec_pattern = re.compile(r'(>=|==|<=|>|<|~=)\s*([0-9A-Za-z.*+-]+(?:\.[0-9A-Za-z*+-]+)*)')
+                specs: List[str] = []
+                for p in parts:
+                    specs.extend([f"{op}{ver}" for op, ver in spec_pattern.findall(p)])
+
+                if not specs:
+                    requirements.append((pkg.strip(), ''))
+                else:
+                    version_spec = ','.join(specs)
+                    requirements.append((pkg.strip(), version_spec))
+    except OSError as e:
+        raise AssertionError(f"Could not read requirements file '{file_path}': {e}")
+
+def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
+    """Test that version specifications use valid PEP 440 format."""
+    for pkg, ver_spec in requirements:
+        if ver_spec:
+            try:
+                SpecifierSet(ver_spec)
+            except Exception as e:
+                assert False, f"Invalid version specifier for {pkg}: {ver_spec} ({e})"
         """Test that version specifications use valid format."""
     # Add at the top of the file with other imports
     # Add at the top with other imports
     from packaging.specifiers import SpecifierSet
     def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
         """Test that version specifications use valid PEP 440 format."""
+        from packaging.specifiers import SpecifierSet
         for pkg, ver_spec in requirements:
             if ver_spec:
                 try:
@@ -278,35 +326,6 @@ class TestSpecificChanges:
         assert len(types_entries) == 1
     
     def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
-        """Test that existing packages are still present."""
-        package_names = [pkg for pkg, _ in requirements]
-        
-        def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
-            """Test that existing packages are still present."""
-            package_names = [pkg for pkg, _ in requirements]
-
-            # Derive expected packages dynamically from the requirements file
-            with open(REQUIREMENTS_FILE, 'r', encoding='utf-8') as f:
-                expected_packages = []
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
-                        continue
-                    # Extract package name before any version specifier
-                    for sep in ('>=', '==', '<=', '>', '<', '~='):
-                        if sep in line:
-                            expected_packages.append(line.split(sep)[0].strip())
-                            break
-                    else:
-                        expected_packages.append(line)
-
-            for expected_pkg in expected_packages:
-                assert expected_pkg in package_names
-            'pytest',
-            'pytest-cov',
-            'pytest-asyncio',
-            'flake8',
-            'pylint',
-        
-        for expected_pkg in expected_packages:
-            assert expected_pkg in package_names
+    def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
+        missing = [pkg for pkg in expected_packages if pkg not in package_names]
+        assert not missing, f"Missing expected packages: {missing}"
