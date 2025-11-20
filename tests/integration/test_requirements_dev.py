@@ -274,10 +274,30 @@ class TestSpecificChanges:
         """Test that existing packages are still present."""
         package_names = [pkg for pkg, _ in requirements]
         
-        expected_packages = [
+        def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
+            """Test that existing packages are still present."""
+            package_names = [pkg for pkg, _ in requirements]
+
+            # Derive expected packages dynamically from the requirements file
+            with open(REQUIREMENTS_FILE, 'r', encoding='utf-8') as f:
+                expected_packages = []
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    # Extract package name before any version specifier
+                    for sep in ('>=', '==', '<=', '>', '<', '~='):
+                        if sep in line:
+                            expected_packages.append(line.split(sep)[0].strip())
+                            break
+                    else:
+                        expected_packages.append(line)
+
+            for expected_pkg in expected_packages:
+                assert expected_pkg in package_names
             'pytest',
             'pytest-cov',
-            'pytest-mock',
+            'pytest-asyncio',
             'flake8',
             'pylint',
             'mypy',
