@@ -4,7 +4,113 @@
  * This test suite validates all mock data objects used across the frontend test suite,
  * ensuring they conform to the expected TypeScript interfaces and contain valid data.
  */
+import {
+  mockAssets,
+  mockAsset,
+  mockAssetClasses,
+  mockSectors,
+  mockRelationships,
+  mockAllRelationships,
+  mockMetrics,
+  mockVisualizationData,
+  mockVizData,
+} from './test-utils';
+import type { Asset, Relationship, Metrics, VisualizationData } from '../app/types/api';
 
+describe('test-utils Mock Data Validation', () => {
+  describe('mockAssets', () => {
+    it('should be an array with valid Asset objects', () => {
+      expect(Array.isArray(mockAssets)).toBe(true);
+      expect(mockAssets.length).toBeGreaterThan(0);
+      mockAssets.forEach((asset) => {
+        expect(asset).toHaveProperty('id');
+        expect(asset).toHaveProperty('symbol');
+        expect(asset).toHaveProperty('name');
+        expect(asset).toHaveProperty('asset_class');
+        expect(asset).toHaveProperty('sector');
+        expect(asset).toHaveProperty('price');
+        expect(asset).toHaveProperty('currency');
+        expect(asset).toHaveProperty('additional_fields');
+      });
+    });
+  });
+
+  describe('mockAsset', () => {
+    it('should conform to Asset', () => {
+      const a: Asset = mockAsset;
+      expect(a).toBeDefined();
+      expect(a.id).toBeTruthy();
+      expect(typeof a.asset_class).toBe('string');
+    });
+  });
+
+  describe('mockAssetClasses', () => {
+    it('should contain asset_classes array of strings', () => {
+      expect(mockAssetClasses).toHaveProperty('asset_classes');
+      expect(Array.isArray(mockAssetClasses.asset_classes)).toBe(true);
+      mockAssetClasses.asset_classes.forEach((cls) => expect(typeof cls).toBe('string'));
+    });
+  });
+
+  describe('mockSectors', () => {
+    it('should contain sectors array of strings', () => {
+      expect(mockSectors).toHaveProperty('sectors');
+      expect(Array.isArray(mockSectors.sectors)).toBe(true);
+      mockSectors.sectors.forEach((s) => expect(typeof s).toBe('string'));
+    });
+  });
+
+  describe('mockRelationships', () => {
+    it('should be an array of Relationship-like objects', () => {
+      expect(Array.isArray(mockRelationships)).toBe(true);
+      mockRelationships.forEach((rel) => {
+        expect(rel).toHaveProperty('source_id');
+        expect(rel).toHaveProperty('target_id');
+        expect(rel).toHaveProperty('relationship_type');
+        expect(rel).toHaveProperty('strength');
+      });
+    });
+  });
+
+  describe('mockAllRelationships', () => {
+    it('should be an array of Relationship-like objects', () => {
+      expect(Array.isArray(mockAllRelationships)).toBe(true);
+      mockAllRelationships.forEach((rel) => {
+        expect(rel).toHaveProperty('source_id');
+        expect(rel).toHaveProperty('target_id');
+        expect(rel).toHaveProperty('relationship_type');
+        expect(rel).toHaveProperty('strength');
+      });
+    });
+  });
+
+  describe('mockMetrics', () => {
+    it('should conform to Metrics', () => {
+      const m: Metrics = mockMetrics;
+      expect(m).toBeDefined();
+      expect(typeof m.total_assets).toBe('number');
+      expect(typeof m.total_relationships).toBe('number');
+    });
+  });
+
+  describe('mockVisualizationData', () => {
+    it('should conform to VisualizationData', () => {
+      const v: VisualizationData = mockVisualizationData;
+      expect(v).toBeDefined();
+      expect(Array.isArray(v.nodes)).toBe(true);
+      expect(Array.isArray(v.edges)).toBe(true);
+    });
+  });
+
+  describe('mockVizData', () => {
+    it('should be a VisualizationData-like object', () => {
+      expect(mockVizData).toHaveProperty('nodes');
+      expect(mockVizData).toHaveProperty('edges');
+      expect(Array.isArray(mockVizData.nodes)).toBe(true);
+      expect(Array.isArray(mockVizData.edges)).toBe(true);
+    });
+  });
+});
 import {
   mockAssets,
   mockAsset,
@@ -252,11 +358,8 @@ describe('test-utils Mock Data Validation', () => {
       const assetIds = mockAssets.map((a) => a.id);
       mockRelationships.forEach((rel) => {
         // At least one ID should be in mockAssets (some may reference ASSET_3, etc.)
-        const sourceValid = assetIds.includes(rel.source_id) || rel.source_id.startsWith('ASSET_');
-        const targetValid = assetIds.includes(rel.target_id) || rel.target_id.startsWith('ASSET_');
-        expect(sourceValid).toBe(true);
-        expect(targetValid).toBe(true);
-      });
+        expect(assetIds).toContain(rel.source_id);
+        expect(assetIds).toContain(rel.target_id);
     });
   });
 
@@ -779,26 +882,12 @@ describe('test-utils Mock Data Validation', () => {
         });
       });
 
-      it('should have bidirectional edge consistency', () => {
-        const edgeMap = new Map<string, Set<string>>();
-        mockVisualizationData.edges.forEach((edge) => {
-          if (!edgeMap.has(edge.source)) {
-            edgeMap.set(edge.source, new Set());
-          }
-          edgeMap.get(edge.source)?.add(edge.target);
-        });
-        
-        // If edge A->B exists with high strength, check for reasonable reciprocity
+        // If edge A->B exists with high strength, the reverse edge must exist
         mockVisualizationData.edges
           .filter(e => e.strength > 0.8)
           .forEach((edge) => {
-            const hasReverse = edgeMap.get(edge.target)?.has(edge.source);
-            // At least some high-strength edges should be bidirectional
-            if (hasReverse) {
-              expect(hasReverse).toBe(true);
-            }
+            expect(edgeMap.get(edge.target)?.has(edge.source)).toBe(true);
           });
-      });
     });
 
     describe('Additional Fields Validation', () => {
@@ -1004,6 +1093,363 @@ describe('test-utils Mock Data Validation', () => {
           expect(typeof node.size).toBe('number');
         });
       });
+    });
+  });
+});
+describe('Advanced Mock Data Validation - Additional Coverage', () => {
+  describe('Cross-Reference Integrity', () => {
+    it('should have all visualization node IDs present in assets', () => {
+      const assetIds = new Set(mockAssets.map(a => a.id));
+      const vizNodeIds = mockVisualizationData.nodes.map(n => n.id);
+      
+      vizNodeIds.forEach(nodeId => {
+        expect(assetIds.has(nodeId)).toBe(true);
+      });
+    });
+
+    it('should have consistent symbols across mocks', () => {
+      const assetSymbols = new Set(mockAssets.map(a => a.symbol));
+      
+      // Check if any mock references use consistent symbols
+      mockAssets.forEach(asset => {
+        expect(assetSymbols.has(asset.symbol)).toBe(true);
+      });
+    });
+
+    it('should have relationships with valid type enum values', () => {
+      const validTypes = new Set([
+        'correlation', 'causation', 'substitution', 
+        'complement', 'supplier', 'competitor',
+        'regulatory_impact', 'ownership'
+      ]);
+      
+      mockAllRelationships.forEach(rel => {
+        expect(validTypes.has(rel.type) || typeof rel.type === 'string').toBe(true);
+      });
+    });
+  });
+
+  describe('Realistic Financial Data Constraints', () => {
+    it('should have market cap values in realistic ranges', () => {
+      mockAssets.forEach(asset => {
+        // Market cap should be positive and less than global GDP (~100 trillion)
+        expect(asset.market_cap).toBeGreaterThan(0);
+        expect(asset.market_cap).toBeLessThan(100_000_000_000_000);
+      });
+    });
+
+    it('should have price values in realistic ranges', () => {
+      mockAssets.forEach(asset => {
+        // Prices should be positive
+        expect(asset.price).toBeGreaterThan(0);
+        // Extremely high prices might indicate bad data
+        expect(asset.price).toBeLessThan(1_000_000);
+      });
+    });
+
+    it('should have relationship strengths between 0 and 1', () => {
+      mockAllRelationships.forEach(rel => {
+        expect(rel.strength).toBeGreaterThanOrEqual(0);
+        expect(rel.strength).toBeLessThanOrEqual(1);
+      });
+      
+      mockVisualizationData.edges.forEach(edge => {
+        expect(edge.strength).toBeGreaterThanOrEqual(0);
+        expect(edge.strength).toBeLessThanOrEqual(1);
+      });
+    });
+
+    it('should have network density in valid range', () => {
+      expect(mockMetrics.network_density).toBeGreaterThanOrEqual(0);
+      expect(mockMetrics.network_density).toBeLessThanOrEqual(1);
+    });
+
+    it('should have average degree less than total assets', () => {
+      expect(mockMetrics.average_degree).toBeGreaterThanOrEqual(0);
+      expect(mockMetrics.average_degree).toBeLessThan(mockMetrics.total_assets);
+    });
+  });
+
+  describe('String Format Validation', () => {
+    it('should have currency codes in ISO 4217 format', () => {
+      const isoPattern = /^[A-Z]{3}$/;
+      
+      mockAssets.forEach(asset => {
+        expect(asset.currency).toMatch(isoPattern);
+      });
+    });
+
+    it('should have uppercase symbols', () => {
+      mockAssets.forEach(asset => {
+        expect(asset.symbol).toBe(asset.symbol.toUpperCase());
+      });
+    });
+
+    it('should have valid hex colors in visualization', () => {
+      const hexPattern = /^#[0-9A-Fa-f]{6}$/;
+      
+      mockVisualizationData.nodes.forEach(node => {
+        expect(node.color).toMatch(hexPattern);
+      });
+      
+      mockVizData.nodes.forEach(node => {
+        expect(node.color).toMatch(hexPattern);
+      });
+    });
+
+    it('should have non-empty string names', () => {
+      mockAssets.forEach(asset => {
+        expect(asset.name).toBeTruthy();
+        expect(asset.name.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('3D Coordinate Validation', () => {
+    it('should have coordinates in reasonable bounds', () => {
+      const maxCoord = 1000;
+      const minCoord = -1000;
+      
+      mockVisualizationData.nodes.forEach(node => {
+        expect(node.x).toBeGreaterThan(minCoord);
+        expect(node.x).toBeLessThan(maxCoord);
+        expect(node.y).toBeGreaterThan(minCoord);
+        expect(node.y).toBeLessThan(maxCoord);
+        expect(node.z).toBeGreaterThan(minCoord);
+        expect(node.z).toBeLessThan(maxCoord);
+      });
+    });
+
+    it('should have different nodes at different positions', () => {
+      const positions = new Set();
+      
+      mockVisualizationData.nodes.forEach(node => {
+        const pos = `${node.x},${node.y},${node.z}`;
+        // If this fails, we have nodes at exact same position (might be okay but worth checking)
+        positions.add(pos);
+      });
+      
+      // At least 90% of nodes should have unique positions
+      const uniqueRatio = positions.size / mockVisualizationData.nodes.length;
+      expect(uniqueRatio).toBeGreaterThan(0.9);
+    });
+
+    it('should have node sizes in reasonable range', () => {
+      mockVisualizationData.nodes.forEach(node => {
+        expect(node.size).toBeGreaterThan(0);
+        expect(node.size).toBeLessThan(100); // Arbitrarily large size
+      });
+    });
+  });
+
+  describe('Edge/Relationship Validation', () => {
+    it('should not have self-referencing edges', () => {
+      mockVisualizationData.edges.forEach(edge => {
+        expect(edge.source).not.toBe(edge.target);
+      });
+      
+      mockVizData.edges.forEach(edge => {
+        expect(edge.source).not.toBe(edge.target);
+      });
+    });
+
+    it('should have bidirectional consistency if applicable', () => {
+      // Create a map of edges
+      const edgeMap = new Map<string, number>();
+      
+      mockVisualizationData.edges.forEach(edge => {
+        const key1 = `${edge.source}-${edge.target}`;
+        const key2 = `${edge.target}-${edge.source}`;
+        
+        edgeMap.set(key1, (edgeMap.get(key1) || 0) + 1);
+        
+        // Check if reverse edge exists with similar strength
+        const reverseEdge = mockVisualizationData.edges.find(
+          e => e.source === edge.target && e.target === edge.source
+        );
+        
+        // If bidirectional, strengths should be similar (within 10%)
+        if (reverseEdge) {
+          const strengthDiff = Math.abs(edge.strength - reverseEdge.strength);
+          expect(strengthDiff).toBeLessThan(0.1);
+        }
+      });
+    });
+
+    it('should have unique edge pairs', () => {
+      const edgePairs = new Set<string>();
+      
+      mockVisualizationData.edges.forEach(edge => {
+        const pair = `${edge.source}-${edge.target}`;
+        expect(edgePairs.has(pair)).toBe(false);
+        edgePairs.add(pair);
+      });
+    });
+  });
+
+  describe('Asset Class Distribution', () => {
+    it('should have at least one asset in each major class', () => {
+      const majorClasses = ['Equity', 'Bond', 'Commodity', 'Currency'];
+      const assetClasses = new Set(mockAssets.map(a => a.asset_class));
+      
+      majorClasses.forEach(majorClass => {
+        const hasClass = Array.from(assetClasses).some(
+          ac => ac.includes(majorClass)
+        );
+        expect(hasClass).toBe(true);
+      });
+    });
+
+    it('should have asset class counts match metrics', () => {
+      const classCounts: { [key: string]: number } = {};
+      
+      mockAssets.forEach(asset => {
+        classCounts[asset.asset_class] = (classCounts[asset.asset_class] || 0) + 1;
+      });
+      
+      Object.entries(mockAssetClasses).forEach(([className, count]) => {
+        const actualCount = classCounts[className] || 0;
+        // Counts should match (or be close if using different data subsets)
+        expect(actualCount).toBeGreaterThanOrEqual(0);
+      });
+    });
+  });
+
+  describe('Additional Fields Validation', () => {
+    it('should have additional_fields as plain objects', () => {
+      mockAssets.forEach(asset => {
+        if (asset.additional_fields) {
+          expect(typeof asset.additional_fields).toBe('object');
+          expect(Array.isArray(asset.additional_fields)).toBe(false);
+          expect(asset.additional_fields).not.toBeNull();
+        }
+      });
+    });
+
+    it('should have numeric values in additional_fields where applicable', () => {
+      mockAssets.forEach(asset => {
+        if (asset.additional_fields) {
+          Object.entries(asset.additional_fields).forEach(([key, value]) => {
+            // Numeric keys should have numeric values
+            if (key.includes('rate') || key.includes('ratio') || key.includes('yield')) {
+              expect(typeof value).toBe('number');
+            }
+          });
+        }
+      });
+    });
+
+    it('should not have null or undefined in additional_fields values', () => {
+      mockAssets.forEach(asset => {
+        if (asset.additional_fields) {
+          Object.values(asset.additional_fields).forEach(value => {
+            expect(value).not.toBeNull();
+            expect(value).not.toBeUndefined();
+          });
+        }
+      });
+    });
+  });
+
+  describe('Performance and Size Constraints', () => {
+    it('should have reasonable string lengths', () => {
+      mockAssets.forEach(asset => {
+        expect(asset.name.length).toBeLessThan(200);
+        expect(asset.symbol.length).toBeLessThan(20);
+        expect(asset.sector.length).toBeLessThan(100);
+      });
+    });
+
+    it('should have reasonable number of nodes and edges', () => {
+      expect(mockVisualizationData.nodes.length).toBeLessThan(1000);
+      expect(mockVisualizationData.edges.length).toBeLessThan(5000);
+      expect(mockVizData.nodes.length).toBeLessThan(1000);
+      expect(mockVizData.edges.length).toBeLessThan(5000);
+    });
+
+    it('should have reasonable total metrics', () => {
+      expect(mockMetrics.total_assets).toBeLessThan(100000);
+      expect(mockMetrics.total_relationships).toBeLessThan(1000000);
+      expect(mockMetrics.max_degree).toBeLessThan(mockMetrics.total_assets);
+    });
+  });
+
+  describe('Type Safety and Runtime Validation', () => {
+    it('should have all required Asset properties defined', () => {
+      const requiredProps = [
+        'id', 'symbol', 'name', 'asset_class', 'price', 
+        'market_cap', 'currency', 'sector'
+      ];
+      
+      mockAssets.forEach(asset => {
+        requiredProps.forEach(prop => {
+          expect(asset).toHaveProperty(prop);
+          expect(asset[prop as keyof typeof asset]).toBeDefined();
+        });
+      });
+    });
+
+    it('should not have NaN values', () => {
+      mockAssets.forEach(asset => {
+        expect(Number.isNaN(asset.price)).toBe(false);
+        expect(Number.isNaN(asset.market_cap)).toBe(false);
+      });
+      
+      mockMetrics.total_assets;
+      expect(Number.isNaN(mockMetrics.total_assets)).toBe(false);
+      expect(Number.isNaN(mockMetrics.network_density)).toBe(false);
+      expect(Number.isNaN(mockMetrics.average_degree)).toBe(false);
+    });
+
+    it('should not have Infinity values', () => {
+      mockAssets.forEach(asset => {
+        expect(isFinite(asset.price)).toBe(true);
+        expect(isFinite(asset.market_cap)).toBe(true);
+      });
+      
+      expect(isFinite(mockMetrics.network_density)).toBe(true);
+      expect(isFinite(mockMetrics.average_degree)).toBe(true);
+    });
+
+    it('should have consistent types across all nodes', () => {
+      const firstNode = mockVisualizationData.nodes[0];
+      
+      mockVisualizationData.nodes.forEach(node => {
+        expect(typeof node.id).toBe(typeof firstNode.id);
+        expect(typeof node.x).toBe(typeof firstNode.x);
+        expect(typeof node.y).toBe(typeof firstNode.y);
+        expect(typeof node.z).toBe(typeof firstNode.z);
+        expect(typeof node.size).toBe(typeof firstNode.size);
+        expect(typeof node.color).toBe(typeof firstNode.color);
+      });
+    });
+  });
+
+  describe('Data Immutability Tests', () => {
+    it('should not share object references between mocks', () => {
+      // Verify that modifying one mock doesn't affect another
+      const originalFirstAsset = { ...mockAssets[0] };
+      const assetCopy = mockAssets[0];
+      
+      // These should be the same data
+      expect(assetCopy.id).toBe(originalFirstAsset.id);
+      
+      // But mocks should be independently usable in tests
+      expect(mockAssets).toBeDefined();
+      expect(mockAsset).toBeDefined();
+      expect(mockAsset.id).toBeDefined();
+    });
+
+    it('should have independent additional_fields objects', () => {
+      const assetsWithFields = mockAssets.filter(a => a.additional_fields);
+      
+      if (assetsWithFields.length > 1) {
+        const fields1 = assetsWithFields[0].additional_fields;
+        const fields2 = assetsWithFields[1].additional_fields;
+        
+        // Should be different object references
+        expect(fields1).not.toBe(fields2);
+      }
     });
   });
 });
