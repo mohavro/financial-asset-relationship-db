@@ -50,8 +50,10 @@ def doc_content() -> str:
         return f.read()
 
     @pytest.fixture(scope='session')
+    @pytest.fixture(scope='session')
     def doc_lines(doc_content: str) -> List[str]:
         """Provide the documentation as a list of lines once per session."""
+        return doc_content.splitlines(keepends=True)
         return doc_content.splitlines(keepends=True)
     
     @pytest.fixture(scope='session')
