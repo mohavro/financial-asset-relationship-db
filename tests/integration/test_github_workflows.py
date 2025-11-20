@@ -340,7 +340,8 @@ class TestPrAgentWorkflow:
             "pr-agent workflow must trigger on pull_request events"
         )
     
-def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
+
+    def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow has a pr-agent-trigger job."""
         jobs = pr_agent_workflow.get("jobs", {})
         assert "pr-agent-trigger" in jobs, "pr-agent workflow must have pr-agent-trigger job"
