@@ -201,7 +201,7 @@ class TestDocumentCompleteness:
     def test_has_summary_statistics(self, summary_content: str):
         """Test that document includes statistics about tests."""
         # Should mention numbers of tests, classes, etc.
-        has_numbers = re.search(r'\d+\s+(test|class)', summary_content, re.IGNORECASE)
+        has_numbers = re.search(r'\d+\s+(tests?|class(?:es)?)', summary_content, re.IGNORECASE)
         assert has_numbers is not None, \
             "Document should include statistics about test coverage"
     
