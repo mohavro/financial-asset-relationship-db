@@ -184,7 +184,7 @@ pytest tests/integration/test_github_workflows.py::TestWorkflowAdvancedSecurity 
 pytest tests/integration/test_github_workflows.py --cov --cov-report=term-missing
 
 # Run all new test classes
-pytest tests/integration/test_github_workflows.py::TestWorkflowAdvanced* -v
+pytest -k "TestWorkflowAdvanced" tests/integration/test_github_workflows.py -v
 ```
 
 ## Impact Analysis
