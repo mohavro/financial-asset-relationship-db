@@ -43,22 +43,52 @@ class TestDocumentationExists:
 class TestDocumentationStructure:
     """Test the structure and formatting of the documentation."""
     
+@pytest.fixture(scope='session')
+def doc_content() -> str:
+    """Load the documentation content once per test session."""
+    with open(DOC_FILE, 'r', encoding='utf-8') as f:
+        return f.read()
+
     @pytest.fixture(scope='session')
     @pytest.fixture(scope='session')
     def doc_content() -> str:
         """Load the documentation content once per test session."""
-        with open(DOC_FILE, 'r', encoding='utf-8') as f:
-            return f.read()
-
-    @pytest.fixture(scope='session')
-    # Move this fixture to module level (outside the class)
+        try:
+            with open(DOC_FILE, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            pytest.fail(f"Could not read documentation file: {e}")
     @pytest.fixture(scope='session')
     def doc_lines(doc_content: str) -> List[str]:
-        """Provide the documentation as a list of lines once per session."""
-        return doc_content.splitlines(keepends=True)
-    
-    @pytest.fixture(scope='session')
-    def section_headers(doc_lines: List[str]) -> List[str]:
+# tests/conftest.py
+import pytest
+from pathlib import Path
+from typing import List
+
+DOC_FILE = Path(__file__).parent.parent.parent / "TEST_GENERATION_WORKFLOW_SUMMARY.md"
+
+@pytest.fixture(scope='session')
+def doc_content() -> str:
+    """Load the documentation content once per test session."""
+    with open(DOC_FILE, 'r', encoding='utf-8') as f:
+        return f.read()
+
+@pytest.fixture(scope='session')
+@pytest.fixture(scope='session')
+def doc_content() -> str:
+    """Load the documentation content once per test session."""
+    with open(DOC_FILE, 'r', encoding='utf-8') as f:
+        return f.read()
+
+@pytest.fixture(scope='session')
+def doc_lines(doc_content: str) -> List[str]:
+    """Provide the documentation as a list of lines once per session."""
+    return doc_content.splitlines(keepends=True)
+
+@pytest.fixture(scope='session')
+def section_headers(doc_lines: List[str]) -> List[str]:
+    """Extract markdown section headers from the documentation lines."""
+    return [line.strip() for line in doc_lines if line.lstrip().startswith('#')]
         """Extract markdown section headers from the documentation lines."""
         return [line.strip() for line in doc_lines if line.lstrip().startswith('#')]
 

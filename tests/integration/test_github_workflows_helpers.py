@@ -49,7 +49,8 @@ class TestGetWorkflowFiles:
         """Test that empty list is returned when workflows directory doesn't exist."""
         nonexistent_dir = tmp_path / "nonexistent" / "workflows"
         
-        result = get_workflow_files(nonexistent_dir)
+        with patch('tests.integration.test_github_workflows.WORKFLOWS_DIR', nonexistent_dir):
+            result = get_workflow_files()
         assert result == []
     
     def test_finds_yml_files(self, tmp_path):

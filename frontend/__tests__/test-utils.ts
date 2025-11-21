@@ -56,6 +56,97 @@ export const mockRelationships: Relationship[] = [
     strength: 0.8,
   },
   {
+    source_id: 'ASSET_2',
+    target_id: 'ASSET_1',
+    relationship_type: 'PEER',
+    strength: 0.75,
+  },
+];
+  {
+    source_id: 'ASSET_1',
+    target_id: 'ASSET_2',
+    relationship_type: 'SAME_SECTOR',
+    strength: 0.8,
+  },
+  {
+    source_id: 'ASSET_2',
+    target_id: 'ASSET_1',
+    relationship_type: 'PEER',
+    strength: 0.75,
+  },
+];
+  {
+    source_id: 'ASSET_1',
+    target_id: 'ASSET_2',
+    relationship_type: 'SAME_SECTOR',
+    strength: 0.8,
+  },
+  {
+    source_id: 'ASSET_2',
+    target_id: 'ASSET_1',
+    relationship_type: 'PEER',
+    strength: 0.75,
+  },
+];
+  {
+    source_id: 'ASSET_1',
+    target_id: 'ASSET_2',
+    relationship_type: 'SAME_SECTOR',
+    strength: 0.8,
+  },
+  {
+    source_id: 'ASSET_2',
+    target_id: 'ASSET_1',
+    relationship_type: 'PEER',
+    strength: 0.75,
+  },
+];
+  {
+    source_id: 'ASSET_1',
+    target_id: 'ASSET_2',
+    relationship_type: 'SAME_SECTOR',
+    strength: 0.8,
+  },
+  {
+    source_id: 'ASSET_2',
+    target_id: 'ASSET_1',
+    relationship_type: 'PEER',
+    strength: 0.75,
+  },
+];
+  {
+    source_id: 'ASSET_1',
+    target_id: 'ASSET_2',
+    relationship_type: 'SAME_SECTOR',
+    strength: 0.8,
+  },
+  {
+    source_id: 'ASSET_2',
+    target_id: 'ASSET_1',
+    relationship_type: 'PEER',
+    strength: 0.75,
+  },
+];
+  {
+    source_id: 'ASSET_1',
+    target_id: 'ASSET_2',
+    relationship_type: 'SAME_SECTOR',
+    strength: 0.8,
+  },
+  {
+    source_id: 'ASSET_2',
+    target_id: 'ASSET_1',
+    relationship_type: 'PEER',
+    strength: 0.75,
+  },
+];
+  {
+    source_id: 'ASSET_1',
+    target_id: 'ASSET_2',
+    relationship_type: 'SAME_SECTOR',
+    strength: 0.8,
+  },
+  {
     source_id: 'ASSET_1',
     target_id: 'ASSET_3',
     relationship_type: 'ISSUER',
