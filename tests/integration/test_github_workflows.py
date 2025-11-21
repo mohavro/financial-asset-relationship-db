@@ -341,7 +341,13 @@ class TestPrAgentWorkflow:
         
         for step in checkout_steps:
             step_with = step.get("with", {})
-            assert "token" in step_with, "Checkout step should specify a token"
+for step in checkout_steps:
+    step_with = step.get("with", {})
+    token = step_with.get("token")
+    assert isinstance(token, str) and token.strip(), (
+        "Checkout step must specify a non-empty token for better security. "
+        "Use ${{ secrets.GITHUB_TOKEN }} or similar."
+    )
     
     def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
         """Asserts the workflow's trigger job includes a setup-python step."""
