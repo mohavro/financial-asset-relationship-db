@@ -279,7 +279,7 @@ class ContextChunker:
                 # Start new chunk with overlap
                 overlap_lines = self._get_overlap_lines(current_chunk)
                 current_chunk = overlap_lines + [line]
-                current_tokens = sum(self.estimate_tokens(l) for l in current_chunk)
+                current_tokens = sum(self.estimate_tokens(ln) for ln in current_chunk)
             else:
                 current_chunk.append(line)
                 current_tokens += line_tokens
