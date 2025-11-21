@@ -53,8 +53,11 @@ def doc_content() -> str:
     @pytest.fixture(scope='session')
     def doc_content() -> str:
         """Load the documentation content once per test session."""
-        with open(DOC_FILE, 'r', encoding='utf-8') as f:
-            return f.read()
+        try:
+            with open(DOC_FILE, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            pytest.fail(f"Could not read documentation file: {e}")
     @pytest.fixture(scope='session')
     def doc_lines(doc_content: str) -> List[str]:
 # tests/conftest.py
