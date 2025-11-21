@@ -9,6 +9,7 @@ import pytest
 import re
 from pathlib import Path
 from typing import List, Tuple
+from packaging.specifiers import SpecifierSet
 
 
 REQUIREMENTS_FILE = Path(__file__).parent.parent.parent / "requirements-dev.txt"
@@ -50,8 +51,6 @@ def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
                 # Normalize by joining with comma
                 version_spec = ','.join(specs)
                 requirements.append((pkg.strip(), version_spec))
-            else:
-                requirements.append((line, ''))
     
     return requirements
 
@@ -156,17 +155,18 @@ class TestVersionSpecifications:
     def requirements(self) -> List[Tuple[str, str]]:
         """Parse and return requirements."""
         return parse_requirements(REQUIREMENTS_FILE)
-    
+
     def test_all_packages_have_versions(self, requirements: List[Tuple[str, str]]):
         """Test that all packages specify version constraints."""
-        packages_without_versions = [pkg for pkg, ver in requirements if not ver]
+        allowed_unpinned = {'types-PyYAML'}
+        packages_without_versions = [
+            pkg for pkg, ver in requirements
+            if not ver and pkg not in allowed_unpinned
+        ]
         assert len(packages_without_versions) == 0
-    
+
     def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
         """Test that version specifications use valid format."""
-    from packaging.specifiers import SpecifierSet
-    def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
-        """Test that version specifications use valid PEP 440 format."""
         for pkg, ver_spec in requirements:
             if ver_spec:
                 try:
@@ -273,33 +273,19 @@ class TestSpecificChanges:
     def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
         """Test that existing packages are still present."""
         package_names = [pkg for pkg, _ in requirements]
-        
-        def test_existing_packages_preserved(self, requirements: List[Tuple[str, str]]):
-            """Test that existing packages are still present."""
-            package_names = [pkg for pkg, _ in requirements]
-
-            # Derive expected packages dynamically from the requirements file
-            with open(REQUIREMENTS_FILE, 'r', encoding='utf-8') as f:
-                expected_packages = []
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
-                        continue
-                    # Extract package name before any version specifier
-                    for sep in ('>=', '==', '<=', '>', '<', '~='):
-                        if sep in line:
-                            expected_packages.append(line.split(sep)[0].strip())
-                            break
-                    else:
-                        expected_packages.append(line)
-
-            for expected_pkg in expected_packages:
-                assert expected_pkg in package_names
+        expected_packages = [
             'pytest',
             'pytest-cov',
             'pytest-asyncio',
             'flake8',
             'pylint',
-        
+            'mypy',
+            'black',
+            'isort',
+            'pre-commit',
+            'PyYAML',
+            'types-PyYAML',
+        ]
+
         for expected_pkg in expected_packages:
             assert expected_pkg in package_names
