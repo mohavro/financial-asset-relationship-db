@@ -43,8 +43,13 @@ class TestDocumentationExists:
 @pytest.fixture(scope='session')
 def doc_content() -> str:
     """Load the documentation content once per test session."""
-    with open(DOC_FILE, 'r', encoding='utf-8') as f:
-        return f.read()
+    try:
+        with open(DOC_FILE, 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        pytest.fail(f"Documentation file not found: {DOC_FILE}")
+    except Exception as e:
+        pytest.fail(f"Could not read documentation file {DOC_FILE}: {e}")
 
 
 @pytest.fixture(scope='session')
