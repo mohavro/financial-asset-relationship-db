@@ -52,13 +52,24 @@ class ContextChunker:
         
         # Initialize tokenizer if available
         self.tokenizer = None
+        tokenizer_cfg = self.config.get('agent', {}).get('context', {}).get('tokenizer', {})
+        require_tokenizer = tokenizer_cfg.get('require', False)
+        encoding_name = tokenizer_cfg.get('encoding', 'cl100k_base')
         if TIKTOKEN_AVAILABLE:
             try:
-                # Use cl100k_base encoding (GPT-4, GPT-3.5-turbo)
-                self.tokenizer = tiktoken.get_encoding('cl100k_base')
+                self.tokenizer = tiktoken.get_encoding(encoding_name)
             except Exception as e:
-                print(f"Warning: Failed to initialize tiktoken encoder: {e}", file=sys.stderr)
-                self.tokenizer = None
+                msg = f"Failed to initialize tiktoken encoder '{encoding_name}': {e}"
+                if require_tokenizer:
+                    raise RuntimeError(msg)
+                else:
+                    print(f"Warning: {msg}. Falling back to heuristic estimation.", file=sys.stderr)
+                    self.tokenizer = None
+        else:
+            if require_tokenizer:
+                raise RuntimeError("tiktoken not available but tokenizer.require=true in config")
+            print("Warning: tiktoken not available, using heuristic token estimation", file=sys.stderr)
+            print("For more accurate token counting, install tiktoken: pip install tiktoken", file=sys.stderr)
     
     def _load_config(self, config_path: str) -> dict:
         """Load configuration from YAML file with robust error handling and deep-merge with defaults."""
