@@ -61,7 +61,18 @@ def doc_lines(doc_content: str) -> List[str]:
 @pytest.fixture(scope='session')
 def section_headers(doc_lines: List[str]) -> List[str]:
     """Extract markdown section headers from the documentation lines."""
-    return [line.strip() for line in doc_lines if line.lstrip().startswith('#')]
+    headers = []
+    in_code_block = False
+    for line in doc_lines:
+        stripped = line.lstrip()
+        if stripped.startswith('```'):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+        if stripped.startswith('#'):
+            headers.append(stripped.strip())
+    return headers
 
 
 class TestDocumentationStructure:
