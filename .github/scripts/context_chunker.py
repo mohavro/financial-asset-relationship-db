@@ -7,7 +7,7 @@ Handles large context by chunking and summarizing content when approaching token
 import re
 import yaml
 import sys
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 from dataclasses import dataclass
 from pathlib import Path
 
