@@ -277,8 +277,7 @@ class ContextChunker:
         chunks = self.create_chunks(sections)
         processed_content = self._build_limited_content(chunks)
         return processed_content, True
-        # Removed redundant unreachable duplicate block
-
+        return processed_content, True
 
 def main():
     """Example usage"""
