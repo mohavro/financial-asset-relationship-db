@@ -388,7 +388,6 @@ class ContextChunker:
         
         # Ensure chunks are processed strictly by priority (already sorted)
         included_indices = set()
-        summaries = []
         omissions = []
 
         # First pass: include full chunks where possible
