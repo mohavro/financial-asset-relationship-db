@@ -577,8 +577,6 @@ class ContextChunker:
         """
         Process PR context and return optimized content.
         Returns: (processed_content, was_chunked)
-        """
-        # Extract sections
         sections = self.extract_content_sections(pr_data)
         
         # Calculate total tokens
