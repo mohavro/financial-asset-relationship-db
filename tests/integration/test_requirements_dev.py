@@ -50,8 +50,13 @@ def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
     for p in parts:
         specs.extend([f"{op}{ver}" for op, ver in spec_pattern.findall(p)])
     if not specs:
-        # No specifiers found; treat as no-version constraint explicitly
-        requirements.append((pkg.strip(), ''))
+        if not specs:
+            # No specifiers found; treat as no-version constraint explicitly
+            requirements.append((pkg.strip(), ''))
+        else:
+            # Normalize by joining with comma
+            version_spec = ','.join(specs)
+            requirements.append((pkg.strip(), version_spec))
     else:
         # Normalize by joining with comma
         version_spec = ','.join(specs)
