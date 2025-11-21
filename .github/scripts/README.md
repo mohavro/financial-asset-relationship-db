@@ -89,14 +89,20 @@ Test the chunker locally:
 
 ```bash
 # Install dependencies
-pip install pyyaml
+pip install pyyaml tiktoken
 
-# Test with example data
+# Test with example data (uses built-in example)
 python .github/scripts/context_chunker.py
 
 # Process real PR data
 gh api repos/OWNER/REPO/pulls/123 | python .github/scripts/context_chunker.py
+
+# Test without tiktoken (heuristic mode)
+pip uninstall -y tiktoken
+python .github/scripts/context_chunker.py
 ```
+
+**Note**: The script will automatically detect if `tiktoken` is available and use the appropriate estimation method.
 
 ## Benefits
 
@@ -146,12 +152,37 @@ PR Context Flow:
 
 ## Token Estimation
 
-The chunker estimates tokens using:
+The chunker uses two methods for token estimation:
+
+### 1. Accurate Estimation (Recommended)
+
+When `tiktoken` is available, the chunker uses OpenAI's tokenizer for precise token counting:
+```python
+import tiktoken
+enc = tiktoken.get_encoding('cl100k_base')  # GPT-4, GPT-3.5-turbo
+tokens = len(enc.encode(text))
+```
+
+**Installation**:
+```bash
+pip install tiktoken
+```
+
+### 2. Heuristic Fallback
+
+When `tiktoken` is not available, uses intelligent heuristics:
 - **Base Rate**: ~4 characters per token (English text)
 - **Code Adjustment**: +0.5 tokens per structural character `{}()[];`
-- **Safety Margin**: Chunks slightly under limit to accommodate system prompts
+- **Whitespace Adjustment**: +0.25 tokens per whitespace sequence
+- **Formatting Adjustment**: +0.3 tokens per markdown character `*_`#-`
+- **Safety Margin**: +10% buffer to prevent overruns
 
-This provides accurate estimates without requiring external tokenizer libraries.
+The heuristic provides reasonable estimates but may be less accurate for:
+- Non-English text
+- Code-heavy content
+- Complex Unicode characters
+
+**Recommendation**: Install `tiktoken` for production use to ensure accurate context management.
 
 ## Troubleshooting
 
@@ -183,7 +214,10 @@ If chunking should activate but doesn't:
 
 1. Check workflow logs for context size
 2. Verify threshold in config: `max_tokens: 32000`
-3. Ensure PyYAML is installed: workflow step includes `pip install pyyaml`
+3. Ensure dependencies installed: workflow includes `pip install pyyaml tiktoken`
+4. Check token estimation accuracy:
+   - With tiktoken: More accurate, may trigger earlier
+   - Without tiktoken: Heuristic, may underestimate slightly
 
 ### Test Failures After Chunking
 
@@ -199,6 +233,23 @@ If tests fail after implementing chunking:
    - File names intact?
    - Error messages included?
 
+## Recent Improvements
+
+### Version 1.1.0
+
+**Accurate Token Estimation**:
+- ✅ Integrated `tiktoken` for precise token counting (GPT-4/3.5-turbo compatible)
+- ✅ Automatic fallback to improved heuristic when tiktoken unavailable
+- ✅ Enhanced heuristic with whitespace and formatting adjustments
+- ✅ 10% safety margin for heuristic mode
+
+**Robust Error Handling**:
+- ✅ Comprehensive configuration validation
+- ✅ Default configuration fallback when file missing/invalid
+- ✅ Graceful degradation on config errors
+- ✅ Detailed error messages to stderr
+- ✅ Safe defaults for all critical settings
+
 ## Future Enhancements
 
 Potential improvements for the chunking system:
@@ -208,6 +259,7 @@ Potential improvements for the chunking system:
 - [ ] Caching of chunked context for repeated access
 - [ ] Progressive loading of chunks as needed
 - [ ] Automatic chunk size optimization based on usage patterns
+- [ ] Multi-model token estimation (Claude, Llama, etc.)
 
 ## References
 

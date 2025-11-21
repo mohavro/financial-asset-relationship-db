@@ -6,9 +6,19 @@ Handles large context by chunking and summarizing content when approaching token
 
 import re
 import yaml
+import sys
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 from pathlib import Path
+
+# Try to import tiktoken for accurate token estimation
+try:
+    import tiktoken
+    TIKTOKEN_AVAILABLE = True
+except ImportError:
+    TIKTOKEN_AVAILABLE = False
+    print("Warning: tiktoken not available, using heuristic token estimation", file=sys.stderr)
+    print("For more accurate token counting, install tiktoken: pip install tiktoken", file=sys.stderr)
 
 
 @dataclass
@@ -26,37 +36,142 @@ class ContextChunker:
     def __init__(self, config_path: str = ".github/pr-agent-config.yml"):
         """Initialize chunker with configuration"""
         self.config = self._load_config(config_path)
+        self._validate_config()
+        
+        # Load configuration with safe defaults
         self.max_tokens = self.config.get('agent', {}).get('context', {}).get('max_tokens', 32000)
         self.chunk_size = self.config.get('agent', {}).get('context', {}).get('chunk_size', 28000)
         self.overlap = self.config.get('agent', {}).get('context', {}).get('overlap_tokens', 2000)
         self.summarization_threshold = self.config.get('agent', {}).get('context', {}).get('summarization_threshold', 30000)
         
-        # Priority mapping
-        priority_order = self.config.get('limits', {}).get('fallback', {}).get('priority_order', [])
+        # Priority mapping with default fallback
+        priority_order = self.config.get('limits', {}).get('fallback', {}).get('priority_order', [
+            'review_comments', 'test_failures', 'changed_files', 'ci_logs', 'full_diff'
+        ])
         self.priority_map = {item: idx for idx, item in enumerate(priority_order)}
+        
+        # Initialize tokenizer if available
+        self.tokenizer = None
+        if TIKTOKEN_AVAILABLE:
+            try:
+                # Use cl100k_base encoding (GPT-4, GPT-3.5-turbo)
+                self.tokenizer = tiktoken.get_encoding('cl100k_base')
+            except Exception as e:
+                print(f"Warning: Failed to initialize tiktoken encoder: {e}", file=sys.stderr)
+                self.tokenizer = None
     
     def _load_config(self, config_path: str) -> dict:
-        """Load configuration from YAML file"""
+        """Load configuration from YAML file with robust error handling"""
         try:
+            config_file = Path(config_path)
+            if not config_file.exists():
+                print(f"Warning: Config file not found: {config_path}", file=sys.stderr)
+                print("Using default configuration values", file=sys.stderr)
+                return self._get_default_config()
+            
             with open(config_path, 'r') as f:
-                return yaml.safe_load(f)
+                config = yaml.safe_load(f)
+                
+            if config is None:
+                print(f"Warning: Config file is empty: {config_path}", file=sys.stderr)
+                return self._get_default_config()
+                
+            return config
+            
+        except yaml.YAMLError as e:
+            print(f"Error: Invalid YAML in config file {config_path}: {e}", file=sys.stderr)
+            print("Using default configuration values", file=sys.stderr)
+            return self._get_default_config()
         except Exception as e:
-            print(f"Warning: Could not load config from {config_path}: {e}")
-            return {}
+            print(f"Error: Could not load config from {config_path}: {e}", file=sys.stderr)
+            print("Using default configuration values", file=sys.stderr)
+            return self._get_default_config()
+    
+    def _get_default_config(self) -> dict:
+        """Return default configuration values"""
+        return {
+            'agent': {
+                'context': {
+                    'max_tokens': 32000,
+                    'chunk_size': 28000,
+                    'overlap_tokens': 2000,
+                    'summarization_threshold': 30000,
+                    'summarization': {
+                        'max_summary_tokens': 2000
+                    }
+                }
+            },
+            'limits': {
+                'fallback': {
+                    'priority_order': [
+                        'review_comments',
+                        'test_failures',
+                        'changed_files',
+                        'ci_logs',
+                        'full_diff'
+                    ]
+                }
+            }
+        }
+    
+    def _validate_config(self) -> None:
+        """Validate configuration has required values"""
+        required_keys = [
+            ('agent', 'context', 'max_tokens'),
+            ('agent', 'context', 'chunk_size'),
+            ('agent', 'context', 'overlap_tokens'),
+        ]
+        
+        for keys in required_keys:
+            current = self.config
+            for key in keys:
+                if not isinstance(current, dict) or key not in current:
+                    print(f"Warning: Missing config key: {'.'.join(keys)}", file=sys.stderr)
+                    break
+                current = current[key]
     
     def estimate_tokens(self, text: str) -> int:
         """
         Estimate token count for text.
-        Rough approximation: ~4 characters per token for English text.
+        Uses tiktoken if available for accurate counting, otherwise falls back to heuristic.
+        
+        Args:
+            text: The text to estimate tokens for
+            
+        Returns:
+            Estimated token count
         """
-        # More accurate estimation considering code structure
-        tokens = len(text) / 4
+        if not text:
+            return 0
+            
+        # Use tiktoken for accurate token counting if available
+        if self.tokenizer is not None:
+            try:
+                return len(self.tokenizer.encode(text))
+            except Exception as e:
+                print(f"Warning: tiktoken encoding failed: {e}, using fallback", file=sys.stderr)
+                # Fall through to heuristic method
         
-        # Add extra tokens for code structure
+        # Fallback: Heuristic estimation
+        # Base estimation: ~4 characters per token for English text
+        base_tokens = len(text) / 4
+        
+        # Adjust for code structure (more tokens for special characters)
         code_chars = len(re.findall(r'[{}()\[\];]', text))
-        tokens += code_chars * 0.5
+        code_adjustment = code_chars * 0.5
         
-        return int(tokens)
+        # Adjust for whitespace (tokens consume whitespace)
+        whitespace_chars = len(re.findall(r'\s+', text))
+        whitespace_adjustment = whitespace_chars * 0.25
+        
+        # Adjust for markdown/formatting
+        formatting_chars = len(re.findall(r'[*_`#\-]', text))
+        formatting_adjustment = formatting_chars * 0.3
+        
+        total_tokens = base_tokens + code_adjustment + whitespace_adjustment + formatting_adjustment
+        
+        # Add 10% safety margin for heuristic estimation
+        return int(total_tokens * 1.1)
     
     def extract_content_sections(self, pr_data: Dict) -> Dict[str, str]:
         """Extract different sections from PR data"""
