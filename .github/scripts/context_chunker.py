@@ -373,7 +373,69 @@ class ContextChunker:
         
         return summary
     
+    def _build_full_content(self, sections: Dict[str, str]) -> str:
+        """Build full content when under summarization threshold."""
+        return '\n\n---\n\n'.join([
+            f"## {section_type.replace('_', ' ').title()}\n\n{content}"
+            for section_type, content in sections.items()
+        ])
+
+    def _build_limited_content(self, chunks: List[ContextChunk]) -> str:
+        """Assemble content from chunks within token limit, adding summaries and omissions."""
+        result_parts: List[str] = []
+        current_tokens = 0
+        included_indices = set()
+        omissions: List[str] = []
+
+        # First pass: include full chunks where possible
+        for idx, chunk in enumerate(chunks):
+            header = f"## {chunk.chunk_type.replace('_', ' ').title()}\n\n"
+            if current_tokens + chunk.tokens <= self.max_tokens:
+                result_parts.append(f"{header}{chunk.content}")
+                current_tokens += chunk.tokens
+                included_indices.add(idx)
+
+        # Second pass: include summaries for remaining high-priority chunks
+        for idx, chunk in enumerate(chunks):
+            if idx in included_indices:
+                continue
+            summary = self.summarize_chunk(chunk)
+            summary_tokens = self.estimate_tokens(summary)
+            if current_tokens + summary_tokens <= self.max_tokens:
+                result_parts.append(summary)
+                current_tokens += summary_tokens
+                included_indices.add(idx)
+            else:
+                omissions.append(chunk.chunk_type.upper())
+
+        # Final pass: add a compact omitted notice if anything left out
+        if omissions:
+            unique_omissions: List[str] = []
+            seen = set()
+            for o in omissions:
+                if o not in seen:
+                    seen.add(o)
+                    unique_omissions.append(o)
+            omitted_note = f"[Omitted due to context limit: {', '.join(unique_omissions)}]"
+            if current_tokens + self.estimate_tokens(omitted_note) <= self.max_tokens:
+                result_parts.append(omitted_note)
+
+        return '\n\n---\n\n'.join(result_parts)
+
     def process_context(self, pr_data: Dict) -> Tuple[str, bool]:
+        """
+        Process PR context and return optimized content.
+        Returns: (processed_content, was_chunked)
+        """
+        sections = self.extract_content_sections(pr_data)
+        total_tokens = sum(self.estimate_tokens(content) for content in sections.values())
+
+        if total_tokens <= self.summarization_threshold:
+            return self._build_full_content(sections), False
+
+        chunks = self.create_chunks(sections)
+        processed_content = self._build_limited_content(chunks)
+        return processed_content, True
         """
         Process PR context and return optimized content.
         Returns: (processed_content, was_chunked)
