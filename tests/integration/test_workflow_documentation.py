@@ -62,7 +62,7 @@ import pytest
 from pathlib import Path
 from typing import List
 
-DOC_FILE = Path(__file__).parent.parent / "TEST_GENERATION_WORKFLOW_SUMMARY.md"
+DOC_FILE = Path(__file__).parent.parent.parent / "TEST_GENERATION_WORKFLOW_SUMMARY.md"
 
 @pytest.fixture(scope='session')
 def doc_content() -> str:
