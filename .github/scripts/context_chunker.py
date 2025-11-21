@@ -383,9 +383,6 @@ class ContextChunker:
 
         return chunks
         
-        current_chunk = []
-        current_tokens = 0
-        
         # Initialize accumulators for building chunks
         current_chunk: List[str] = []
         current_tokens: int = 0
