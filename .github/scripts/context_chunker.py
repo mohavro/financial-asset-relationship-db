@@ -212,34 +212,7 @@ class ContextChunker:
         
         return sections
     
-    def create_chunks(self, sections: Dict[str, str]) -> List[ContextChunk]:
-        """Create prioritized chunks from sections"""
-        chunks = []
-        
-        for section_type, content in sections.items():
-            if not content:
-                continue
-            
-            tokens = self.estimate_tokens(content)
-            priority = self.priority_map.get(section_type, 999)
-            
-            # If section is small enough, keep as single chunk
-            if tokens <= self.chunk_size:
-                chunks.append(ContextChunk(
-                    content=content,
-                    tokens=tokens,
-                    priority=priority,
-                    chunk_type=section_type
-                ))
-            else:
-                # Split large sections into multiple chunks
-                sub_chunks = self._split_content(content, section_type, priority)
-                chunks.extend(sub_chunks)
-        
-        # Sort by priority
-        chunks.sort(key=lambda x: x.priority)
-        return chunks
-    
+    # Removed duplicate create_chunks definition. The implementation below is the single source of truth.
     def create_chunks(self, sections: Dict[str, str]) -> List[ContextChunk]:
         """Create prioritized chunks from sections"""
         chunks: List[ContextChunk] = []
