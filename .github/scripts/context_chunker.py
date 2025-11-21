@@ -146,69 +146,7 @@ class ContextChunker:
         chunks = self.create_chunks(sections)
         processed_content = self._build_limited_content(chunks)
         return processed_content, True
-        """
-        Process PR context and return optimized content.
-        Returns: (processed_content, was_chunked)
-        sections = self.extract_content_sections(pr_data)
-        
-        # Calculate total tokens
-        total_tokens = sum(self.estimate_tokens(content) for content in sections.values())
-        
-        # If under threshold, return as is
-        if total_tokens <= self.summarization_threshold:
-            full_content = '\n\n---\n\n'.join([
-                f"## {section_type.replace('_', ' ').title()}\n\n{content}"
-                for section_type, content in sections.items()
-            ])
-            return full_content, False
-        
-        # Create chunks
-        chunks = self.create_chunks(sections)
-        
-        # Build context within token limit
-        result_parts = []
-        current_tokens = 0
-        
-        # Ensure chunks are processed strictly by priority (already sorted)
-        included_indices = set()
-        omissions = []
-
-        # First pass: include full chunks where possible
-        for idx, chunk in enumerate(chunks):
-            header = f"## {chunk.chunk_type.replace('_', ' ').title()}\n\n"
-            if current_tokens + chunk.tokens <= self.max_tokens:
-                result_parts.append(f"{header}{chunk.content}")
-                current_tokens += chunk.tokens
-                included_indices.add(idx)
-
-        # Second pass: include summaries for remaining high-priority chunks
-        for idx, chunk in enumerate(chunks):
-            if idx in included_indices:
-                continue
-            summary = self.summarize_chunk(chunk)
-            summary_tokens = self.estimate_tokens(summary)
-            if current_tokens + summary_tokens <= self.max_tokens:
-                result_parts.append(summary)
-                current_tokens += summary_tokens
-                included_indices.add(idx)
-            else:
-                # Keep track of omissions with minimal metadata
-                omissions.append(chunk.chunk_type.upper())
-
-        # Final pass: add a compact omitted notice if anything left out
-        if omissions:
-            unique_omissions = []
-            seen = set()
-            for o in omissions:
-                if o not in seen:
-                    seen.add(o)
-                    unique_omissions.append(o)
-            omitted_note = f"[Omitted due to context limit: {', '.join(unique_omissions)}]"
-            # Add only if it fits, otherwise drop silently
-            if current_tokens + self.estimate_tokens(omitted_note) <= self.max_tokens:
-                result_parts.append(omitted_note)
-        processed_content = '\n\n---\n\n'.join(result_parts)
-        return processed_content, True
+        # Removed redundant unreachable duplicate block
 
 
 def main():
