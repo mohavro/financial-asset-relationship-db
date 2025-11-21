@@ -40,27 +40,27 @@ class TestDocumentationExists:
         assert DOC_FILE.suffix == ".md", "Documentation file should have .md extension"
 
 
+@pytest.fixture(scope='session')
+def doc_content() -> str:
+    """Load the documentation content once per test session."""
+    with open(DOC_FILE, 'r', encoding='utf-8') as f:
+        return f.read()
+
+
+@pytest.fixture(scope='session')
+def doc_lines(doc_content: str) -> List[str]:
+    """Provide the documentation as a list of lines once per session."""
+    return doc_content.splitlines(keepends=True)
+
+
+@pytest.fixture(scope='session')
+def section_headers(doc_lines: List[str]) -> List[str]:
+    """Extract markdown section headers from the documentation lines."""
+    return [line.strip() for line in doc_lines if line.lstrip().startswith('#')]
+
+
 class TestDocumentationStructure:
     """Test the structure and formatting of the documentation."""
-    
-    @pytest.fixture(scope='session')
-    @pytest.fixture(scope='session')
-    def doc_content() -> str:
-        """Load the documentation content once per test session."""
-        with open(DOC_FILE, 'r', encoding='utf-8') as f:
-            return f.read()
-
-    @pytest.fixture(scope='session')
-    # Move this fixture to module level (outside the class)
-    @pytest.fixture(scope='session')
-    def doc_lines(doc_content: str) -> List[str]:
-        """Provide the documentation as a list of lines once per session."""
-        return doc_content.splitlines(keepends=True)
-    
-    @pytest.fixture(scope='session')
-    def section_headers(doc_lines: List[str]) -> List[str]:
-        """Extract markdown section headers from the documentation lines."""
-        return [line.strip() for line in doc_lines if line.lstrip().startswith('#')]
 
     def test_has_overview(self, section_headers: List[str]):
         """Test that there's an Overview section."""
