@@ -240,10 +240,175 @@ class ContextChunker:
         chunks.sort(key=lambda x: x.priority)
         return chunks
     
+    def create_chunks(self, sections: Dict[str, str]) -> List[ContextChunk]:
+        """Create prioritized chunks from sections"""
+        chunks: List[ContextChunk] = []
+
+        for section_type, content in sections.items():
+            if not content:
+                continue
+
+            tokens = self.estimate_tokens(content)
+            priority = self.priority_map.get(section_type, 999)
+
+            if tokens <= self.chunk_size:
+                chunks.append(ContextChunk(
+                    content=content,
+                    tokens=tokens,
+                    priority=priority,
+                    chunk_type=section_type
+                ))
+            else:
+                # Split large sections into multiple chunks using appropriate strategy
+                sub_chunks = self._split_content(content, section_type, priority)
+                chunks.extend(sub_chunks)
+
+        # Sort by priority
+        chunks.sort(key=lambda x: x.priority)
+        return chunks
+
     def _split_content(self, content: str, chunk_type: str, priority: int) -> List[ContextChunk]:
-        """Split large content into smaller chunks with overlap"""
-        chunks = []
-        lines = content.split('\n')
+        """Dispatch to appropriate splitting strategy based on content type."""
+        if chunk_type in ['changed_files', 'full_diff', 'code_changes']:
+            return self._split_code_aware(content, chunk_type, priority)
+        return self._split_line_based(content, chunk_type, priority)
+
+    def _split_code_aware(self, content: str, chunk_type: str, priority: int) -> List[ContextChunk]:
+        """Split code content at logical boundaries (functions, classes, SQL, diff sections)."""
+        chunks: List[ContextChunk] = []
+
+        # Split content into logical sections: classes, defs, SQL statements, diff/file headers
+        # Includes diff markers (---, +++), hunk headers (@@), and common language constructs.
+        sections = re.split(
+            r'(?=\n(?:class\s+|def\s+|SELECT\b|INSERT\b|UPDATE\b|DELETE\b|CREATE\b|WITH\b|@@|\-\-\- |\+\+\+ |diff --git ))',
+            content
+        )
+
+        current_sections: List[str] = []
+        current_tokens = 0
+
+        for section in sections:
+            if not section:
+                continue
+            section_tokens = self.estimate_tokens(section)
+
+            # Handle ultra-long single section gracefully by slicing by lines
+            if section_tokens > self.chunk_size:
+                # Flush current chunk first
+                if current_sections:
+                    chunk_content = ''.join(current_sections)
+                    chunks.append(ContextChunk(
+                        content=chunk_content,
+                        tokens=current_tokens,
+                        priority=priority,
+                        chunk_type=chunk_type
+                    ))
+                    current_sections = []
+                    current_tokens = 0
+                # Fallback to line-based splitting for this oversized section
+                chunks.extend(self._split_line_based(section, chunk_type, priority))
+                continue
+
+            if current_tokens + section_tokens > self.chunk_size and current_sections:
+                # Save current chunk
+                chunk_content = ''.join(current_sections)
+                chunks.append(ContextChunk(
+                    content=chunk_content,
+                    tokens=current_tokens,
+                    priority=priority,
+                    chunk_type=chunk_type
+                ))
+
+                # Keep overlap: last few sections within overlap token budget
+                overlap_sections: List[str] = []
+                overlap_tokens = 0
+                for s in reversed(current_sections):
+                    t = self.estimate_tokens(s)
+                    if overlap_tokens + t <= self.overlap:
+                        overlap_sections.insert(0, s)
+                        overlap_tokens += t
+                    else:
+                        break
+
+                current_sections = overlap_sections + [section]
+                current_tokens = sum(self.estimate_tokens(s) for s in current_sections)
+            else:
+                current_sections.append(section)
+                current_tokens += section_tokens
+
+        if current_sections:
+            chunk_content = ''.join(current_sections)
+            chunks.append(ContextChunk(
+                content=chunk_content,
+                tokens=current_tokens,
+                priority=priority,
+                chunk_type=chunk_type
+            ))
+
+        return chunks
+
+    def _split_line_based(self, content: str, chunk_type: str, priority: int) -> List[ContextChunk]:
+        """Split text content by lines while respecting chunk size and overlap."""
+        chunks: List[ContextChunk] = []
+        lines = content.splitlines()
+        current_chunk: List[str] = []
+        current_tokens = 0
+
+        for line in lines:
+            line_tokens = self.estimate_tokens(line)
+
+            # Handle ultra-long lines that exceed chunk_size to avoid data loss
+            if line_tokens > self.chunk_size:
+                # Flush current chunk if it has content before emitting oversized line
+                if current_chunk:
+                    chunk_content = '\n'.join(current_chunk)
+                    chunks.append(ContextChunk(
+                        content=chunk_content,
+                        tokens=current_tokens,
+                        priority=priority,
+                        chunk_type=chunk_type
+                    ))
+                    current_chunk = []
+                    current_tokens = 0
+
+                # Emit the oversized line as its own chunk
+                chunks.append(ContextChunk(
+                    content=line,
+                    tokens=line_tokens,
+                    priority=priority,
+                    chunk_type=chunk_type
+                ))
+                continue
+
+            if current_tokens + line_tokens > self.chunk_size and current_chunk:
+                # Save current chunk
+                chunk_content = '\n'.join(current_chunk)
+                chunks.append(ContextChunk(
+                    content=chunk_content,
+                    tokens=current_tokens,
+                    priority=priority,
+                    chunk_type=chunk_type
+                ))
+
+                # Start new chunk with overlap
+                overlap_lines = self._get_overlap_lines(current_chunk)
+                current_chunk = overlap_lines + [line]
+                current_tokens = sum(self.estimate_tokens(ln) for ln in current_chunk)
+            else:
+                current_chunk.append(line)
+                current_tokens += line_tokens
+
+        # Flush remaining lines
+        if current_chunk:
+            chunk_content = '\n'.join(current_chunk)
+            chunks.append(ContextChunk(
+                content=chunk_content,
+                tokens=current_tokens,
+                priority=priority,
+                chunk_type=chunk_type
+            ))
+
+        return chunks
         
         current_chunk = []
         current_tokens = 0
