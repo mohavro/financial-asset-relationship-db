@@ -421,6 +421,17 @@ class TestPrAgentWorkflow:
 
         for step in checkout_steps:
             step_with = step.get("with", {})
+            # It's acceptable for fetch-depth to be omitted entirely
+            if "fetch-depth" not in step_with:
+                continue
+            fetch_depth = step_with["fetch-depth"]
+            # Reject non-integer types (including strings)
+            assert isinstance(fetch_depth, int), (
+                f"fetch-depth should be an integer, got {type(fetch_depth).__name__}"
+            )
+            # Reject negative integers
+            assert fetch_depth >= 0, "fetch-depth cannot be negative"
+            step_with = step.get("with", {})
             if "fetch-depth" in step_with:
                 fetch_depth = step_with["fetch-depth"]
                 assert isinstance(fetch_depth, int) or fetch_depth == 0, (
