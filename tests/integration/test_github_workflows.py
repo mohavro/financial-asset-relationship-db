@@ -411,8 +411,8 @@ class TestPrAgentWorkflow:
     def test_pr_agent_fetch_depth_configured(self, pr_agent_workflow: Dict[str, Any]):
         """Ensure checkout steps in the trigger job have valid fetch-depth values."""
 
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
 
         checkout_steps = [
             s for s in steps
