@@ -61,32 +61,45 @@ class ContextChunker:
                 self.tokenizer = None
     
     def _load_config(self, config_path: str) -> dict:
-        """Load configuration from YAML file with robust error handling"""
+        """Load configuration from YAML file with robust error handling and deep-merge with defaults."""
+        def _deep_merge(base: dict, override: dict) -> dict:
+            """Recursively merge override into base without mutating inputs."""
+            result = dict(base)
+            for k, v in (override or {}).items():
+                if isinstance(v, dict) and isinstance(result.get(k), dict):
+                    result[k] = _deep_merge(result[k], v)
+                else:
+                    result[k] = v
+            return result
         try:
             config_file = Path(config_path)
+            defaults = self._get_default_config()
+
             if not config_file.exists():
                 print(f"Warning: Config file not found: {config_path}", file=sys.stderr)
                 print("Using default configuration values", file=sys.stderr)
-                return self._get_default_config()
-            
+                return defaults
+
             with open(config_path, 'r') as f:
                 config = yaml.safe_load(f)
-                
-            if config is None:
-                print(f"Warning: Config file is empty: {config_path}", file=sys.stderr)
-                return self._get_default_config()
-                
-            return config
-            
+
+            # If the file exists but content is invalid or empty, raise a critical error
+            if config is None or not isinstance(config, dict):
+                raise RuntimeError(f"Critical configuration error: {config_path} is empty or not a valid mapping.")
+
+            # Deep-merge with defaults to ensure all required keys are present
+            merged = _deep_merge(defaults, config)
+            return merged
+
         except yaml.YAMLError as e:
-            print(f"Error: Invalid YAML in config file {config_path}: {e}", file=sys.stderr)
-            print("Using default configuration values", file=sys.stderr)
-            return self._get_default_config()
+            # YAML parsing errors for an existing file should be critical
+            raise RuntimeError(f"Critical configuration error: invalid YAML in {config_path}: {e}") from e
+        except RuntimeError:
+            # Re-raise explicit critical configuration errors
+            raise
         except Exception as e:
-            print(f"Error: Could not load config from {config_path}: {e}", file=sys.stderr)
-            print("Using default configuration values", file=sys.stderr)
-            return self._get_default_config()
-    
+            # Unexpected errors reading existing config: raise to avoid silent misconfigurations
+            raise RuntimeError(f"Critical configuration error: could not load config from {config_path}: {e}") from e
     def _get_default_config(self) -> dict:
         """Return default configuration values"""
         return {
