@@ -240,6 +240,14 @@ class ContextChunker:
         chunks.sort(key=lambda x: x.priority)
         return chunks
     
+    def _split_content(self, content: str, chunk_type: str, priority: int) -> List[ContextChunk]:
+        """Split large content into smaller chunks with overlap"""
+        chunks = []
+        lines = content.split('\n')
+        
+        current_chunk = []
+        current_tokens = 0
+        
         for line in lines:
             line_tokens = self.estimate_tokens(line)
 
@@ -283,6 +291,18 @@ class ContextChunker:
             else:
                 current_chunk.append(line)
                 current_tokens += line_tokens
+        
+        # Add final chunk
+        if current_chunk:
+            chunk_content = '\n'.join(current_chunk)
+            chunks.append(ContextChunk(
+                content=chunk_content,
+                tokens=current_tokens,
+                priority=priority,
+                chunk_type=chunk_type
+            ))
+        
+        return chunks
     
     def _get_overlap_lines(self, lines: List[str]) -> List[str]:
         """Get overlap lines for continuity between chunks"""
