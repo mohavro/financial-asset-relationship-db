@@ -248,22 +248,32 @@ class ContextChunker:
         current_chunk = []
         current_tokens = 0
         
+        # Initialize accumulators for building chunks
+        current_chunk: List[str] = []
+        current_tokens: int = 0
+
+        # Helper to flush the current accumulated chunk safely
+        def flush_current_chunk():
+            nonlocal current_chunk, current_tokens
+            if not current_chunk:
+                return
+            chunk_content = '\n'.join(current_chunk)
+            chunks.append(ContextChunk(
+                content=chunk_content,
+                tokens=current_tokens,
+                priority=priority,
+                chunk_type=chunk_type
+            ))
+            current_chunk = []
+            current_tokens = 0
+
         for line in lines:
             line_tokens = self.estimate_tokens(line)
 
             # Handle ultra-long lines that exceed chunk_size to avoid data loss
             if line_tokens > self.chunk_size:
-                # Flush current chunk if it has content before emitting oversized line
-                if current_chunk:
-                    chunk_content = '\n'.join(current_chunk)
-                    chunks.append(ContextChunk(
-                        content=chunk_content,
-                        tokens=current_tokens,
-                        priority=priority,
-                        chunk_type=chunk_type
-                    ))
-                    current_chunk = []
-                    current_tokens = 0
+                # Flush any accumulated content before emitting the oversized line
+                flush_current_chunk()
 
                 # Emit the oversized line as its own chunk
                 chunks.append(ContextChunk(
@@ -273,15 +283,18 @@ class ContextChunker:
                     chunk_type=chunk_type
                 ))
                 continue
-    
+
+            # If adding this line would exceed the chunk size, flush current chunk and start a new one with overlap
             if current_tokens + line_tokens > self.chunk_size and current_chunk:
-                # Save current chunk
-                chunk_content = '\n'.join(current_chunk)
-                chunks.append(ContextChunk(
-                    content=chunk_content,
-                    tokens=current_tokens,
-                    priority=priority,
-                    chunk_type=chunk_type
+                flush_current_chunk()
+                # Start new chunk with overlap for continuity
+                overlap_lines = self._get_overlap_lines(lines=current_chunk)
+                current_chunk = overlap_lines + [line]
+                current_tokens = sum(self.estimate_tokens(ln) for ln in current_chunk)
+            else:
+                # Accumulate line into the current chunk
+                current_chunk.append(line)
+                current_tokens += line_tokens
                 ))
 
                 # Start new chunk with overlap
