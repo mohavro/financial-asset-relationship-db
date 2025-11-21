@@ -240,17 +240,32 @@ class ContextChunker:
         chunks.sort(key=lambda x: x.priority)
         return chunks
     
-    def _split_content(self, content: str, chunk_type: str, priority: int) -> List[ContextChunk]:
-        """Split large content into smaller chunks with overlap"""
-        chunks = []
-        lines = content.split('\n')
-        
-        current_chunk = []
-        current_tokens = 0
-        
         for line in lines:
             line_tokens = self.estimate_tokens(line)
-            
+
+            # Handle ultra-long lines that exceed chunk_size to avoid data loss
+            if line_tokens > self.chunk_size:
+                # Flush current chunk if it has content before emitting oversized line
+                if current_chunk:
+                    chunk_content = '\n'.join(current_chunk)
+                    chunks.append(ContextChunk(
+                        content=chunk_content,
+                        tokens=current_tokens,
+                        priority=priority,
+                        chunk_type=chunk_type
+                    ))
+                    current_chunk = []
+                    current_tokens = 0
+
+                # Emit the oversized line as its own chunk
+                chunks.append(ContextChunk(
+                    content=line,
+                    tokens=line_tokens,
+                    priority=priority,
+                    chunk_type=chunk_type
+                ))
+                continue
+    
             if current_tokens + line_tokens > self.chunk_size and current_chunk:
                 # Save current chunk
                 chunk_content = '\n'.join(current_chunk)
@@ -260,7 +275,7 @@ class ContextChunker:
                     priority=priority,
                     chunk_type=chunk_type
                 ))
-                
+
                 # Start new chunk with overlap
                 overlap_lines = self._get_overlap_lines(current_chunk)
                 current_chunk = overlap_lines + [line]
@@ -268,18 +283,6 @@ class ContextChunker:
             else:
                 current_chunk.append(line)
                 current_tokens += line_tokens
-        
-        # Add final chunk
-        if current_chunk:
-            chunk_content = '\n'.join(current_chunk)
-            chunks.append(ContextChunk(
-                content=chunk_content,
-                tokens=current_tokens,
-                priority=priority,
-                chunk_type=chunk_type
-            ))
-        
-        return chunks
     
     def _get_overlap_lines(self, lines: List[str]) -> List[str]:
         """Get overlap lines for continuity between chunks"""
