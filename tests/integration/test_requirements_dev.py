@@ -366,23 +366,22 @@ class TestRequirementsFileFormatting:
 class TestRequirementsPackageIntegrity:
     """Additional tests for package integrity and consistency in requirements-dev.txt."""
     
-    def test_no_duplicate_package_names(self):
-        """Test that no package appears multiple times in requirements-dev.txt."""
-        assert REQUIREMENTS_FILE.exists(), "requirements-dev.txt not found"
-        
-        requirements = parse_requirements(REQUIREMENTS_FILE)
-        
-        # Extract package names (case-insensitive)
+    def _find_duplicate_packages(requirements: List[Tuple[str, str]]) -> List[str]:
+        """Return list of duplicate package names (case-insensitive)."""
         package_names = [pkg.lower() for pkg, _ in requirements]
-        
-        # Find duplicates
         seen = set()
         duplicates = []
         for pkg in package_names:
             if pkg in seen:
                 duplicates.append(pkg)
             seen.add(pkg)
-        
+        return duplicates
+
+    def test_no_duplicate_package_names(self):
+        """Test that no package appears multiple times in requirements-dev.txt."""
+        assert REQUIREMENTS_FILE.exists(), "requirements-dev.txt not found"
+        requirements = parse_requirements(REQUIREMENTS_FILE)
+        duplicates = _find_duplicate_packages(requirements)
         assert len(duplicates) == 0, (
             f"Duplicate packages found in requirements-dev.txt: {duplicates}. "
             "Each package should appear only once."
