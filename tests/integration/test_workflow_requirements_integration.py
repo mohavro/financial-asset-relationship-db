@@ -16,27 +16,29 @@ WORKFLOWS_DIR = Path(__file__).parent.parent.parent / ".github" / "workflows"
 REQUIREMENTS_FILE = Path(__file__).parent.parent.parent / "requirements-dev.txt"
 
 
+from packaging.requirements import Requirement
+
+
 def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
     """Parse requirements file and return list of (package, version_spec) tuples."""
-    requirements = []
-    
+    requirements: List[Tuple[str, str]] = []
+
     with open(file_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            
+        for raw_line in f:
+            line = raw_line.strip()
+
             if not line or line.startswith('#'):
                 continue
-            
-            # Extract package name before any version specifier
-            for sep in ('>=', '==', '<=', '>', '<', '~='):
-                if sep in line:
-                    pkg = line.split(sep)[0].strip()
-                    version = line.split(sep)[1].strip()
-                    requirements.append((pkg, f"{sep}{version}"))
-                    break
-            else:
-                requirements.append((line.strip(), ''))
-    
+
+            try:
+                req = Requirement(line)
+                # Only include the name and version specifier; ignore extras and markers for matching
+                requirements.append((req.name, str(req.specifier)))
+            except Exception:
+                # Fall back to previous behavior on unparseable lines
+                # Keep the raw (stripped) line with empty spec to avoid false negatives
+                requirements.append((line, ''))
+
     return requirements
 
 
