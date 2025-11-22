@@ -357,8 +357,8 @@ for step in checkout_steps:
     def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
         """Asserts the workflow's trigger job includes a setup-python step."""
 
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        ]
+        assert len(python_steps) > 0, "pr-agent-trigger job must set up Python"
 
         python_steps = [
             s for s in steps
