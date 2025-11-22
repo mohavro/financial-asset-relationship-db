@@ -7,10 +7,10 @@ workflows can successfully use the installed dependencies.
 """
 
 import pytest
-import yaml
 from pathlib import Path
 from typing import List, Tuple
 
+yaml = pytest.importorskip("yaml")
 
 WORKFLOWS_DIR = Path(__file__).parent.parent.parent / ".github" / "workflows"
 REQUIREMENTS_FILE = Path(__file__).parent.parent.parent / "requirements-dev.txt"
