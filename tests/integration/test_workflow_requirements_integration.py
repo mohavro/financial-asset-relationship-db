@@ -218,6 +218,6 @@ class TestRequirementsMatchWorkflowNeeds:
                 major = int(version_parts[0])
                 minor = int(version_parts[1])
                 
-                assert major >= 3 and minor >= 8, (
+                assert (major > 3) or (major == 3 and minor >= 8), (
                     f"Workflow uses Python {python_version}, but requires 3.8+ for modern tooling"
                 )
