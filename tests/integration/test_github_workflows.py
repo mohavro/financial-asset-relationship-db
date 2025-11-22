@@ -230,7 +230,7 @@ class TestWorkflowActions:
                 if "uses" in step:
                     action = step["uses"]
                     # Local actions (starting with ./) don't need version tags
-                    if action.startswith(("./", ".github/", "../")):
+                    if action.startswith(("./", "../")):
                         continue
                     # Action should have a version tag (e.g., @v1, @v3.5.2, or @<commit-sha>)
                     assert "@" in action, (
