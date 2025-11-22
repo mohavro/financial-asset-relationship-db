@@ -346,13 +346,23 @@ assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
         
         for step in checkout_steps:
             step_with = step.get("with", {})
-for step in checkout_steps:
-    step_with = step.get("with", {})
-    token = step_with.get("token")
-    assert isinstance(token, str) and token.strip(), (
-        "Checkout step must specify a non-empty token for better security. "
-        "Use ${{ secrets.GITHUB_TOKEN }} or similar."
-    )
+def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
+    """Test that checkout steps explicitly define a non-empty token."""
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
+
+    checkout_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/checkout")
+    ]
+
+    for step in checkout_steps:
+        step_with = step.get("with", {})
+        token = step_with.get("token")
+        assert isinstance(token, str) and token.strip(), (
+            "Checkout step must specify a non-empty token for better security. "
+            "Use ${{ secrets.GITHUB_TOKEN }} or similar."
+        )
     
     def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
         """Asserts the workflow's trigger job includes a setup-python step."""
