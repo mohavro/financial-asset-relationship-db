@@ -163,7 +163,7 @@ class TestVersionSpecifications:
             pkg for pkg, ver in requirements
             if not ver and pkg not in allowed_unpinned
         ]
-        assert len(packages_without_versions) == 0
+        assert not packages_without_versions, f"Found unpinned packages that are not in the allowed list: {packages_without_versions}"
 
     def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
         """Test that version specifications use valid format."""
