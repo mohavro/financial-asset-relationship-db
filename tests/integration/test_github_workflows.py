@@ -230,7 +230,7 @@ class TestWorkflowActions:
                 if "uses" in step:
                     action = step["uses"]
                     # Local actions (starting with ./) don't need version tags
-                    if action.startswith("./"):
+                    if action.startswith(("./", ".github/", "../")):
                         continue
                     # Action should have a version tag (e.g., @v1, @v3.5.2, or @<commit-sha>)
                     assert "@" in action, (
@@ -306,6 +306,9 @@ class TestPrAgentWorkflow:
         assert isinstance(pr_agent_workflow["name"], str) and pr_agent_workflow["name"].strip(), (
             "pr-agent workflow 'name' field must be a non-empty string"
         )
+        assert pr_agent_workflow["name"] == "PR Agent Workflow", (
+            "pr-agent workflow name should match the workflow definition"
+        )
     
     def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow triggers on pull_request events."""
@@ -351,22 +354,11 @@ class TestPrAgentWorkflow:
         jobs = pr_agent_workflow.get("jobs", {})
         assert "pr-agent-trigger" in jobs, "pr-agent workflow must have pr-agent-trigger job"
     
-    def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
+    def test_pr_agent_trigger_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job runs on Ubuntu."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        runs_on = review_job.get("runs-on", "")
-        # Be more specific about expected runner format
-        assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
-            f"PR Agent trigger job should run on standard Ubuntu runner, got '{runs_on}'"
-        )
-        """Test that pr-agent workflow has a pr-agent-trigger job."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have pr-agent-trigger job"
-    
-    def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job runs on Ubuntu."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        runs_on = review_job.get("runs-on", "")
+        trigger_job = pr_agent_workflow["jobs"].get("pr-agent-trigger")
+        assert trigger_job is not None, "pr-agent workflow must have pr-agent-trigger job"
+        runs_on = trigger_job.get("runs-on", "")
         # Be more specific about expected runner format
         assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
             f"PR Agent trigger job should run on standard Ubuntu runner, got '{runs_on}'"
@@ -374,8 +366,8 @@ class TestPrAgentWorkflow:
     
     def test_pr_agent_has_checkout_step(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job checks out the code."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
         
         checkout_steps = [
             s for s in steps 
@@ -386,11 +378,11 @@ class TestPrAgentWorkflow:
     def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
         """
         Ensure every actions/checkout step in the pr-agent-trigger job provides a `token` in its `with` mapping.
-        
+
         Fails the test if any checkout step omits the `token` key.
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
         
         checkout_steps = [
             s for s in steps 
@@ -409,8 +401,8 @@ class TestPrAgentWorkflow:
         """
         Asserts the workflow's "pr-agent-trigger" job includes at least one step that uses actions/setup-python.
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
         
         python_steps = [
             s for s in steps 
@@ -420,8 +412,8 @@ class TestPrAgentWorkflow:
     
     def test_pr_agent_has_node_setup(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job sets up Node.js."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
         
         node_steps = [
             s for s in steps 
@@ -433,8 +425,8 @@ class TestPrAgentWorkflow:
         """
         Ensure any actions/setup-python step in the "pr-agent-trigger" job specifies python-version "3.11".
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
         
         python_steps = [
             s for s in steps 
@@ -454,8 +446,8 @@ class TestPrAgentWorkflow:
         """
         Ensure every actions/setup-node step in the pr-agent 'pr-agent-trigger' job specifies Node.js version 18.
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
         
         node_steps = [
             s for s in steps 
@@ -473,8 +465,8 @@ class TestPrAgentWorkflow:
     
     def test_pr_agent_no_duplicate_setup_steps(self, pr_agent_workflow: Dict[str, Any]):
         """Test that there are no duplicate setup steps in the workflow."""
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
         
         # Check for duplicate step names
         step_names = [s.get("name", "") for s in steps if s.get("name")]
@@ -488,8 +480,8 @@ class TestPrAgentWorkflow:
         """
         Ensure checkout steps in the PR Agent trigger job have valid fetch-depth values.
         """
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        steps = trigger_job.get("steps", [])
         
         checkout_steps = [
             s for s in steps 
@@ -1190,13 +1182,7 @@ class TestWorkflowEnvAndSecrets:
         if "env" in config:
             invalid = check_env_vars(config["env"])
             if invalid:
-# Check top-level env
-        if "env" in config:
-            invalid = check_env_vars(config["env"])
-            if invalid:
                 print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
-                      f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
-                      f"readability and consistency across workflows.")
                       f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
                       f"readability and consistency across workflows.")
 
