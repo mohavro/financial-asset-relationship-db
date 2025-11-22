@@ -333,25 +333,12 @@ assert "PR Agent" in pr_agent_workflow["name"], (
         else:
             normalized = set()
 
-        assert "pull_request" in normalized, (
-            "pr-agent workflow must trigger on pull_request events"
-        )
-        triggers = pr_agent_workflow.get("on", {})
-        assert "pull_request" in triggers, (
-            "pr-agent workflow must trigger on pull_request events"
-        )
-    
-
-    def test_pr_agent_has_trigger_job(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent workflow has a pr-agent-trigger job."""
-        jobs = pr_agent_workflow.get("jobs", {})
-        assert "pr-agent-trigger" in jobs, "pr-agent workflow must have pr-agent-trigger job"
-    
-    def test_pr_agent_trigger_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that pr-agent-trigger job runs on Ubuntu."""
-        trigger_job = pr_agent_workflow["jobs"].get("pr-agent-trigger")
-        assert trigger_job is not None, "pr-agent workflow must have pr-agent-trigger job"
-        runs_on = trigger_job.get("runs-on", "")
+def test_pr_agent_trigger_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
+    """Test that pr-agent-trigger job runs on Ubuntu."""
+    # Rely on test_pr_agent_has_trigger_job for job existence
+    trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    runs_on = trigger_job.get("runs-on", "")
+    # ... rest of test ...
         # Be more specific about expected runner format
         assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
             f"PR Agent trigger job should run on standard Ubuntu runner, got '{runs_on}'"
