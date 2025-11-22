@@ -465,12 +465,6 @@ def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
             )
             # Reject negative integers
             assert fetch_depth >= 0, "fetch-depth cannot be negative"
-            step_with = step.get("with", {})
-            # It's acceptable for fetch-depth to be omitted entirely
-            if "fetch-depth" not in step_with:
-                continue
-            fetch_depth = step_with["fetch-depth"]
-            # Reject non-integer types (including strings)
             assert isinstance(fetch_depth, int), (
                 f"fetch-depth should be an integer, got {type(fetch_depth).__name__}"
             )
