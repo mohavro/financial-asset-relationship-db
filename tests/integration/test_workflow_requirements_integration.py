@@ -122,8 +122,7 @@ class TestPyYAMLAvailability:
         assert REQUIREMENTS_FILE.exists(), "requirements-dev.txt not found"
         
         requirements = parse_requirements(REQUIREMENTS_FILE)
-        package_names = [pkg for pkg, _ in requirements]
-        
+        package_names = [pkg.lower() for pkg, _ in requirements]
         assert 'PyYAML' in package_names, (
             "PyYAML must be in requirements-dev.txt because test_github_workflows.py "
             "uses it to parse and validate workflow YAML files"
