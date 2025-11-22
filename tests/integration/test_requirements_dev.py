@@ -159,7 +159,7 @@ class TestVersionSpecifications:
     def test_all_packages_have_versions(self, requirements: List[Tuple[str, str]]):
         """Test that all packages specify version constraints."""
         packages_without_versions = [pkg for pkg, ver in requirements if not ver]
-        assert len(packages_without_versions) == 0
+        assert len(packages_without_versions) == 0, f"Packages without version constraints: {packages_without_versions}"
     
     def test_version_format_valid(self, requirements: List[Tuple[str, str]]):
         """Test that version specifications use valid PEP 440 format."""
