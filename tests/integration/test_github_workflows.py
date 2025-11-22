@@ -366,7 +366,8 @@ class TestPrAgentWorkflow:
     
     def test_pr_agent_has_checkout_step(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent-trigger job checks out the code."""
-        trigger_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+        trigger_job = pr_agent_workflow["jobs"].get("pr-agent-trigger")
+        assert trigger_job is not None, "pr-agent workflow must have pr-agent-trigger job"
         steps = trigger_job.get("steps", [])
         
         checkout_steps = [
