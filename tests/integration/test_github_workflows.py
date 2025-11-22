@@ -306,6 +306,9 @@ class TestPrAgentWorkflow:
         assert isinstance(pr_agent_workflow["name"], str) and pr_agent_workflow["name"].strip(), (
             "pr-agent workflow 'name' field must be a non-empty string"
         )
+        assert pr_agent_workflow["name"].strip() == "PR Agent Workflow", (
+            "pr-agent workflow 'name' should match the configured workflow name"
+        )
     
     def test_pr_agent_triggers_on_pull_request(self, pr_agent_workflow: Dict[str, Any]):
         """Test that pr-agent workflow triggers on pull_request events."""
@@ -1190,15 +1193,11 @@ class TestWorkflowEnvAndSecrets:
         if "env" in config:
             invalid = check_env_vars(config["env"])
             if invalid:
-# Check top-level env
-        if "env" in config:
-            invalid = check_env_vars(config["env"])
-            if invalid:
-                print(f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
-                      f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
-                      f"readability and consistency across workflows.")
-                      f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
-                      f"readability and consistency across workflows.")
+                print(
+                    f"MAINTAINABILITY: Workflow {workflow_file.name} has environment variables "
+                    f"that don't follow UPPER_CASE convention: {invalid}. This can reduce "
+                    f"readability and consistency across workflows."
+                )
 
     @pytest.mark.parametrize("workflow_file", get_workflow_files())
     def test_workflow_secrets_not_in_env_values(self, workflow_file: Path):
