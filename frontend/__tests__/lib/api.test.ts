@@ -11,6 +11,16 @@
 
 import axios from 'axios';
 import type { Asset, Relationship, Metrics, VisualizationData } from '../../app/types/api';
+import {
+  mockAssets,
+  mockAsset,
+  mockRelationships,
+  mockAllRelationships,
+  mockMetrics,
+  mockVizData,
+  mockAssetClasses,
+  mockSectors,
+} from '../test-utils';
 
 // Mock axios
 jest.mock('axios');
@@ -77,31 +87,6 @@ describe('API Client', () => {
   });
 
   describe('getAssets', () => {
-    const mockAssets: Asset[] = [
-      {
-        id: 'ASSET_1',
-        symbol: 'AAPL',
-        name: 'Apple Inc.',
-        asset_class: 'EQUITY',
-        sector: 'Technology',
-        price: 150.0,
-        market_cap: 2400000000000,
-        currency: 'USD',
-        additional_fields: {},
-      },
-      {
-        id: 'ASSET_2',
-        symbol: 'GOOGL',
-        name: 'Alphabet Inc.',
-        asset_class: 'EQUITY',
-        sector: 'Technology',
-        price: 140.0,
-        market_cap: 1800000000000,
-        currency: 'USD',
-        additional_fields: {},
-      },
-    ];
-
     it('should fetch all assets without filters', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
 
@@ -162,21 +147,6 @@ describe('API Client', () => {
   });
 
   describe('getAssetDetail', () => {
-    const mockAsset: Asset = {
-      id: 'ASSET_1',
-      symbol: 'AAPL',
-      name: 'Apple Inc.',
-      asset_class: 'EQUITY',
-      sector: 'Technology',
-      price: 150.0,
-      market_cap: 2400000000000,
-      currency: 'USD',
-      additional_fields: {
-        pe_ratio: 25.5,
-        dividend_yield: 0.005,
-      },
-    };
-
     it('should fetch asset details by ID', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockAsset });
 
@@ -207,21 +177,6 @@ describe('API Client', () => {
   });
 
   describe('getAssetRelationships', () => {
-    const mockRelationships: Relationship[] = [
-      {
-        source_id: 'ASSET_1',
-        target_id: 'ASSET_2',
-        relationship_type: 'SAME_SECTOR',
-        strength: 0.8,
-      },
-      {
-        source_id: 'ASSET_1',
-        target_id: 'ASSET_3',
-        relationship_type: 'ISSUER',
-        strength: 0.95,
-      },
-    ];
-
     it('should fetch relationships for an asset', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockRelationships });
 
@@ -257,28 +212,13 @@ describe('API Client', () => {
   });
 
   describe('getAllRelationships', () => {
-    const mockRelationships: Relationship[] = [
-      {
-        source_id: 'ASSET_1',
-        target_id: 'ASSET_2',
-        relationship_type: 'SAME_SECTOR',
-        strength: 0.8,
-      },
-      {
-        source_id: 'ASSET_3',
-        target_id: 'ASSET_4',
-        relationship_type: 'COMMODITY_EXPOSURE',
-        strength: 0.6,
-      },
-    ];
-
     it('should fetch all relationships', async () => {
-      mockAxiosInstance.get.mockResolvedValue({ data: mockRelationships });
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAllRelationships });
 
       const result = await api.getAllRelationships();
 
       expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/relationships');
-      expect(result).toEqual(mockRelationships);
+      expect(result).toEqual(mockAllRelationships);
       expect(result).toHaveLength(2);
     });
 
@@ -292,20 +232,6 @@ describe('API Client', () => {
   });
 
   describe('getMetrics', () => {
-    const mockMetrics: Metrics = {
-      total_assets: 15,
-      total_relationships: 42,
-      asset_classes: {
-        EQUITY: 6,
-        FIXED_INCOME: 4,
-        COMMODITY: 3,
-        CURRENCY: 2,
-      },
-      avg_degree: 5.6,
-      max_degree: 12,
-      network_density: 0.42,
-    };
-
     it('should fetch network metrics', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockMetrics });
 
@@ -349,41 +275,6 @@ describe('API Client', () => {
   });
 
   describe('getVisualizationData', () => {
-    const mockVizData: VisualizationData = {
-      nodes: [
-        {
-          id: 'ASSET_1',
-          name: 'Apple Inc.',
-          symbol: 'AAPL',
-          asset_class: 'EQUITY',
-          x: 1.5,
-          y: 2.3,
-          z: 0.8,
-          color: '#1f77b4',
-          size: 10,
-        },
-        {
-          id: 'ASSET_2',
-          name: 'Gold',
-          symbol: 'GOLD',
-          asset_class: 'COMMODITY',
-          x: -1.2,
-          y: 0.5,
-          z: 1.9,
-          color: '#ff7f0e',
-          size: 8,
-        },
-      ],
-      edges: [
-        {
-          source: 'ASSET_1',
-          target: 'ASSET_2',
-          relationship_type: 'COMMODITY_EXPOSURE',
-          strength: 0.7,
-        },
-      ],
-    };
-
     it('should fetch visualization data', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockVizData });
 
@@ -442,10 +333,6 @@ describe('API Client', () => {
   });
 
   describe('getAssetClasses', () => {
-    const mockAssetClasses = {
-      asset_classes: ['EQUITY', 'FIXED_INCOME', 'COMMODITY', 'CURRENCY'],
-    };
-
     it('should fetch asset classes', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockAssetClasses });
 
@@ -476,10 +363,6 @@ describe('API Client', () => {
   });
 
   describe('getSectors', () => {
-    const mockSectors = {
-      sectors: ['Energy', 'Financials', 'Technology'],
-    };
-
     it('should fetch sectors', async () => {
       mockAxiosInstance.get.mockResolvedValue({ data: mockSectors });
 
@@ -542,7 +425,203 @@ describe('API Client', () => {
 
       const result = await api.healthCheck();
 
+      await expect(api.getAllRelationships()).rejects.toThrow();
+  });
+
+  describe('Advanced Error Handling', () => {
+    it('should handle network timeout errors', async () => {
+      mockAxiosInstance.get.mockRejectedValue({
+        code: 'ECONNABORTED',
+        message: 'timeout of 5000ms exceeded',
+      });
+
+      await expect(api.healthCheck()).rejects.toMatchObject({
+        code: 'ECONNABORTED',
+      });
+    });
+
+    it('should handle 404 not found errors', async () => {
+      mockAxiosInstance.get.mockRejectedValue({
+        response: { status: 404, data: { detail: 'Not found' } },
+      });
+
+      await expect(api.getAssetDetail('NONEXISTENT')).rejects.toMatchObject({
+        response: { status: 404 },
+      });
+    });
+
+    it('should handle 500 server errors', async () => {
+      mockAxiosInstance.get.mockRejectedValue({
+        response: { status: 500, data: { detail: 'Internal server error' } },
+      });
+
+      await expect(api.getMetrics()).rejects.toMatchObject({
+        response: { status: 500 },
+      });
+    });
+
+    it('should handle malformed JSON responses', async () => {
+      mockAxiosInstance.get.mockRejectedValue(new SyntaxError('Unexpected token'));
+
+      await expect(api.getAssets()).rejects.toThrow(SyntaxError);
+    });
+  });
+
+  describe('Response Validation', () => {
+    it('should return empty array when API returns null', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: null });
+
+      const result = await api.getAllRelationships();
       expect(result).toBeNull();
     });
+
+    it('should handle undefined response data', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: undefined });
+
+      const result = await api.getAllRelationships();
+      expect(result).toBeUndefined();
+    });
+
+    it('should preserve response structure for paginated results', async () => {
+      const paginatedResponse = {
+        items: mockAssets,
+        total: 100,
+        page: 2,
+        per_page: 20,
+      };
+      mockAxiosInstance.get.mockResolvedValue({ data: paginatedResponse });
+
+      const result = await api.getAssets({ page: 2, per_page: 20 });
+      
+      expect(result).toEqual(paginatedResponse);
+      expect(result).toHaveProperty('items');
+      expect(result).toHaveProperty('total');
+      expect(result).toHaveProperty('page');
+      expect(result).toHaveProperty('per_page');
+    });
+  });
+
+  describe('Request Parameter Edge Cases', () => {
+    it('should handle zero as valid page number', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+
+      await api.getAssets({ page: 0, per_page: 20 });
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
+        params: { page: 0, per_page: 20 },
+      });
+    });
+
+    it('should handle very large per_page value', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+
+      await api.getAssets({ page: 1, per_page: 10000 });
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
+        params: { page: 1, per_page: 10000 },
+      });
+    });
+
+    it('should handle special characters in asset IDs', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAsset });
+
+      await api.getAssetDetail('ASSET_1-2-3');
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets/ASSET_1-2-3');
+    });
+
+    it('should handle empty string filters', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+
+      await api.getAssets({ asset_class: '', sector: '' });
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/api/assets', {
+        params: { asset_class: '', sector: '' },
+      });
+    });
+  });
+
+  describe('Concurrent Request Handling', () => {
+    it('should handle multiple simultaneous getAssets calls', async () => {
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAssets });
+
+      const promises = [
+        api.getAssets({ asset_class: 'EQUITY' }),
+        api.getAssets({ sector: 'Technology' }),
+        api.getAssets({ page: 2 }),
+      ];
+
+      const results = await Promise.all(promises);
+
+      expect(results).toHaveLength(3);
+      expect(mockAxiosInstance.get).toHaveBeenCalledTimes(3);
+    });
+
+    it('should handle mixed success and failure in concurrent requests', async () => {
+      mockAxiosInstance.get
+        .mockResolvedValueOnce({ data: mockAssets })
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce({ data: mockMetrics });
+
+      const results = await Promise.allSettled([
+        api.getAssets(),
+        api.getAllRelationships(),
+        api.getMetrics(),
+      ]);
+
+      expect(results[0].status).toBe('fulfilled');
+      expect(results[1].status).toBe('rejected');
+      expect(results[2].status).toBe('fulfilled');
+    });
+  });
+
+  describe('Response Data Integrity', () => {
+    it('should not mutate response data', async () => {
+      const originalData = { ...mockAsset };
+      mockAxiosInstance.get.mockResolvedValue({ data: mockAsset });
+
+      const result = await api.getAssetDetail('ASSET_1');
+      result.price = 999.99;
+
+      expect(mockAsset.price).toBe(originalData.price);
+    });
+
+    it('should handle deeply nested additional_fields', async () => {
+      const nestedAsset = {
+        ...mockAsset,
+        additional_fields: {
+          nested: {
+            deep: {
+              value: 123,
+            },
+          },
+        },
+      };
+      mockAxiosInstance.get.mockResolvedValue({ data: nestedAsset });
+
+      const result = await api.getAssetDetail('ASSET_1');
+
+      expect(result.additional_fields.nested.deep.value).toBe(123);
+      // Missing nested fields should be handled gracefully
+      const missingNestedAsset = {
+        ...mockAsset,
+        additional_fields: undefined,
+      };
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: missingNestedAsset });
+      const resultMissing = await api.getAssetDetail('ASSET_1');
+      expect(resultMissing.additional_fields?.nested?.deep?.value).toBeUndefined();
+
+      // Malformed nested structure (deep is not an object)
+      const malformedNestedAsset = {
+        ...mockAsset,
+        additional_fields: {
+          nested: {
+            deep: null,
+          },
+        },
+      };
+      mockAxiosInstance.get.mockResolvedValueOnce({ data: malformedNestedAsset });
+      expect(resultMalformed.additional_fields?.nested?.deep).toBeNull();
+      expect(resultMalformed.additional_fields?.nested?.deep && typeof resultMalformed.additional_fields.nested.deep === 'object').toBe(false);
   });
 });

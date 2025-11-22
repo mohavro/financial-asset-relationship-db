@@ -7,6 +7,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AssetList from '../../app/components/AssetList';
 import { api } from '../../app/lib/api';
+import { mockAssetClasses, mockSectors } from '../test-utils';
 
 jest.mock('../../app/lib/api');
 const mockedApi = api as jest.Mocked<typeof api>;
@@ -38,17 +39,22 @@ describe('AssetList Component', () => {
     },
   ];
 
-  const mockAssetClasses = {
-    asset_classes: ['EQUITY', 'FIXED_INCOME', 'COMMODITY', 'CURRENCY'],
-  };
-
-  const mockSectors = {
-    sectors: ['Energy', 'Financials', 'Technology'],
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRouterReplace.mockClear();
+    mockRouterReplace.mockImplementation((url: string) => {
+      const queryString = url.split('?')[1] ?? '';
+      mockSearch = queryString;
+    });
+    mockSearch = '';
+    mockedApi.getAssets.mockResolvedValue({
+      items: mockAssets,
+      total: mockAssets.length,
+      page: 1,
+      per_page: 20,
+    });
+    mockedApi.getAssetClasses.mockResolvedValue(mockAssetClasses);
+    mockedApi.getSectors.mockResolvedValue(mockSectors);
+  });
     mockRouterReplace.mockImplementation((url: string) => {
       const queryString = url.split('?')[1] ?? '';
       mockSearch = queryString;
