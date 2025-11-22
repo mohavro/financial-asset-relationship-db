@@ -305,6 +305,12 @@ class TestPrAgentWorkflow:
         assert "pr-agent-trigger" in jobs, (
             "pr-agent workflow must define the 'pr-agent-trigger' job"
         )
+        assert isinstance(jobs["pr-agent-trigger"], dict), (
+            "'pr-agent-trigger' job must be a mapping"
+        )
+        assert isinstance(jobs["pr-agent-trigger"], dict), (
+            "'pr-agent-trigger' job must be a mapping"
+        )
     
     def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
 assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
@@ -343,25 +349,35 @@ assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
         
         for step in checkout_steps:
             step_with = step.get("with", {})
-for step in checkout_steps:
-    step_with = step.get("with", {})
-    token = step_with.get("token")
-    assert isinstance(token, str) and token.strip(), (
-        "Checkout step must specify a non-empty token for better security. "
-        "Use ${{ secrets.GITHUB_TOKEN }} or similar."
-    )
+def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
+    """Test that checkout steps explicitly define a non-empty token."""
+    review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
+    steps = review_job.get("steps", [])
+
+    checkout_steps = [
+        s for s in steps 
+        if s.get("uses", "").startswith("actions/checkout")
+    ]
+
+    for step in checkout_steps:
+        step_with = step.get("with", {})
+        token = step_with.get("token")
+        assert isinstance(token, str) and token.strip(), (
+            "Checkout step must specify a non-empty token for better security. "
+            "Use ${{ secrets.GITHUB_TOKEN }} or similar."
+        )
     
     def test_pr_agent_has_python_setup(self, pr_agent_workflow: Dict[str, Any]):
         """Asserts the workflow's trigger job includes a setup-python step."""
 
-        review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
-        steps = review_job.get("steps", [])
+        ]
+        assert len(python_steps) > 0, "pr-agent-trigger job must set up Python"
 
         python_steps = [
             s for s in steps
             if s.get("uses", "").startswith("actions/setup-python")
         ]
-        assert len(python_steps) > 0, "Review job must set up Python"
+        assert len(python_steps) > 0, "pr-agent-trigger job must set up Python"
     
     def test_pr_agent_has_node_setup(self, pr_agent_workflow: Dict[str, Any]):
         """Test that review job sets up Node.js."""
@@ -452,12 +468,33 @@ for step in checkout_steps:
             )
             # Reject negative integers
             assert fetch_depth >= 0, "fetch-depth cannot be negative"
+            assert isinstance(fetch_depth, int), (
+                f"fetch-depth should be an integer, got {type(fetch_depth).__name__}"
+            )
+            # Reject negative integers
+            assert fetch_depth >= 0, "fetch-depth cannot be negative"
             step_with = step.get("with", {})
             # It's acceptable for fetch-depth to be omitted entirely
             if "fetch-depth" not in step_with:
                 continue
             fetch_depth = step_with["fetch-depth"]
             # Reject non-integer types (including strings)
+            assert isinstance(fetch_depth, int), (
+                f"fetch-depth should be an integer, got {type(fetch_depth).__name__}"
+            )
+            # Reject negative integers
+            assert fetch_depth >= 0, "fetch-depth cannot be negative"
+            step_with = step.get("with", {})
+            # It's acceptable for fetch-depth to be omitted entirely
+            if "fetch-depth" not in step_with:
+                continue
+            fetch_depth = step_with["fetch-depth"]
+            # Reject non-integer types (including strings)
+            assert isinstance(fetch_depth, int), (
+                f"fetch-depth should be an integer, got {type(fetch_depth).__name__}"
+            )
+            # Reject negative integers
+            assert fetch_depth >= 0, "fetch-depth cannot be negative"
             assert isinstance(fetch_depth, int), (
                 f"fetch-depth should be an integer, got {type(fetch_depth).__name__}"
             )
@@ -1177,12 +1214,41 @@ def test_workflow_env_vars_naming_convention(workflow_file: Path):
         if not isinstance(env_dict, dict):
             return []
         invalid = []
+    def check_env_vars(env_dict):
+        """
+        Identify environment variable names that do not follow the convention of using only upper-case letters, digits and underscores.
+    
+        Parameters:
+            env_dict (dict): Mapping of environment variable names to their values. If a non-dict is provided it is treated as absent and no invalid names are returned.
+    
+        Returns:
+            invalid_keys (List[str]): List of keys from `env_dict` that are not composed solely of upper-case letters, digits and underscores.
+        """
+        if not isinstance(env_dict, dict):
+            return []
+        invalid = []
         for key in env_dict.keys():
             # Ensure all characters are either alphanumeric or underscore
             is_valid_chars = all(c.isalnum() or c == '_' for c in key)
             if not key.isupper() or not is_valid_chars:
                 invalid.append(key)
         return invalid
+
+    # Check top-level env
+    if "env" in config:
+        invalid = check_env_vars(config["env"])
+        assert not invalid, (
+            f"Workflow {workflow_file.name} has invalid env var names: {invalid}"
+        )
+
+    # Check job-level env
+    jobs = config.get("jobs", {})
+    for job_name, job_config in jobs.items():
+        if "env" in job_config:
+            invalid = check_env_vars(job_config["env"])
+            assert not invalid, (
+                f"Job '{job_name}' in {workflow_file.name} has invalid env var names: {invalid}"
+            )
         
         # Check top-level env
         if "env" in config:
