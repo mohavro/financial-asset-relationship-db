@@ -363,31 +363,36 @@ class TestConfigurationConsistency:
         
         # Parse with duplicate key detection
         class DuplicateKeyLoader(yaml.SafeLoader):
-            def construct_mapping(self, node, deep=False):
-                if not isinstance(node, yaml.MappingNode):
+            """Loader that raises on duplicate keys at any depth."""
+
+        def _construct_mapping(loader, node, deep=False):
+            if not isinstance(node, yaml.MappingNode):
+                raise yaml.constructor.ConstructorError(
+                    None, None,
+                    f"expected a mapping node, but found {node.id}",
+                    node.start_mark
+                )
+
+            mapping = {}
+            for key_node, value_node in node.value:
+                key = loader.construct_object(key_node, deep=True)
+                if key in mapping:
                     raise yaml.constructor.ConstructorError(
-                        None, None,
-                        f"expected a mapping node, but found {node.id}",
-                        node.start_mark
+                        "while constructing a mapping",
+                        node.start_mark,
+                        f"found duplicate key: {key}",
+                        key_node.start_mark
                     )
-                
-                mapping = {}
-                for key_node, value_node in node.value:
-                    key = self.construct_object(key_node, deep=deep)
-                    
-                    if key in mapping:
-                        raise yaml.constructor.ConstructorError(
-                            f"while constructing a mapping",
-                            node.start_mark,
-                            f"found duplicate key: {key}",
-                            key_node.start_mark
-                        )
-                    
-                    value = self.construct_object(value_node, deep=deep)
-                    mapping[key] = value
-                
-                return mapping
-        
+
+                mapping[key] = loader.construct_object(value_node, deep=True)
+
+            return mapping
+
+        DuplicateKeyLoader.add_constructor(
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+            _construct_mapping,
+        )
+
         try:
             yaml.load(content, Loader=DuplicateKeyLoader)
         except yaml.constructor.ConstructorError as e:
