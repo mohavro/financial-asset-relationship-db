@@ -374,7 +374,7 @@ def test_pr_agent_checkout_has_token(self, pr_agent_workflow: Dict[str, Any]):
             s for s in steps
             if s.get("uses", "").startswith("actions/setup-python")
         ]
-        assert len(python_steps) > 0, "Review job must set up Python"
+        assert len(python_steps) > 0, "pr-agent-trigger job must set up Python"
     
     def test_pr_agent_has_node_setup(self, pr_agent_workflow: Dict[str, Any]):
         """Test that review job sets up Node.js."""
