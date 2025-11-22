@@ -34,11 +34,9 @@ def parse_requirements(file_path: Path) -> List[Tuple[str, str]]:
                 req = Requirement(line)
                 # Only include the name and version specifier; ignore extras and markers for matching
                 requirements.append((req.name, str(req.specifier)))
-            except Exception:
-                # Fall back to previous behavior on unparseable lines
-                # Keep the raw (stripped) line with empty spec to avoid false negatives
-                requirements.append((line, ''))
-
+            except Exception as e:
+                # Surface unparseable requirement lines to avoid masking issues
+                raise ValueError(f"Failed to parse requirement line: '{line}'. Error: {e}") from e
     return requirements
 
 
