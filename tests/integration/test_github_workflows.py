@@ -307,7 +307,9 @@ class TestPrAgentWorkflow:
         )
     
     def test_pr_agent_review_runs_on_ubuntu(self, pr_agent_workflow: Dict[str, Any]):
-        """Test that review job runs on Ubuntu."""
+assert runs_on in ["ubuntu-latest", "ubuntu-22.04", "ubuntu-20.04"], (
+    f"PR Agent trigger job should run on standard Ubuntu runner, got '{runs_on}'"
+)
         review_job = pr_agent_workflow["jobs"]["pr-agent-trigger"]
         runs_on = review_job.get("runs-on", "")
         assert "ubuntu" in runs_on.lower(), (
